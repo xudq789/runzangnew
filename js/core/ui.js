@@ -59,5 +59,789 @@ export const UI = {
     paymentOrderId: () => DOM.id('payment-order-id')
 };
 
-// ... 其他函数保持不变（initFormOptions, setDefaultValues, updateServiceDisplay等）
-// 但需要更新 collectUserData 函数中的提示词引用
+// 初始化表单选项
+export function initFormOptions() {
+    const years = [];
+    for (let i = 1900; i <= 2024; i++) years.push(i);
+    const months = Array.from({ length: 12 }, (_, i) => i + 1);
+    const days = Array.from({ length: 31 }, (_, i) => i + 1);
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+    const minutes = Array.from({ length: 60 }, (_, i) => i);
+    
+    const fillSelect = (selectId, options, suffix) => {
+        const select = DOM.id(selectId);
+        if (!select) return;
+        select.innerHTML = `<option value="">${suffix}</option>`;
+        options.forEach(option => {
+            const opt = document.createElement('option');
+            opt.value = option;
+            opt.textContent = option + suffix;
+            select.appendChild(opt);
+        });
+    };
+    
+    fillSelect('birth-year', years, '年');
+    fillSelect('birth-month', months, '月');
+    fillSelect('birth-day', days, '日');
+    fillSelect('birth-hour', hours, '时');
+    fillSelect('birth-minute', minutes, '分');
+    fillSelect('partner-birth-year', years, '年');
+    fillSelect('partner-birth-month', months, '月');
+    fillSelect('partner-birth-day', days, '日');
+    fillSelect('partner-birth-hour', hours, '时');
+    fillSelect('partner-birth-minute', minutes, '分');
+}
+
+// 设置默认表单值
+export function setDefaultValues() {
+    UI.name().value = '张三';
+    UI.gender().value = 'male';
+    UI.birthCity().value = '北京';
+    UI.birthYear().value = 1990;
+    UI.birthMonth().value = 1;
+    UI.birthDay().value = 1;
+    UI.birthHour().value = 12;
+    UI.birthMinute().value = 0;
+    UI.partnerName().value = '李四';
+    UI.partnerGender().value = 'female';
+    UI.partnerBirthCity().value = '上海';
+    UI.partnerBirthYear().value = 1992;
+    UI.partnerBirthMonth().value = 6;
+    UI.partnerBirthDay().value = 15;
+    UI.partnerBirthHour().value = 15;
+    UI.partnerBirthMinute().value = 30;
+}
+
+// 更新服务显示
+export function updateServiceDisplay(serviceName) {
+    DOM.getAll('.service-nav a').forEach(link => {
+        link.classList.remove('active');
+        if (link.dataset.service === serviceName) {
+            link.classList.add('active');
+        }
+    });
+    
+    DOM.id('form-title').textContent = serviceName + '信息填写';
+    STATE.currentService = serviceName;
+    
+    const resultServiceName = UI.resultServiceName();
+    if (resultServiceName) {
+        resultServiceName.textContent = serviceName + '分析报告';
+    }
+    
+    const partnerInfoSection = DOM.id('partner-info-section');
+    if (serviceName === '八字合婚') {
+        showElement(partnerInfoSection);
+    } else {
+        hideElement(partnerInfoSection);
+    }
+    
+    const serviceConfig = SERVICES[serviceName];
+    if (serviceConfig) {
+        const heroImage = UI.heroImage();
+        const detailImage = UI.detailImage();
+        const heroPlaceholder = heroImage?.previousElementSibling;
+        const detailPlaceholder = detailImage?.previousElementSibling;
+        if (heroPlaceholder) showElement(heroPlaceholder);
+        if (detailPlaceholder) showElement(detailPlaceholder);
+        if (heroImage) { heroImage.classList.remove('loaded'); heroImage.src = serviceConfig.heroImage; }
+        if (detailImage) { detailImage.classList.remove('loaded'); detailImage.src = serviceConfig.detailImage; }
+    }
+    
+    updateUnlockInfo();
+}
+
+// 更新解锁价格和项目
+export function updateUnlockInfo() {
+    const serviceConfig = SERVICES[STATE.currentService];
+    if (!serviceConfig) return;
+    
+    const unlockPriceElement = UI.unlockPrice();
+    if (unlockPriceElement) {
+        unlockPriceElement.textContent = serviceConfig.price;
+    }
+    
+    const unlockItemsList = UI.unlockItemsList();
+    const unlockCountElement = UI.unlockCount();
+    if (unlockItemsList && unlockCountElement) {
+        unlockItemsList.innerHTML = '';
+        unlockCountElement.textContent = serviceConfig.lockedItems.length;
+        serviceConfig.lockedItems.forEach(item => {
+            const li = document.createElement('li');
+            if (STATE.isPaymentUnlocked) {
+                li.innerHTML = '<span>✅ ' + item + '</span>';
+                li.classList.add('unlocked-item');
+            } else {
+                li.innerHTML = '<span>🔒 ' + item + '</span>';
+            }
+            unlockItemsList.appendChild(li);
+        });
+    }
+}
+
+// 显示预测者信息
+export function displayPredictorInfo() {
+    const predictorInfoGrid = UI.predictorInfoGrid();
+    if (!predictorInfoGrid || !STATE.userData) return;
+    predictorInfoGrid.innerHTML = '';
+    const infoItems = [
+        { label: '姓名', value: STATE.userData.name },
+        { label: '性别', value: STATE.userData.gender },
+        { label: '出生时间', value: `${STATE.userData.birthYear}年${STATE.userData.birthMonth}月${STATE.userData.birthDay}日 ${STATE.userData.birthHour}时${STATE.userData.birthMinute}分` },
+        { label: '出生城市', value: STATE.userData.birthCity },
+        { label: '测算服务', value: STATE.currentService },
+        { label: '测算时间', value: formatDate() }
+    ];
+    if (STATE.currentService === '八字合婚' && STATE.partnerData) {
+        infoItems.push(
+            { label: '伴侣姓名', value: STATE.partnerData.partnerName },
+            { label: '伴侣性别', value: STATE.partnerData.partnerGender },
+            { label: '伴侣出生时间', value: `${STATE.partnerData.partnerBirthYear}年${STATE.partnerData.partnerBirthMonth}月${STATE.partnerData.partnerBirthDay}日 ${STATE.partnerData.partnerBirthHour}时${STATE.partnerData.partnerBirthMinute}分` },
+            { label: '伴侣出生城市', value: STATE.partnerData.partnerBirthCity }
+        );
+    }
+    infoItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'predictor-info-item';
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'predictor-info-label';
+        labelSpan.textContent = item.label;
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'predictor-info-value';
+        valueSpan.textContent = item.value;
+        div.appendChild(labelSpan);
+        div.appendChild(valueSpan);
+        predictorInfoGrid.appendChild(div);
+    });
+}
+
+// 显示八字排盘结果
+export function displayBaziPan() {
+    const baziGrid = UI.baziGrid();
+    if (!baziGrid) return;
+    baziGrid.innerHTML = '';
+    
+    if (STATE.currentService === '八字合婚' && STATE.partnerData) {
+        const userSection = document.createElement('div');
+        userSection.className = 'bazi-section';
+        const userTitle = document.createElement('h5');
+        userTitle.textContent = `${STATE.userData.name} 的八字排盘`;
+        userTitle.style.cssText = 'color:var(--primary-color);margin-bottom:15px;text-align:center;';
+        userSection.appendChild(userTitle);
+        const userGrid = document.createElement('div');
+        userGrid.className = 'bazi-section-grid';
+        const userBaziData = STATE.baziData || STATE.userBaziData;
+        if (userBaziData) {
+            const userColumns = [
+                { label: '年柱', value: userBaziData.yearColumn, element: userBaziData.yearElement },
+                { label: '月柱', value: userBaziData.monthColumn, element: userBaziData.monthElement },
+                { label: '日柱', value: userBaziData.dayColumn, element: userBaziData.dayElement },
+                { label: '时柱', value: userBaziData.hourColumn, element: userBaziData.hourElement }
+            ];
+            userColumns.forEach(col => {
+                const div = document.createElement('div');
+                div.className = 'bazi-column';
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'bazi-label';
+                labelDiv.textContent = col.label;
+                const valueDiv = document.createElement('div');
+                valueDiv.className = 'bazi-value';
+                valueDiv.textContent = col.value;
+                const elementDiv = document.createElement('div');
+                elementDiv.className = 'bazi-element';
+                elementDiv.textContent = col.element || '';
+                div.appendChild(labelDiv);
+                div.appendChild(valueDiv);
+                div.appendChild(elementDiv);
+                userGrid.appendChild(div);
+            });
+        }
+        userSection.appendChild(userGrid);
+        baziGrid.appendChild(userSection);
+        
+        const separator = document.createElement('div');
+        separator.style.cssText = 'height:2px;background:linear-gradient(to right,transparent,var(--secondary-color),transparent);margin:20px 0;';
+        baziGrid.appendChild(separator);
+        
+        const partnerSection = document.createElement('div');
+        partnerSection.className = 'bazi-section';
+        const partnerTitle = document.createElement('h5');
+        partnerTitle.textContent = `${STATE.partnerData.partnerName} 的八字排盘`;
+        partnerTitle.style.cssText = 'color:var(--primary-color);margin-bottom:15px;text-align:center;';
+        partnerSection.appendChild(partnerTitle);
+        const partnerGrid = document.createElement('div');
+        partnerGrid.className = 'bazi-section-grid';
+        const partnerBaziData = STATE.partnerBaziData || calculatePartnerBazi();
+        if (partnerBaziData) {
+            const partnerColumns = [
+                { label: '年柱', value: partnerBaziData.yearColumn, element: partnerBaziData.yearElement },
+                { label: '月柱', value: partnerBaziData.monthColumn, element: partnerBaziData.monthElement },
+                { label: '日柱', value: partnerBaziData.dayColumn, element: partnerBaziData.dayElement },
+                { label: '时柱', value: partnerBaziData.hourColumn, element: partnerBaziData.hourElement }
+            ];
+            partnerColumns.forEach(col => {
+                const div = document.createElement('div');
+                div.className = 'bazi-column';
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'bazi-label';
+                labelDiv.textContent = col.label;
+                const valueDiv = document.createElement('div');
+                valueDiv.className = 'bazi-value';
+                valueDiv.textContent = col.value;
+                const elementDiv = document.createElement('div');
+                elementDiv.className = 'bazi-element';
+                elementDiv.textContent = col.element || '';
+                div.appendChild(labelDiv);
+                div.appendChild(valueDiv);
+                div.appendChild(elementDiv);
+                partnerGrid.appendChild(div);
+            });
+            STATE.partnerBaziData = partnerBaziData;
+        }
+        partnerSection.appendChild(partnerGrid);
+        baziGrid.appendChild(partnerSection);
+    } else {
+        const baziDataToDisplay = STATE.baziData;
+        if (!baziDataToDisplay) return;
+        const columns = [
+            { label: '年柱', value: baziDataToDisplay.yearColumn, element: baziDataToDisplay.yearElement },
+            { label: '月柱', value: baziDataToDisplay.monthColumn, element: baziDataToDisplay.monthElement },
+            { label: '日柱', value: baziDataToDisplay.dayColumn, element: baziDataToDisplay.dayElement },
+            { label: '时柱', value: baziDataToDisplay.hourColumn, element: baziDataToDisplay.hourElement }
+        ];
+        columns.forEach(col => {
+            const div = document.createElement('div');
+            div.className = 'bazi-column';
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'bazi-label';
+            labelDiv.textContent = col.label;
+            const valueDiv = document.createElement('div');
+            valueDiv.className = 'bazi-value';
+            valueDiv.textContent = col.value;
+            const elementDiv = document.createElement('div');
+            elementDiv.className = 'bazi-element';
+            elementDiv.textContent = col.element || '';
+            div.appendChild(labelDiv);
+            div.appendChild(valueDiv);
+            div.appendChild(elementDiv);
+            baziGrid.appendChild(div);
+        });
+    }
+}
+
+// 计算伴侣八字
+function calculatePartnerBazi() {
+    if (!STATE.partnerData) return null;
+    return calculateBazi({
+        birthYear: STATE.partnerData.partnerBirthYear,
+        birthMonth: STATE.partnerData.partnerBirthMonth,
+        birthDay: STATE.partnerData.partnerBirthDay,
+        birthHour: STATE.partnerData.partnerBirthHour,
+        birthMinute: STATE.partnerData.partnerBirthMinute
+    });
+}
+
+// 处理并显示分析结果
+export function processAndDisplayAnalysis(result) {
+    const freeSections = ['【八字排盘】', '【大运排盘】', '【八字喜用分析】', '【性格特点】', '【适宜行业职业推荐】'];
+    let freeContent = '';
+    let lockedContent = '';
+    const sections = result.split('【');
+    for (let i = 1; i < sections.length; i++) {
+        const section = '【' + sections[i];
+        const sectionTitle = section.split('】')[0] + '】';
+        if (sectionTitle === '【八字排盘】' || sectionTitle === '【大运排盘】') continue;
+        if (freeSections.includes(sectionTitle)) {
+            freeContent += section + '\n\n';
+        } else {
+            lockedContent += section + '\n\n';
+        }
+    }
+    
+    if (freeContent.length < 100) {
+        freeContent = '';
+        for (const freeSection of freeSections) {
+            const startIndex = result.indexOf(freeSection);
+            if (startIndex !== -1) {
+                let endIndex = result.indexOf('【', startIndex + 1);
+                if (endIndex === -1) endIndex = result.length;
+                freeContent += result.substring(startIndex, endIndex) + '\n\n';
+            }
+        }
+        if (freeContent) lockedContent = result.replace(freeContent, '');
+    }
+    
+    const freeAnalysisText = UI.freeAnalysisText();
+    if (freeAnalysisText) {
+        let formattedContent = '';
+        const freeSectionsArray = freeContent.split('\n\n');
+        freeSectionsArray.forEach(section => {
+            if (section.trim()) {
+                const titleMatch = section.match(/【([^】]+)】/);
+                if (titleMatch) {
+                    const title = titleMatch[1];
+                    const content = section.replace(titleMatch[0], '').trim();
+                    formattedContent += `<div class="analysis-section"><h5>${title}</h5><div class="analysis-content">${content.replace(/\n/g, '<br>')}</div></div>`;
+                } else {
+                    formattedContent += `<div class="analysis-content">${section.replace(/\n/g, '<br>')}</div>`;
+                }
+            }
+        });
+        freeAnalysisText.innerHTML = formattedContent;
+    }
+    
+    const lockedAnalysisText = UI.lockedAnalysisText();
+    if (lockedAnalysisText) {
+        let formattedLockedContent = '';
+        const lockedSectionsArray = lockedContent.split('\n\n');
+        lockedSectionsArray.forEach(section => {
+            if (section.trim()) {
+                const titleMatch = section.match(/【([^】]+)】/);
+                if (titleMatch) {
+                    const title = titleMatch[1];
+                    const content = section.replace(titleMatch[0], '').trim();
+                    formattedLockedContent += `<div class="analysis-section"><h5>${title}</h5><div class="analysis-content">${content.replace(/\n/g, '<br>')}</div></div>`;
+                } else {
+                    formattedLockedContent += `<div class="analysis-content">${section.replace(/\n/g, '<br>')}</div>`;
+                }
+            }
+        });
+        lockedAnalysisText.innerHTML = formattedLockedContent;
+    }
+}
+
+// 显示支付弹窗
+export async function showPaymentModal() {
+    console.log('调用支付接口...');
+    const serviceConfig = SERVICES[STATE.currentService];
+    if (!serviceConfig) return;
+    
+    try {
+        const paymentModal = UI.paymentModal();
+        if (paymentModal) {
+            showElement(paymentModal);
+            document.body.style.overflow = 'hidden';
+            UI.paymentServiceType().textContent = STATE.currentService;
+            UI.paymentAmount().textContent = '¥' + serviceConfig.price;
+            UI.paymentOrderId().textContent = '生成中...';
+        }
+        
+        const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent);
+        
+        const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/payment/create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                serviceType: STATE.currentService,
+                userData: STATE.userData
+            })
+        });
+        
+        const result = await response.json();
+        console.log('支付响应:', result);
+        
+        if (!result.success) {
+            alert('创建订单失败：' + (result.error || '请稍后重试'));
+            closePaymentModal();
+            return;
+        }
+        
+        const { orderId, outTradeNo, paymentUrl, paymentType, amount } = result.data;
+        
+        UI.paymentServiceType().textContent = STATE.currentService;
+        UI.paymentAmount().textContent = '¥' + amount;
+        UI.paymentOrderId().textContent = outTradeNo;
+        STATE.currentOrderId = orderId;
+        STATE.currentOutTradeNo = outTradeNo;
+        
+        if (STATE.fullAnalysisResult) {
+            localStorage.setItem('last_analysis_result', STATE.fullAnalysisResult);
+            localStorage.setItem('last_analysis_service', STATE.currentService);
+            localStorage.setItem('last_user_data', JSON.stringify(STATE.userData || {}));
+            localStorage.setItem('last_order_id', orderId);
+        }
+        
+        const paymentMethods = document.querySelector('.payment-methods');
+        if (paymentMethods) {
+            const buttonHtml = `
+                <div style="margin: 20px 0;">
+                    <button id="alipay-redirect-btn" class="dynamic-pulse-btn" style="
+                        margin: 10px auto;
+                        display: block;
+                        max-width: ${isMobile ? '280px' : '250px'};
+                        background: linear-gradient(135deg, #1677FF, #4096ff);
+                        color: white;
+                        border: none;
+                        padding: ${isMobile ? '16px 35px' : '15px 30px'};
+                        border-radius: 25px;
+                        font-size: ${isMobile ? '18px' : '16px'};
+                        font-weight: bold;
+                        cursor: pointer;
+                        transition: all 0.3s;
+                        width: 100%;
+                    ">
+                        <span style="display: flex; align-items: center; justify-content: center;">
+                            <span style="margin-right: 10px;">${isMobile ? '📱' : '💻'}</span>
+                            ${isMobile ? '去支付宝支付' : '电脑支付'}
+                        </span>
+                    </button>
+                    <div style="text-align: center; margin-top: 10px; font-size: 12px; color: #999;">
+                        ${isMobile ? '将跳转到支付宝APP完成支付' : '使用支付宝扫码或登录完成支付'}
+                    </div>
+                </div>
+            `;
+            paymentMethods.innerHTML = buttonHtml;
+            
+            const payBtn = document.getElementById('alipay-redirect-btn');
+            if (payBtn) {
+                payBtn.onclick = () => {
+                    console.log('跳转到支付宝支付:', paymentUrl);
+                    window.location.href = paymentUrl;
+                };
+            }
+        }
+        
+        startPollingPaymentStatus(orderId);
+        updatePaymentStatusText(isMobile ? '正在跳转支付宝...' : '等待支付...');
+        
+    } catch (error) {
+        console.error('支付请求失败:', error);
+        alert('网络连接失败，请检查网络后重试');
+        closePaymentModal();
+    }
+}
+
+// 轮询支付状态
+function startPollingPaymentStatus(orderId) {
+    let pollCount = 0;
+    const maxPolls = 60;
+    const pollInterval = 5000;
+    
+    if (window._paymentPolling) {
+        clearInterval(window._paymentPolling);
+    }
+    
+    window._paymentPolling = setInterval(async () => {
+        pollCount++;
+        try {
+            const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/payment/status/${orderId}`);
+            const result = await response.json();
+            console.log(`📊 轮询支付状态 (${pollCount}/${maxPolls}):`, result);
+            
+            if (result.success && result.data) {
+                if (result.data.status === 'paid') {
+                    clearInterval(window._paymentPolling);
+                    updatePaymentStatusText('✅ 支付成功！正在解锁...');
+                    handlePaymentSuccessDirect(orderId);
+                    setTimeout(() => {
+                        closePaymentModal();
+                        const resultSection = document.getElementById('analysis-result-section');
+                        if (resultSection) {
+                            resultSection.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }, 1000);
+                    return;
+                }
+                if (pollCount >= maxPolls) {
+                    clearInterval(window._paymentPolling);
+                    updatePaymentStatusText('⏰ 支付超时，请重新下单');
+                    return;
+                }
+                const statusText = result.data.status === 'pending' ? '等待支付...' : '处理中...';
+                updatePaymentStatusText(statusText);
+            }
+        } catch (error) {
+            console.error('轮询支付状态失败:', error);
+            if (pollCount >= maxPolls) {
+                clearInterval(window._paymentPolling);
+                updatePaymentStatusText('⏰ 查询超时，请点击"我已支付"手动确认');
+            }
+        }
+    }, pollInterval);
+}
+
+// 更新支付状态提示
+function updatePaymentStatusText(text) {
+    let statusElement = document.getElementById('payment-status-text');
+    if (!statusElement) {
+        const container = document.querySelector('.payment-methods');
+        if (container) {
+            const div = document.createElement('div');
+            div.id = 'payment-status-text';
+            div.style.cssText = 'text-align:center;margin:10px 0;padding:10px;background:#f8f9fa;border-radius:6px;font-size:14px;color:#666;';
+            container.appendChild(div);
+            statusElement = div;
+        }
+    }
+    if (statusElement) statusElement.textContent = text;
+}
+
+// 直接处理支付成功
+function handlePaymentSuccessDirect(orderId) {
+    STATE.isPaymentUnlocked = true;
+    STATE.isDownloadLocked = false;
+    
+    if (typeof unlockDownloadButton === 'function') {
+        unlockDownloadButton();
+    }
+    if (typeof updateUnlockInterface === 'function') {
+        updateUnlockInterface();
+    }
+    if (typeof showFullAnalysisContent === 'function') {
+        showFullAnalysisContent();
+    }
+    if (window.PaymentManager && typeof PaymentManager.unlockContent === 'function') {
+        PaymentManager.unlockContent(orderId);
+    }
+}
+
+// 关闭支付弹窗
+export function closePaymentModal() {
+    const paymentModal = UI.paymentModal();
+    if (paymentModal) {
+        hideElement(paymentModal);
+        document.body.style.overflow = 'auto';
+    }
+    if (window._paymentPolling) {
+        clearInterval(window._paymentPolling);
+        window._paymentPolling = null;
+    }
+}
+
+// 更新解锁界面状态
+export function updateUnlockInterface() {
+    const lockedOverlay = DOM.id('locked-overlay');
+    if (!lockedOverlay) return;
+    
+    const unlockHeader = lockedOverlay.querySelector('.unlock-header');
+    if (unlockHeader) {
+        const lockIcon = unlockHeader.querySelector('.lock-icon');
+        const headerTitle = unlockHeader.querySelector('h4');
+        const headerDesc = unlockHeader.querySelector('p');
+        if (lockIcon) lockIcon.textContent = '✅';
+        if (headerTitle) headerTitle.textContent = '完整报告已解锁';
+        if (headerDesc) headerDesc.textContent = '您可以查看全部命理分析内容';
+    }
+    
+    const unlockItems = lockedOverlay.querySelectorAll('.unlock-items li');
+    unlockItems.forEach(item => {
+        item.classList.add('unlocked-item');
+        const text = item.textContent.replace('🔒 ', '');
+        item.innerHTML = '<span>✅ ' + text + '</span>';
+    });
+    
+    const unlockBtnContainer = lockedOverlay.querySelector('.unlock-btn-container');
+    if (unlockBtnContainer) {
+        const unlockBtn = unlockBtnContainer.querySelector('.unlock-btn');
+        const unlockPrice = unlockBtnContainer.querySelector('.unlock-price');
+        if (unlockBtn) {
+            unlockBtn.innerHTML = '✅ 已解锁完整报告';
+            unlockBtn.style.background = 'linear-gradient(135deg, var(--success-color), #28c76f)';
+            unlockBtn.style.cursor = 'default';
+            unlockBtn.disabled = true;
+        }
+        if (unlockPrice) {
+            unlockPrice.innerHTML = '<span style="color: var(--success-color);">✅ 已解锁全部内容</span>';
+        }
+    }
+}
+
+// 显示完整分析内容
+export function showFullAnalysisContent() {
+    const lockedAnalysisText = UI.lockedAnalysisText();
+    const freeAnalysisText = UI.freeAnalysisText();
+    if (lockedAnalysisText && lockedAnalysisText.textContent.trim() && freeAnalysisText) {
+        freeAnalysisText.innerHTML = freeAnalysisText.innerHTML + lockedAnalysisText.innerHTML;
+    }
+}
+
+// 锁定下载按钮
+export function lockDownloadButton() {
+    const downloadBtn = UI.downloadReportBtn();
+    const downloadBtnText = DOM.id('download-btn-text');
+    if (downloadBtn && downloadBtnText) {
+        downloadBtn.disabled = true;
+        downloadBtn.classList.add('download-btn-locked');
+        downloadBtnText.textContent = '下载报告';
+        STATE.isDownloadLocked = true;
+    }
+}
+
+// 解锁下载按钮
+export function unlockDownloadButton() {
+    const downloadBtn = UI.downloadReportBtn();
+    const downloadBtnText = DOM.id('download-btn-text');
+    if (downloadBtn && downloadBtnText) {
+        downloadBtn.disabled = false;
+        downloadBtn.classList.remove('download-btn-locked');
+        downloadBtnText.textContent = '下载报告';
+        STATE.isDownloadLocked = false;
+        downloadBtn.style.background = 'linear-gradient(135deg, var(--primary-color), #3a7bd5)';
+        downloadBtn.style.boxShadow = '0 4px 15px rgba(58, 123, 213, 0.4)';
+    }
+}
+
+// 重置解锁界面
+export function resetUnlockInterface() {
+    const lockedOverlay = DOM.id('locked-overlay');
+    if (!lockedOverlay) return;
+    
+    const unlockHeader = lockedOverlay.querySelector('.unlock-header');
+    if (unlockHeader) {
+        const lockIcon = unlockHeader.querySelector('.lock-icon');
+        const headerTitle = unlockHeader.querySelector('h4');
+        const headerDesc = unlockHeader.querySelector('p');
+        if (lockIcon) lockIcon.textContent = '🔒';
+        if (headerTitle) headerTitle.textContent = '完整内容已锁定';
+        if (headerDesc) headerDesc.textContent = '解锁完整分析报告，查看全部命理分析内容';
+    }
+    
+    const unlockItemsList = UI.unlockItemsList();
+    if (unlockItemsList) {
+        unlockItemsList.innerHTML = '';
+        const serviceConfig = SERVICES[STATE.currentService];
+        if (serviceConfig) {
+            serviceConfig.lockedItems.forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = '<span>🔒 ' + item + '</span>';
+                unlockItemsList.appendChild(li);
+            });
+        }
+    }
+    
+    const unlockBtnContainer = lockedOverlay.querySelector('.unlock-btn-container');
+    if (unlockBtnContainer) {
+        const unlockBtn = unlockBtnContainer.querySelector('.unlock-btn');
+        const unlockPrice = unlockBtnContainer.querySelector('.unlock-price');
+        const serviceConfig = SERVICES[STATE.currentService];
+        if (serviceConfig && unlockBtn && unlockPrice) {
+            unlockBtn.innerHTML = `解锁完整报告 (¥<span id="unlock-price">${serviceConfig.price}</span>)`;
+            unlockBtn.style.background = 'linear-gradient(135deg, var(--secondary-color), #e6b800)';
+            unlockBtn.style.cursor = 'pointer';
+            unlockBtn.disabled = false;
+            unlockPrice.innerHTML = `共包含 <span id="unlock-count">${serviceConfig.lockedItems.length}</span> 项详细分析`;
+        }
+    }
+}
+
+// 按钮拉伸动画
+export function animateButtonStretch() {
+    const button = UI.analyzeBtn();
+    if (!button) return;
+    button.classList.add('stretching');
+    setTimeout(() => {
+        button.classList.remove('stretching');
+        setTimeout(() => {
+            button.style.width = '';
+            button.style.maxWidth = '';
+        }, 5000);
+    }, 800);
+}
+
+// 显示加载弹窗
+export function showLoadingModal() {
+    const loadingModal = UI.loadingModal();
+    if (loadingModal) {
+        showElement(loadingModal);
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// 隐藏加载弹窗
+export function hideLoadingModal() {
+    const loadingModal = UI.loadingModal();
+    if (loadingModal) {
+        hideElement(loadingModal);
+        document.body.style.overflow = 'auto';
+    }
+}
+
+// 显示分析结果区域
+export function showAnalysisResult() {
+    const analysisResultSection = UI.analysisResultSection();
+    if (analysisResultSection) {
+        showElement(analysisResultSection);
+        UI.analysisTime().textContent = formatDate();
+        analysisResultSection.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+// 隐藏分析结果区域
+export function hideAnalysisResult() {
+    const analysisResultSection = UI.analysisResultSection();
+    if (analysisResultSection) {
+        hideElement(analysisResultSection);
+    }
+}
+
+// 重置表单错误状态
+export function resetFormErrors() {
+    DOM.getAll('.error').forEach(error => {
+        error.style.display = 'none';
+    });
+}
+
+// 验证表单
+export function validateForm() {
+    let isValid = true;
+    resetFormErrors();
+    
+    const validateField = (fieldId, errorId) => {
+        const field = DOM.id(fieldId);
+        const error = DOM.id(errorId);
+        if (!field || !error) return true;
+        if (!field.value || field.value.trim() === '') {
+            error.style.display = 'block';
+            return false;
+        }
+        return true;
+    };
+    
+    if (!validateField('name', 'name-error')) isValid = false;
+    if (!validateField('gender', 'gender-error')) isValid = false;
+    if (!validateField('birth-year', 'birth-year-error')) isValid = false;
+    if (!validateField('birth-month', 'birth-month-error')) isValid = false;
+    if (!validateField('birth-day', 'birth-day-error')) isValid = false;
+    if (!validateField('birth-hour', 'birth-hour-error')) isValid = false;
+    if (!validateField('birth-minute', 'birth-minute-error')) isValid = false;
+    if (!validateField('birth-city', 'birth-city-error')) isValid = false;
+    
+    if (STATE.currentService === '八字合婚') {
+        if (!validateField('partner-name', 'partner-name-error')) isValid = false;
+        if (!validateField('partner-gender', 'partner-gender-error')) isValid = false;
+        if (!validateField('partner-birth-year', 'partner-birth-year-error')) isValid = false;
+        if (!validateField('partner-birth-month', 'partner-birth-month-error')) isValid = false;
+        if (!validateField('partner-birth-day', 'partner-birth-day-error')) isValid = false;
+        if (!validateField('partner-birth-hour', 'partner-birth-hour-error')) isValid = false;
+        if (!validateField('partner-birth-minute', 'partner-birth-minute-error')) isValid = false;
+        if (!validateField('partner-birth-city', 'partner-birth-city-error')) isValid = false;
+    }
+    
+    return isValid;
+}
+
+// 收集用户数据
+export function collectUserData() {
+    STATE.userData = {
+        name: UI.name().value,
+        gender: UI.gender().value === 'male' ? '男' : '女',
+        birthYear: UI.birthYear().value,
+        birthMonth: UI.birthMonth().value,
+        birthDay: UI.birthDay().value,
+        birthHour: UI.birthHour().value,
+        birthMinute: UI.birthMinute().value,
+        birthCity: UI.birthCity().value
+    };
+    if (STATE.currentService === '八字合婚') {
+        STATE.partnerData = {
+            partnerName: UI.partnerName().value,
+            partnerGender: UI.partnerGender().value === 'male' ? '男' : '女',
+            partnerBirthYear: UI.partnerBirthYear().value,
+            partnerBirthMonth: UI.partnerBirthMonth().value,
+            partnerBirthDay: UI.partnerBirthDay().value,
+            partnerBirthHour: UI.partnerBirthHour().value,
+            partnerBirthMinute: UI.partnerBirthMinute().value,
+            partnerBirthCity: UI.partnerBirthCity().value
+        };
+    }
+}

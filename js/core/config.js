@@ -59,6 +59,7 @@ export const STATE = {
     baziData: null,
     partnerBaziData: null,
     currentOrderId: null,
+    currentOutTradeNo: null,
     userData: null,
     partnerData: null,
     apiStatus: null,
@@ -66,13 +67,14 @@ export const STATE = {
     isDownloadLocked: true
 };
 
-// API配置
+// API配置 - 请替换为你的实际后端地址
 export const API_CONFIG = {
-    BACKEND_URL: 'https://api.yourdomain.com', // 替换为你的后端地址
+    BACKEND_URL: 'https://api.yourdomain.com',  // 替换为你的支付后端域名
+    // 本地开发时可以使用: 'http://localhost:3001'
     TIMEOUT: 120000
 };
 
 // 支付配置
 export const PAYMENT_CONFIG = {
-    GATEWAY_URL: 'https://runzang.top/api/payment'
+    GATEWAY_URL: `${API_CONFIG.BACKEND_URL}/api/payment`
 };

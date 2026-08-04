@@ -69,7 +69,7 @@ export const STATE = {
 
 // API配置 - 指向你的支付后端
 export const API_CONFIG = {
-    BACKEND_URL: 'http://119.29.160.189:3001',  // 你的支付后端地址
+    BACKEND_URL: 'https://119.29.160.189',  // 注意：使用HTTPS，去掉端口
     TIMEOUT: 120000
 };
 

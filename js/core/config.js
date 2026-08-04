@@ -67,10 +67,9 @@ export const STATE = {
     isDownloadLocked: true
 };
 
-// API配置 - 请替换为你的实际后端地址
+// API配置 - 指向你的支付后端
 export const API_CONFIG = {
-    BACKEND_URL: 'https://api.yourdomain.com',  // 替换为你的支付后端域名
-    // 本地开发时可以使用: 'http://localhost:3001'
+    BACKEND_URL: 'http://119.29.160.189:3001',  // 你的支付后端地址
     TIMEOUT: 120000
 };
 

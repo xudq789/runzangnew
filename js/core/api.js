@@ -1,100 +1,89 @@
 // API通信模块
 import { DOM } from './utils.js';
+import { API_CONFIG } from './config.js';
 
-// DeepSeek API调用
-export async function callDeepSeekAPI(prompt) {
-    console.log('调用DeepSeek API...');
+// 调用后端分析接口
+export async function callDeepSeekAPI(prompt, serviceType) {
+    console.log('📡 调用后端分析服务...');
+    console.log('📋 服务类型:', serviceType);
+    console.log('📏 提示词长度:', prompt.length);
     
     try {
-        const response = await fetch(window.APP_CONFIG.DEEPSEEK_API_URL, {
+        const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/analyze`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${window.APP_CONFIG.DEEPSEEK_API_KEY}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'deepseek-chat',
-                messages: [
-                    {
-                        role: 'system',
-                        content: '你是一位职业的命理大师，精通梁湘润论命体系。请根据用户信息进行专业命理分析，严格按照要求的格式输出。'
-                    },
-                    {
-                        role: 'user',
-                        content: prompt
-                    }
-                ],
-                max_tokens: 4000,
-                temperature: 0.7,
-                stream: false
-            })
+                prompt: prompt,
+                serviceType: serviceType
+            }),
+            signal: AbortSignal.timeout(API_CONFIG.TIMEOUT)
         });
-        
-        console.log('API响应状态:', response.status);
-        
+
+        console.log('📊 响应状态:', response.status);
+
         if (!response.ok) {
             const errorData = await response.json();
-            console.error('API错误响应:', errorData);
-            throw new Error(`API请求失败: ${response.status}`);
+            console.error('❌ 后端错误:', errorData);
+            throw new Error(errorData.error || `请求失败 (${response.status})`);
         }
-        
-        const data = await response.json();
-        console.log('API响应数据接收成功');
-        
-        if (data.choices && data.choices.length > 0 && data.choices[0].message) {
-            return data.choices[0].message.content;
+
+        const result = await response.json();
+        console.log('✅ 后端响应成功');
+
+        if (result.success && result.data && result.data.analysis) {
+            console.log('📝 响应长度:', result.data.analysis.length);
+            return result.data.analysis;
         } else {
-            throw new Error('API返回数据格式错误');
+            throw new Error('后端返回数据格式错误');
+        }
+
+    } catch (error) {
+        console.error('❌ 分析请求失败:', error);
+        
+        if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+            throw new Error('分析请求超时，请稍后再试');
         }
         
-    } catch (error) {
-        console.error('DeepSeek API调用失败:', error);
         throw error;
     }
 }
 
 // 检查API状态
 export async function checkAPIStatus() {
-    console.log('正在检查DeepSeek API状态...');
+    console.log('🔍 检查后端服务状态...');
     const statusElement = DOM.id('api-status');
     
     if (!statusElement) return 'unknown';
     
     try {
-        const response = await fetch(window.APP_CONFIG.DEEPSEEK_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${window.APP_CONFIG.DEEPSEEK_API_KEY}`
-            },
-            body: JSON.stringify({
-                model: 'deepseek-chat',
-                messages: [{ 
-                    role: 'user', 
-                    content: '请回复"API连接正常"' 
-                }],
-                max_tokens: 10,
-                temperature: 0.1
-            })
+        const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/status`, {
+            signal: AbortSignal.timeout(5000)
         });
         
         if (response.ok) {
-            statusElement.textContent = '✅ API连接正常';
-            statusElement.className = 'api-status online';
-            return 'online';
-        } else {
-            statusElement.textContent = '❌ API连接异常';
-            statusElement.className = 'api-status offline';
-            return 'offline';
+            const data = await response.json();
+            if (data.success && data.data && data.data.status === 'online') {
+                statusElement.textContent = '✅ 服务连接正常';
+                statusElement.className = 'api-status online';
+                return 'online';
+            }
         }
+        
+        statusElement.textContent = '❌ 服务连接异常';
+        statusElement.className = 'api-status offline';
+        return 'offline';
+        
     } catch (error) {
-        statusElement.textContent = '❌ API连接失败';
+        console.error('状态检查失败:', error);
+        statusElement.textContent = '❌ 服务不可用';
         statusElement.className = 'api-status offline';
         return 'offline';
     }
 }
 
-// 解析八字数据从AI回复中
+// 解析八字数据
 export function parseBaziData(analysisResult) {
     console.log('解析八字数据...');
     

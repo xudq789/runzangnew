@@ -327,13 +327,13 @@ function calculatePartnerBazi() {
     });
 }
 
-// ============ 新增：大运排盘显示 ============
+// ============ 大运排盘显示 ============
 export function displayDayunPan(dayunData) {
-    console.log('显示大运排盘...', dayunData);
+    console.log('📊 显示大运排盘...', dayunData);
     
-    let dayunCard = DOM.id('dayun-pan-card');
+    let dayunCard = document.getElementById('dayun-pan-card');
     if (!dayunCard) {
-        const baziPan = DOM.id('bazi-pan');
+        const baziPan = document.getElementById('bazi-pan');
         if (baziPan) {
             const card = document.createElement('div');
             card.id = 'dayun-pan-card';
@@ -350,30 +350,34 @@ export function displayDayunPan(dayunData) {
     
     if (!dayunCard) return;
     
-    const dayunGrid = DOM.id('dayun-grid');
+    const dayunGrid = document.getElementById('dayun-grid');
     if (!dayunGrid) return;
     
     dayunGrid.innerHTML = '';
     
     if (!dayunData || !dayunData.ages || !dayunData.dayuns || dayunData.ages.length === 0) {
-        dayunGrid.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">暂无大运数据</p>';
+        dayunGrid.innerHTML = `
+            <div style="padding: 15px; text-align: center; color: #999; background: #f9f5f0; border-radius: 8px;">
+                ⚠️ 大运排盘数据暂不可用
+            </div>
+        `;
         return;
     }
     
     const table = document.createElement('table');
-    table.style.cssText = 'width:100%; border-collapse: collapse; margin-top: 10px;';
+    table.style.cssText = 'width:100%; border-collapse: collapse; margin-top: 10px; border-radius: 8px; overflow: hidden;';
     
     const trHeader = document.createElement('tr');
     const thLabel = document.createElement('th');
     thLabel.textContent = '大运';
-    thLabel.style.cssText = 'padding: 8px 12px; background: var(--primary-color); color: white; text-align: center; font-weight: 600;';
+    thLabel.style.cssText = 'padding: 8px 12px; background: var(--primary-color); color: white; text-align: center; font-weight: 600; min-width: 60px;';
     trHeader.appendChild(thLabel);
     
     const ages = dayunData.ages || [];
-    ages.forEach(age => {
+    ages.forEach((age, index) => {
         const th = document.createElement('th');
         th.textContent = age + '岁';
-        th.style.cssText = 'padding: 8px 12px; background: var(--primary-color); color: white; text-align: center; font-weight: 600;';
+        th.style.cssText = `padding: 8px 12px; background: ${index % 2 === 0 ? 'var(--primary-color)' : '#a0522d'}; color: white; text-align: center; font-weight: 600;`;
         trHeader.appendChild(th);
     });
     table.appendChild(trHeader);
@@ -385,10 +389,10 @@ export function displayDayunPan(dayunData) {
     trDayun.appendChild(tdLabel);
     
     const dayuns = dayunData.dayuns || [];
-    dayuns.forEach(dayun => {
+    dayuns.forEach((dayun, index) => {
         const td = document.createElement('td');
         td.textContent = dayun;
-        td.style.cssText = 'padding: 8px 12px; text-align: center; font-weight: 500; color: var(--primary-color); border-bottom: 1px solid #eee;';
+        td.style.cssText = `padding: 8px 12px; text-align: center; font-weight: 500; color: var(--primary-color); ${index % 2 === 0 ? 'background: #faf8f5;' : 'background: #fff;'}`;
         trDayun.appendChild(td);
     });
     table.appendChild(trDayun);
@@ -400,10 +404,10 @@ export function displayDayunPan(dayunData) {
         tdElementLabel.style.cssText = 'padding: 8px 12px; background: #f5f1e8; text-align: center; font-weight: 600; color: var(--dark-color);';
         trElement.appendChild(tdElementLabel);
         
-        dayunData.elements.forEach(element => {
+        dayunData.elements.forEach((element, index) => {
             const td = document.createElement('td');
             td.textContent = element || '';
-            td.style.cssText = 'padding: 8px 12px; text-align: center; font-size: 13px; color: #666; border-bottom: 1px solid #eee;';
+            td.style.cssText = `padding: 8px 12px; text-align: center; font-size: 13px; color: #666; ${index % 2 === 0 ? 'background: #faf8f5;' : 'background: #fff;'}`;
             trElement.appendChild(td);
         });
         table.appendChild(trElement);
@@ -413,13 +417,88 @@ export function displayDayunPan(dayunData) {
     dayunCard.style.display = 'block';
 }
 
-// ============ 新增：进度更新函数 ============
-export function updateProgress(step, percent, message) {
-    console.log(`📊 进度更新: step=${step}, percent=${percent}%, message=${message}`);
+// ============ 解析大运数据 ============
+export function parseDayunData(analysisResult) {
+    console.log('🔍 解析大运数据...');
     
-    const progressBar = DOM.id('progress-bar');
-    const progressPercent = DOM.id('progress-percent');
-    const progressLabel = DOM.id('progress-label');
+    const result = { ages: [], dayuns: [], elements: [] };
+    
+    // 方法1：匹配标准格式
+    const dayunMatch = analysisResult.match(/【大运排盘】([\s\S]*?)(?=【|$)/);
+    if (dayunMatch) {
+        const dayunText = dayunMatch[1];
+        
+        const ageMatch = dayunText.match(/岁[：:]\s*([\d\s]+)/);
+        if (ageMatch) {
+            result.ages = ageMatch[1].trim().split(/\s+/).map(Number).filter(a => !isNaN(a) && a > 0);
+        }
+        
+        const dayunMatch2 = dayunText.match(/大运[：:]\s*([^\n]+)/);
+        if (dayunMatch2) {
+            result.dayuns = dayunMatch2[1].trim().split(/\s+/).filter(d => d.length > 0);
+        }
+        
+        const elementMatch = dayunText.match(/纳音[：:]\s*([^\n]+)/);
+        if (elementMatch) {
+            result.elements = elementMatch[1].trim().split(/\s+/).filter(e => e.length > 0);
+        }
+    }
+    
+    // 方法2：逐行解析
+    if (result.ages.length === 0 || result.dayuns.length === 0) {
+        const lines = analysisResult.split('\n');
+        let foundDayunSection = false;
+        let tempAges = [], tempDayuns = [], tempElements = [];
+        
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.includes('【大运排盘】')) {
+                foundDayunSection = true;
+                continue;
+            }
+            if (foundDayunSection && trimmed.match(/^【/)) break;
+            if (!foundDayunSection) continue;
+            
+            const ageNumbers = trimmed.match(/\d+/g);
+            if (ageNumbers && trimmed.includes('岁')) {
+                tempAges = ageNumbers.map(Number);
+            }
+            
+            const dayunMatches = trimmed.match(/[\u4e00-\u9fa5]{2}/g);
+            if (dayunMatches && trimmed.includes('大运')) {
+                tempDayuns = dayunMatches;
+            }
+            
+            if (trimmed.includes('纳音')) {
+                const elementMatches = trimmed.match(/[\u4e00-\u9fa5]{2}/g);
+                if (elementMatches) tempElements = elementMatches;
+            }
+        }
+        
+        if (tempAges.length > 0 && tempDayuns.length > 0) {
+            result.ages = tempAges;
+            result.dayuns = tempDayuns;
+            if (tempElements.length > 0) result.elements = tempElements;
+        }
+    }
+    
+    const maxLen = Math.min(8, result.ages.length, result.dayuns.length);
+    result.ages = result.ages.slice(0, maxLen);
+    result.dayuns = result.dayuns.slice(0, maxLen);
+    result.elements = result.elements.slice(0, maxLen);
+    
+    console.log('✅ 大运数据:', result);
+    return result;
+}
+
+// ============ 进度更新 - 按服务项目显示 ============
+export function updateProgress(currentStep, totalSteps, stepName, percent, message) {
+    console.log(`📊 进度: ${stepName} (${currentStep}/${totalSteps}) ${percent}%`);
+    
+    // 更新进度条
+    const progressBar = document.getElementById('progress-bar');
+    const progressPercent = document.getElementById('progress-percent');
+    const progressLabel = document.getElementById('progress-label');
     
     if (progressBar) {
         progressBar.style.width = Math.min(percent, 100) + '%';
@@ -428,105 +507,59 @@ export function updateProgress(step, percent, message) {
         progressPercent.textContent = Math.min(percent, 100) + '%';
     }
     if (progressLabel) {
-        progressLabel.textContent = message || '处理中...';
+        progressLabel.textContent = message || '分析中...';
     }
     
-    const steps = [
-        { id: 'step-1', text: '准备分析数据...' },
-        { id: 'step-2', text: '调用AI进行命理分析...' },
-        { id: 'step-3', text: '生成八字排盘结果...' },
-        { id: 'step-4', text: '整理分析报告...' }
-    ];
+    // 更新项目列表 - 从config获取当前服务的步骤
+    const serviceConfig = SERVICES[STATE.currentService];
+    if (!serviceConfig) return;
     
-    steps.forEach((s, index) => {
-        const el = DOM.id(s.id);
-        if (el) {
-            const stepNum = index + 1;
-            if (stepNum < step) {
-                el.style.opacity = '1';
-                const span = el.querySelector('span:first-child');
-                if (span) span.textContent = '✅';
-                el.style.color = 'var(--success-color)';
-                el.style.animation = 'none';
-            } else if (stepNum === step) {
-                el.style.opacity = '1';
-                const span = el.querySelector('span:first-child');
-                if (span) span.textContent = '⏳';
-                el.style.color = 'var(--secondary-color)';
-                el.style.animation = 'pulseStep 1s ease-in-out infinite';
-            } else {
-                el.style.opacity = '0.4';
-                const span = el.querySelector('span:first-child');
-                if (span) span.textContent = '⏳';
-                el.style.color = '#999';
-                el.style.animation = 'none';
-            }
+    const steps = serviceConfig.analysisSteps || [];
+    const container = document.getElementById('progress-items-container');
+    if (!container) return;
+    
+    // 构建项目列表HTML
+    let html = '';
+    steps.forEach((step, index) => {
+        const stepNum = index + 1;
+        let status = 'pending';
+        let icon = '⏳';
+        let color = '#ccc';
+        let extraText = '';
+        
+        if (stepNum < currentStep) {
+            status = 'done';
+            icon = '✅';
+            color = 'var(--success-color)';
+            extraText = ' <span style="color:var(--success-color);font-size:12px;">完成</span>';
+        } else if (stepNum === currentStep) {
+            status = 'active';
+            icon = '⏳';
+            color = 'var(--secondary-color)';
+            extraText = ' <span style="color:var(--secondary-color);font-size:12px;animation:pulseStep 1s ease-in-out infinite;">进行中...</span>';
         }
+        
+        const isActive = status === 'active';
+        const isDone = status === 'done';
+        
+        html += `
+            <div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #f5f5f5;
+                ${isActive ? 'animation:pulseStep 1s ease-in-out infinite;' : ''}
+                ${isDone ? 'opacity:1;' : 'opacity:0.6;'}">
+                <span style="color:${color};font-size:16px;min-width:24px;">${icon}</span>
+                <span style="flex:1;font-size:13px;${isDone ? 'color:#333;' : 'color:#999;'}">
+                    ${step}${extraText}
+                </span>
+                ${isDone ? '<span style="color:var(--success-color);font-size:12px;">✓</span>' : ''}
+                ${isActive ? `<span style="color:var(--secondary-color);font-size:12px;">⏳</span>` : ''}
+            </div>
+        `;
     });
+    
+    container.innerHTML = html;
 }
 
-// ============ 新增：解析大运数据 ============
-export function parseDayunData(analysisResult) {
-    console.log('解析大运数据...');
-    
-    const result = {
-        ages: [],
-        dayuns: [],
-        elements: []
-    };
-    
-    const dayunMatch = analysisResult.match(/【大运排盘】([\s\S]*?)(?=【|$)/);
-    if (!dayunMatch) {
-        console.log('未找到大运排盘数据');
-        return result;
-    }
-    
-    const dayunText = dayunMatch[1];
-    
-    const ageMatch = dayunText.match(/岁[：:]\s*([\d\s]+)/);
-    if (ageMatch) {
-        const ageStr = ageMatch[1].trim();
-        result.ages = ageStr.split(/\s+/).map(Number).filter(a => !isNaN(a));
-    }
-    
-    const dayunMatch2 = dayunText.match(/大运[：:]\s*([^\n]+)/);
-    if (dayunMatch2) {
-        const dayunStr = dayunMatch2[1].trim();
-        result.dayuns = dayunStr.split(/\s+/).filter(d => d.length > 0);
-    }
-    
-    if (result.ages.length === 0 || result.dayuns.length === 0) {
-        const lines = dayunText.split('\n');
-        for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed.includes('岁')) {
-                const nums = trimmed.match(/\d+/g);
-                if (nums) {
-                    result.ages = nums.map(Number);
-                }
-            }
-            if (trimmed.includes('大运') && !trimmed.includes('起运')) {
-                const parts = trimmed.split(/[：:]\s*/);
-                if (parts.length > 1) {
-                    const dayunStr = parts[1].trim();
-                    const dayunList = dayunStr.split(/\s+/).filter(d => d.length > 0 && /[\u4e00-\u9fa5]/.test(d));
-                    if (dayunList.length > 0) {
-                        result.dayuns = dayunList;
-                    }
-                }
-            }
-        }
-    }
-    
-    const maxLen = Math.min(8, result.ages.length, result.dayuns.length);
-    result.ages = result.ages.slice(0, maxLen);
-    result.dayuns = result.dayuns.slice(0, maxLen);
-    
-    console.log('解析到的大运数据:', result);
-    return result;
-}
-
-// ============ 原有函数 ============
+// ============ 处理分析结果 ============
 export function processAndDisplayAnalysis(result) {
     const freeSections = ['【八字排盘】', '【大运排盘】', '【八字喜用分析】', '【性格特点】', '【适宜行业职业推荐】'];
     let freeContent = '';
@@ -595,6 +628,7 @@ export function processAndDisplayAnalysis(result) {
     }
 }
 
+// ============ 支付相关函数 ============
 export async function showPaymentModal() {
     console.log('调用支付接口...');
     const serviceConfig = SERVICES[STATE.currentService];
@@ -650,19 +684,10 @@ export async function showPaymentModal() {
             const buttonHtml = `
                 <div style="margin: 20px 0;">
                     <button id="alipay-redirect-btn" class="dynamic-pulse-btn" style="
-                        margin: 10px auto;
-                        display: block;
-                        max-width: ${isMobile ? '280px' : '250px'};
-                        background: linear-gradient(135deg, #1677FF, #4096ff);
-                        color: white;
-                        border: none;
-                        padding: ${isMobile ? '16px 35px' : '15px 30px'};
-                        border-radius: 25px;
-                        font-size: ${isMobile ? '18px' : '16px'};
-                        font-weight: bold;
-                        cursor: pointer;
-                        transition: all 0.3s;
-                        width: 100%;
+                        margin: 10px auto; display: block; max-width: ${isMobile ? '280px' : '250px'};
+                        background: linear-gradient(135deg, #1677FF, #4096ff); color: white; border: none;
+                        padding: ${isMobile ? '16px 35px' : '15px 30px'}; border-radius: 25px;
+                        font-size: ${isMobile ? '18px' : '16px'}; font-weight: bold; cursor: pointer; transition: all 0.3s; width: 100%;
                     ">
                         <span style="display: flex; align-items: center; justify-content: center;">
                             <span style="margin-right: 10px;">${isMobile ? '📱' : '💻'}</span>

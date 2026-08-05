@@ -91,7 +91,7 @@ const PaymentManager = {
     async verifyPaymentStatus(orderId) {
         try {
             console.log('🔐 验证支付状态，订单号:', orderId);
-            const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/payment/status/${orderId}`);
+            const response = await fetch(API_CONFIG.BACKEND_URL + '/api/payment/status/' + orderId);
             const result = await response.json();
             console.log('支付状态响应:', result);
             if (result.success && result.data.status === 'paid') {
@@ -281,9 +281,9 @@ import { checkAPIStatus, parseBaziData, callDeepSeekAPI } from './api.js';
 import {
     UI, initFormOptions, setDefaultValues, updateServiceDisplay,
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,
-    displayDayunPan,  // 新增
-    updateProgress,   // 新增
-    parseDayunData,   // 新增
+    displayDayunPan,
+    updateProgress,
+    parseDayunData,
     processAndDisplayAnalysis, showPaymentModal, closePaymentModal,
     updateUnlockInterface, showFullAnalysisContent, lockDownloadButton,
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
@@ -296,7 +296,7 @@ import { YunchengModule } from '../modules/yuncheng.js';
 import { XiangpiModule } from '../modules/xiangpi.js';
 import { HehunModule } from '../modules/hehun.js';
 
-const SERVICE_MODULES = {
+var SERVICE_MODULES = {
     '测算验证': CesuanModule,
     '流年运程': YunchengModule,
     '人生详批': XiangpiModule,
@@ -320,18 +320,18 @@ function confirmPayment() {
         alert('请先点击"前往支付宝支付"按钮完成支付');
         return;
     }
-    const confirmed = confirm('如果您已完成支付宝支付，请点击"确定"解锁内容。\n如支付遇到问题，请联系客服微信：runzang888');
+    var confirmed = confirm('如果您已完成支付宝支付，请点击"确定"解锁内容。\n如支付遇到问题，请联系客服微信：runzang888');
     if (confirmed) {
-        fetch(`${API_CONFIG.BACKEND_URL}/api/payment/status/${STATE.currentOrderId}`)
-            .then(response => response.json())
-            .then(result => {
+        fetch(API_CONFIG.BACKEND_URL + '/api/payment/status/' + STATE.currentOrderId)
+            .then(function(response) { return response.json(); })
+            .then(function(result) {
                 if (result.success && result.data.status === 'paid') {
                     handlePaymentSuccess();
                 } else {
                     alert('支付状态未确认，请稍后再试或联系客服');
                 }
             })
-            .catch(error => {
+            .catch(function(error) {
                 console.error('检查支付状态失败:', error);
                 alert('网络错误，请稍后重试');
             });
@@ -363,10 +363,10 @@ async function initApp() {
 function setupEventListeners() {
     console.log('设置事件监听器...');
     
-    document.querySelectorAll('.service-nav a').forEach(link => {
+    document.querySelectorAll('.service-nav a').forEach(function(link) {
         link.addEventListener('click', function(event) {
             event.preventDefault();
-            const serviceName = this.dataset.service;
+            var serviceName = this.dataset.service;
             switchService(serviceName);
         });
     });
@@ -384,23 +384,23 @@ function setupEventListeners() {
     });
     
     window.addEventListener('click', function(event) {
-        const paymentModal = UI.paymentModal();
+        var paymentModal = UI.paymentModal();
         if (event.target === paymentModal) closePaymentModal();
     });
     
-    const heroImage = UI.heroImage();
-    const detailImage = UI.detailImage();
+    var heroImage = UI.heroImage();
+    var detailImage = UI.detailImage();
     if (heroImage) {
         heroImage.addEventListener('load', function() {
             this.classList.add('loaded');
-            const placeholder = this.previousElementSibling;
+            var placeholder = this.previousElementSibling;
             if (placeholder) placeholder.style.display = 'none';
         });
     }
     if (detailImage) {
         detailImage.addEventListener('load', function() {
             this.classList.add('loaded');
-            const placeholder = this.previousElementSibling;
+            var placeholder = this.previousElementSibling;
             if (placeholder) placeholder.style.display = 'none';
         });
     }
@@ -412,7 +412,7 @@ function switchService(serviceName) {
         console.error('服务不存在:', serviceName);
         return;
     }
-    const oldService = STATE.currentService;
+    var oldService = STATE.currentService;
     if (oldService !== serviceName) {
         console.log('切换到不同服务，彻底重置状态');
         STATE.isPaymentUnlocked = false;
@@ -432,17 +432,32 @@ function switchService(serviceName) {
     lockDownloadButton();
     if (oldService !== serviceName) {
         hideAnalysisResult();
-        const freeAnalysisText = UI.freeAnalysisText();
+        var freeAnalysisText = UI.freeAnalysisText();
         if (freeAnalysisText) freeAnalysisText.innerHTML = '';
-        const predictorInfoGrid = UI.predictorInfoGrid();
+        var predictorInfoGrid = UI.predictorInfoGrid();
         if (predictorInfoGrid) predictorInfoGrid.innerHTML = '';
-        const baziGrid = UI.baziGrid();
+        var baziGrid = UI.baziGrid();
         if (baziGrid) baziGrid.innerHTML = '';
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     console.log('服务切换完成，解锁状态:', STATE.isPaymentUnlocked);
 }
 
+function preloadImages() {
+    console.log('预加载图片...');
+    Object.values(SERVICES).forEach(function(service) {
+        var heroImg = new Image();
+        heroImg.src = service.heroImage;
+        var detailImg = new Image();
+        detailImg.src = service.detailImage;
+    });
+}
+
+function sleep(ms) {
+    return new Promise(function(resolve) { setTimeout(resolve, ms); });
+}
+
+// ============ 核心分析函数 ============
 async function startAnalysis() {
     console.log('开始命理分析...');
     
@@ -456,7 +471,7 @@ async function startAnalysis() {
         return;
     }
     
-    const resultServiceName = document.getElementById('result-service-name');
+    var resultServiceName = document.getElementById('result-service-name');
     if (resultServiceName) {
         resultServiceName.textContent = STATE.currentService + '分析报告';
     }
@@ -470,21 +485,19 @@ async function startAnalysis() {
     animateButtonStretch();
     showLoadingModal();
     
-    // 获取当前服务的分析步骤
-    const serviceConfig = SERVICES[STATE.currentService];
-    const totalSteps = serviceConfig.analysisSteps ? serviceConfig.analysisSteps.length : 8;
-    let currentStep = 0;
-    let progressPercent = 0;
+    var serviceConfig = SERVICES[STATE.currentService];
+    var totalSteps = serviceConfig.analysisSteps ? serviceConfig.analysisSteps.length : 8;
+    var currentStep = 0;
+    var progressPercent = 0;
     
     try {
-        // 步骤1: 收集用户数据
         collectUserData();
         currentStep = 1;
         progressPercent = 5;
         updateProgress(currentStep, totalSteps, '验证用户信息', progressPercent, '正在验证用户信息...');
         await sleep(300);
         
-        const freeAnalysisText = UI.freeAnalysisText();
+        var freeAnalysisText = UI.freeAnalysisText();
         if (freeAnalysisText) {
             freeAnalysisText.innerHTML = '<div class="loading-text">正在生成分析结果...</div>';
         }
@@ -494,13 +507,12 @@ async function startAnalysis() {
         updateProgress(currentStep, totalSteps, '准备分析数据', progressPercent, '用户信息验证完成');
         await sleep(300);
         
-        // 生成提示词
-        const serviceModule = SERVICE_MODULES[STATE.currentService];
+        var serviceModule = SERVICE_MODULES[STATE.currentService];
         if (!serviceModule) {
-            throw new Error(`未找到服务模块: ${STATE.currentService}`);
+            throw new Error('未找到服务模块: ' + STATE.currentService);
         }
         
-        let prompt;
+        var prompt;
         try {
             prompt = serviceModule.getPrompt(STATE.userData, STATE.partnerData);
         } catch (error) {
@@ -513,7 +525,6 @@ async function startAnalysis() {
         console.log('生成的分析提示词长度:', prompt.length);
         console.log('当前服务:', STATE.currentService);
         
-        // 调用DeepSeek API
         currentStep = 2;
         progressPercent = 20;
         updateProgress(currentStep, totalSteps, 'AI命理分析', progressPercent, '正在连接AI分析引擎...');
@@ -522,8 +533,7 @@ async function startAnalysis() {
         progressPercent = 30;
         updateProgress(currentStep, totalSteps, 'AI命理分析', progressPercent, 'AI正在分析您的命理信息...');
         
-        // 模拟进度更新（因为API是异步的）
-        let progressInterval = setInterval(() => {
+        var progressInterval = setInterval(function() {
             if (progressPercent < 60) {
                 progressPercent += 1;
                 updateProgress(currentStep, totalSteps, 'AI命理分析', progressPercent, 'AI正在深度分析中...');
@@ -531,33 +541,29 @@ async function startAnalysis() {
         }, 1000);
         
         console.log('正在调用DeepSeek API...');
-        const analysisResult = await callDeepSeekAPI(prompt, STATE.currentService);
+        var analysisResult = await callDeepSeekAPI(prompt, STATE.currentService);
         
         clearInterval(progressInterval);
         
         console.log('DeepSeek API调用成功，响应长度:', analysisResult.length);
         STATE.fullAnalysisResult = analysisResult;
         
-        // 解析八字数据
-        const parsedBaziData = parseBaziData(analysisResult);
+        var parsedBaziData = parseBaziData(analysisResult);
         STATE.baziData = parsedBaziData.userBazi;
         STATE.partnerBaziData = parsedBaziData.partnerBazi;
         
-        // 显示八字排盘
         currentStep = 3;
         progressPercent = 70;
         updateProgress(currentStep, totalSteps, '生成排盘结果', progressPercent, '八字排盘生成完成');
         displayBaziPan();
         await sleep(300);
         
-        // 解析并显示大运排盘
-        const dayunData = parseDayunData(analysisResult);
+        var dayunData = parseDayunData(analysisResult);
         displayDayunPan(dayunData);
         progressPercent = 80;
         updateProgress(currentStep, totalSteps, '生成排盘结果', progressPercent, '大运排盘生成完成');
         await sleep(300);
         
-        // 处理分析结果
         currentStep = 4;
         progressPercent = 88;
         updateProgress(currentStep, totalSteps, '整理分析报告', progressPercent, '正在整理分析报告...');
@@ -575,15 +581,14 @@ async function startAnalysis() {
         
         console.log('命理分析完成，结果已显示');
         
-        // 保存分析结果
         PaymentManager.saveAnalysisBeforePayment();
         
-        const paymentData = PaymentManager.getPaymentData();
+        var paymentData = PaymentManager.getPaymentData();
         if (paymentData && paymentData.verified) {
-            const savedService = localStorage.getItem('last_analysis_service');
+            var savedService = localStorage.getItem('last_analysis_service');
             if (savedService === STATE.currentService && !STATE.isPaymentUnlocked) {
                 console.log('当前服务已支付，自动解锁');
-                setTimeout(() => {
+                setTimeout(function() {
                     PaymentManager.updateUIAfterPayment();
                 }, 500);
             }
@@ -593,23 +598,18 @@ async function startAnalysis() {
         console.error('分析失败:', error);
         hideLoadingModal();
         
-        let errorMessage = '命理分析失败，请稍后再试。';
-        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        var errorMessage = '命理分析失败，请稍后再试。';
+        if (error.message.indexOf('401') !== -1 || error.message.indexOf('Unauthorized') !== -1) {
             errorMessage = 'API密钥错误，请联系管理员。';
-        } else if (error.message.includes('429')) {
+        } else if (error.message.indexOf('429') !== -1) {
             errorMessage = '请求过于频繁，请稍后再试。';
-        } else if (error.message.includes('网络') || error.message.includes('Network')) {
+        } else if (error.message.indexOf('网络') !== -1 || error.message.indexOf('Network') !== -1) {
             errorMessage = '网络连接失败，请检查您的网络设置。';
-        } else if (error.message.includes('超时') || error.message.includes('timeout')) {
+        } else if (error.message.indexOf('超时') !== -1 || error.message.indexOf('timeout') !== -1) {
             errorMessage = '分析请求超时，请稍后再试。';
         }
         alert(errorMessage + '\n\n错误详情：' + error.message);
     }
-}
-
-// 辅助函数：延迟
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function downloadReport() {
@@ -639,29 +639,29 @@ function downloadReport() {
         return;
     }
     
-    const currentServiceName = STATE.currentService || '测算验证';
+    var currentServiceName = STATE.currentService || '测算验证';
     
-    let predictorInfo = `命理分析报告 - ${currentServiceName}\n\n预测者信息：\n姓名：${STATE.userData.name}\n性别：${STATE.userData.gender}\n出生时间：${STATE.userData.birthYear}年${STATE.userData.birthMonth}月${STATE.userData.birthDay}日${STATE.userData.birthHour}时${STATE.userData.birthMinute}分\n出生城市：${STATE.userData.birthCity}\n测算服务：${currentServiceName}\n测算时间：${new Date().toLocaleString('zh-CN')}`;
+    var predictorInfo = '命理分析报告 - ' + currentServiceName + '\n\n预测者信息：\n姓名：' + STATE.userData.name + '\n性别：' + STATE.userData.gender + '\n出生时间：' + STATE.userData.birthYear + '年' + STATE.userData.birthMonth + '月' + STATE.userData.birthDay + '日' + STATE.userData.birthHour + '时' + STATE.userData.birthMinute + '分\n出生城市：' + STATE.userData.birthCity + '\n测算服务：' + currentServiceName + '\n测算时间：' + new Date().toLocaleString('zh-CN');
     
     if (currentServiceName === '八字合婚' && STATE.partnerData) {
-        predictorInfo += `\n\n伴侣信息：\n姓名：${STATE.partnerData.partnerName}\n性别：${STATE.partnerData.partnerGender}\n出生时间：${STATE.partnerData.partnerBirthYear}年${STATE.partnerData.partnerBirthMonth}月${STATE.partnerData.partnerBirthDay}日${STATE.partnerData.partnerBirthHour}时${STATE.partnerData.partnerBirthMinute}分\n出生城市：${STATE.partnerData.partnerBirthCity}`;
+        predictorInfo += '\n\n伴侣信息：\n姓名：' + STATE.partnerData.partnerName + '\n性别：' + STATE.partnerData.partnerGender + '\n出生时间：' + STATE.partnerData.partnerBirthYear + '年' + STATE.partnerData.partnerBirthMonth + '月' + STATE.partnerData.partnerBirthDay + '日' + STATE.partnerData.partnerBirthHour + '时' + STATE.partnerData.partnerBirthMinute + '分\n出生城市：' + STATE.partnerData.partnerBirthCity;
     }
     
-    let baziInfo = '';
+    var baziInfo = '';
     if (STATE.currentService === '八字合婚' && STATE.partnerData && STATE.partnerBaziData) {
-        baziInfo = `${STATE.userData.name} 八字排盘：\n年柱：${STATE.baziData.yearColumn} (${STATE.baziData.yearElement})\n月柱：${STATE.baziData.monthColumn} (${STATE.baziData.monthElement})\n日柱：${STATE.baziData.dayColumn} (${STATE.baziData.dayElement})\n时柱：${STATE.baziData.hourColumn} (${STATE.baziData.hourElement})\n\n${STATE.partnerData.partnerName} 八字排盘：\n年柱：${STATE.partnerBaziData.yearColumn} (${STATE.partnerBaziData.yearElement})\n月柱：${STATE.partnerBaziData.monthColumn} (${STATE.partnerBaziData.monthElement})\n日柱：${STATE.partnerBaziData.dayColumn} (${STATE.partnerBaziData.dayElement})\n时柱：${STATE.partnerBaziData.hourColumn} (${STATE.partnerBaziData.hourElement})`;
+        baziInfo = STATE.userData.name + ' 八字排盘：\n年柱：' + STATE.baziData.yearColumn + ' (' + STATE.baziData.yearElement + ')\n月柱：' + STATE.baziData.monthColumn + ' (' + STATE.baziData.monthElement + ')\n日柱：' + STATE.baziData.dayColumn + ' (' + STATE.baziData.dayElement + ')\n时柱：' + STATE.baziData.hourColumn + ' (' + STATE.baziData.hourElement + ')\n\n' + STATE.partnerData.partnerName + ' 八字排盘：\n年柱：' + STATE.partnerBaziData.yearColumn + ' (' + STATE.partnerBaziData.yearElement + ')\n月柱：' + STATE.partnerBaziData.monthColumn + ' (' + STATE.partnerBaziData.monthElement + ')\n日柱：' + STATE.partnerBaziData.dayColumn + ' (' + STATE.partnerBaziData.dayElement + ')\n时柱：' + STATE.partnerBaziData.hourColumn + ' (' + STATE.partnerBaziData.hourElement + ')';
     } else {
-        const baziDataToDisplay = STATE.baziData;
-        baziInfo = `八字排盘：\n年柱：${baziDataToDisplay.yearColumn} (${baziDataToDisplay.yearElement})\n月柱：${baziDataToDisplay.monthColumn} (${baziDataToDisplay.monthElement})\n日柱：${baziDataToDisplay.dayColumn} (${baziDataToDisplay.dayElement})\n时柱：${baziDataToDisplay.hourColumn} (${baziDataToDisplay.hourElement})`;
+        var baziDataToDisplay = STATE.baziData;
+        baziInfo = '八字排盘：\n年柱：' + baziDataToDisplay.yearColumn + ' (' + baziDataToDisplay.yearElement + ')\n月柱：' + baziDataToDisplay.monthColumn + ' (' + baziDataToDisplay.monthElement + ')\n日柱：' + baziDataToDisplay.dayColumn + ' (' + baziDataToDisplay.dayElement + ')\n时柱：' + baziDataToDisplay.hourColumn + ' (' + baziDataToDisplay.hourElement + ')';
     }
     
-    const reportContent = `命理分析报告 - ${STATE.currentService}\n\n${predictorInfo}\n\n${baziInfo}\n\n${STATE.fullAnalysisResult}\n\n--- 命理分析服务平台 ---\n分析时间：${new Date().toLocaleString('zh-CN')}\n使用技术：DeepSeek AI命理分析系统`;
+    var reportContent = '命理分析报告 - ' + STATE.currentService + '\n\n' + predictorInfo + '\n\n' + baziInfo + '\n\n' + STATE.fullAnalysisResult + '\n\n--- 命理分析服务平台 ---\n分析时间：' + new Date().toLocaleString('zh-CN') + '\n使用技术：DeepSeek AI命理分析系统';
     
-    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    var blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
     a.href = url;
-    a.download = `命理分析报告_${STATE.userData.name}_${new Date().toISOString().slice(0, 10)}.txt`;
+    a.download = '命理分析报告_' + STATE.userData.name + '_' + new Date().toISOString().slice(0, 10) + '.txt';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -676,7 +676,7 @@ function newAnalysis() {
     lockDownloadButton();
     hideAnalysisResult();
     resetUnlockInterface();
-    const freeAnalysisText = UI.freeAnalysisText();
+    var freeAnalysisText = UI.freeAnalysisText();
     if (freeAnalysisText) freeAnalysisText.innerHTML = '';
     STATE.currentOrderId = null;
     STATE.fullAnalysisResult = '';
@@ -697,10 +697,5 @@ window.confirmPayment = confirmPayment;
 window.downloadReport = downloadReport;
 window.newAnalysis = newAnalysis;
 window.handlePaymentSuccess = handlePaymentSuccess;
-
-if (typeof PaymentManager !== 'undefined') {
-    window.PaymentManager = PaymentManager;
-}
-if (typeof STATE !== 'undefined') {
-    window.STATE = STATE;
-}
+window.PaymentManager = PaymentManager;
+window.STATE = STATE;

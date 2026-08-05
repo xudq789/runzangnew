@@ -443,103 +443,173 @@ function switchService(serviceName) {
     console.log('服务切换完成，解锁状态:', STATE.isPaymentUnlocked);
 }
 
-function preloadImages() {
-    console.log('预加载图片...');
-    Object.values(SERVICES).forEach(service => {
-        const heroImg = new Image();
-        heroImg.src = service.heroImage;
-        const detailImg = new Image();
-        detailImg.src = service.detailImage;
-    });
-}
-
-/* 进度步骤动画 */
-@keyframes pulseStep {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
-/* 大运排盘卡片 */
-#dayun-pan-card {
-    display: none;
-    margin-top: 20px;
-}
-
-#dayun-grid table {
-    width: 100%;
-    border-collapse: collapse;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-
-#dayun-grid th,
-#dayun-grid td {
-    padding: 10px 14px;
-    text-align: center;
-    border: 1px solid #eee;
-}
-
-#dayun-grid th {
-    background: var(--primary-color);
-    color: white;
-    font-weight: 600;
-}
-
-#dayun-grid td {
-    background: #faf8f5;
-}
-
-#dayun-grid tr:nth-child(2) td {
-    background: #fff;
-    font-weight: 500;
-    color: var(--primary-color);
-}
-
-#dayun-grid tr:last-child td {
-    font-size: 13px;
-    color: #888;
-}
-
-/* 进度项目容器滚动 */
-#progress-items-container {
-    scrollbar-width: thin;
-    scrollbar-color: #d4af37 #f0f0f0;
-}
-
-#progress-items-container::-webkit-scrollbar {
-    width: 4px;
-}
-
-#progress-items-container::-webkit-scrollbar-track {
-    background: #f0f0f0;
-    border-radius: 4px;
-}
-
-#progress-items-container::-webkit-scrollbar-thumb {
-    background: var(--secondary-color);
-    border-radius: 4px;
-}
-
-/* 响应式大运表格 */
-@media (max-width: 768px) {
-    #dayun-grid table {
-        font-size: 12px;
+async function startAnalysis() {
+    console.log('开始命理分析...');
+    
+    if (STATE.apiStatus !== 'online') {
+        alert('⚠️ API连接异常，请稍后再试或检查网络连接。');
+        return;
     }
-    #dayun-grid th,
-    #dayun-grid td {
-        padding: 6px 8px;
+    
+    if (!validateForm()) {
+        alert('请填写完整的个人信息');
+        return;
+    }
+    
+    const resultServiceName = document.getElementById('result-service-name');
+    if (resultServiceName) {
+        resultServiceName.textContent = STATE.currentService + '分析报告';
+    }
+    
+    STATE.fullAnalysisResult = '';
+    STATE.baziData = null;
+    STATE.partnerBaziData = null;
+    STATE.isPaymentUnlocked = false;
+    STATE.isDownloadLocked = true;
+    lockDownloadButton();
+    animateButtonStretch();
+    showLoadingModal();
+    
+    // 获取当前服务的分析步骤
+    const serviceConfig = SERVICES[STATE.currentService];
+    const totalSteps = serviceConfig.analysisSteps ? serviceConfig.analysisSteps.length : 8;
+    let currentStep = 0;
+    let progressPercent = 0;
+    
+    try {
+        // 步骤1: 收集用户数据
+        collectUserData();
+        currentStep = 1;
+        progressPercent = 5;
+        updateProgress(currentStep, totalSteps, '验证用户信息', progressPercent, '正在验证用户信息...');
+        await sleep(300);
+        
+        const freeAnalysisText = UI.freeAnalysisText();
+        if (freeAnalysisText) {
+            freeAnalysisText.innerHTML = '<div class="loading-text">正在生成分析结果...</div>';
+        }
+        
+        displayPredictorInfo();
+        progressPercent = 10;
+        updateProgress(currentStep, totalSteps, '准备分析数据', progressPercent, '用户信息验证完成');
+        await sleep(300);
+        
+        // 生成提示词
+        const serviceModule = SERVICE_MODULES[STATE.currentService];
+        if (!serviceModule) {
+            throw new Error(`未找到服务模块: ${STATE.currentService}`);
+        }
+        
+        let prompt;
+        try {
+            prompt = serviceModule.getPrompt(STATE.userData, STATE.partnerData);
+        } catch (error) {
+            console.error('生成提示词失败:', error);
+            alert(error.message);
+            hideLoadingModal();
+            return;
+        }
+        
+        console.log('生成的分析提示词长度:', prompt.length);
+        console.log('当前服务:', STATE.currentService);
+        
+        // 调用DeepSeek API
+        currentStep = 2;
+        progressPercent = 20;
+        updateProgress(currentStep, totalSteps, 'AI命理分析', progressPercent, '正在连接AI分析引擎...');
+        await sleep(500);
+        
+        progressPercent = 30;
+        updateProgress(currentStep, totalSteps, 'AI命理分析', progressPercent, 'AI正在分析您的命理信息...');
+        
+        // 模拟进度更新（因为API是异步的）
+        let progressInterval = setInterval(() => {
+            if (progressPercent < 60) {
+                progressPercent += 1;
+                updateProgress(currentStep, totalSteps, 'AI命理分析', progressPercent, 'AI正在深度分析中...');
+            }
+        }, 1000);
+        
+        console.log('正在调用DeepSeek API...');
+        const analysisResult = await callDeepSeekAPI(prompt, STATE.currentService);
+        
+        clearInterval(progressInterval);
+        
+        console.log('DeepSeek API调用成功，响应长度:', analysisResult.length);
+        STATE.fullAnalysisResult = analysisResult;
+        
+        // 解析八字数据
+        const parsedBaziData = parseBaziData(analysisResult);
+        STATE.baziData = parsedBaziData.userBazi;
+        STATE.partnerBaziData = parsedBaziData.partnerBazi;
+        
+        // 显示八字排盘
+        currentStep = 3;
+        progressPercent = 70;
+        updateProgress(currentStep, totalSteps, '生成排盘结果', progressPercent, '八字排盘生成完成');
+        displayBaziPan();
+        await sleep(300);
+        
+        // 解析并显示大运排盘
+        const dayunData = parseDayunData(analysisResult);
+        displayDayunPan(dayunData);
+        progressPercent = 80;
+        updateProgress(currentStep, totalSteps, '生成排盘结果', progressPercent, '大运排盘生成完成');
+        await sleep(300);
+        
+        // 处理分析结果
+        currentStep = 4;
+        progressPercent = 88;
+        updateProgress(currentStep, totalSteps, '整理分析报告', progressPercent, '正在整理分析报告...');
+        processAndDisplayAnalysis(analysisResult);
+        await sleep(300);
+        
+        progressPercent = 95;
+        updateProgress(currentStep, totalSteps, '整理分析报告', progressPercent, '报告整理完成');
+        
+        hideLoadingModal();
+        progressPercent = 100;
+        updateProgress(currentStep, totalSteps, '✅ 分析完成', progressPercent, '✅ 所有分析项目已完成！');
+        
+        showAnalysisResult();
+        
+        console.log('命理分析完成，结果已显示');
+        
+        // 保存分析结果
+        PaymentManager.saveAnalysisBeforePayment();
+        
+        const paymentData = PaymentManager.getPaymentData();
+        if (paymentData && paymentData.verified) {
+            const savedService = localStorage.getItem('last_analysis_service');
+            if (savedService === STATE.currentService && !STATE.isPaymentUnlocked) {
+                console.log('当前服务已支付，自动解锁');
+                setTimeout(() => {
+                    PaymentManager.updateUIAfterPayment();
+                }, 500);
+            }
+        }
+        
+    } catch (error) {
+        console.error('分析失败:', error);
+        hideLoadingModal();
+        
+        let errorMessage = '命理分析失败，请稍后再试。';
+        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+            errorMessage = 'API密钥错误，请联系管理员。';
+        } else if (error.message.includes('429')) {
+            errorMessage = '请求过于频繁，请稍后再试。';
+        } else if (error.message.includes('网络') || error.message.includes('Network')) {
+            errorMessage = '网络连接失败，请检查您的网络设置。';
+        } else if (error.message.includes('超时') || error.message.includes('timeout')) {
+            errorMessage = '分析请求超时，请稍后再试。';
+        }
+        alert(errorMessage + '\n\n错误详情：' + error.message);
     }
 }
 
-@media (max-width: 480px) {
-    #dayun-grid table {
-        font-size: 11px;
-    }
-    #dayun-grid th,
-    #dayun-grid td {
-        padding: 4px 6px;
-    }
+// 辅助函数：延迟
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function downloadReport() {

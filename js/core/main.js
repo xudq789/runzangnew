@@ -453,147 +453,92 @@ function preloadImages() {
     });
 }
 
-async function startAnalysis() {
-    console.log('开始命理分析...');
-    
-    if (STATE.apiStatus !== 'online') {
-        alert('⚠️ API连接异常，请稍后再试或检查网络连接。');
-        return;
+/* 进度步骤动画 */
+@keyframes pulseStep {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* 大运排盘卡片 */
+#dayun-pan-card {
+    display: none;
+    margin-top: 20px;
+}
+
+#dayun-grid table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+#dayun-grid th,
+#dayun-grid td {
+    padding: 10px 14px;
+    text-align: center;
+    border: 1px solid #eee;
+}
+
+#dayun-grid th {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
+}
+
+#dayun-grid td {
+    background: #faf8f5;
+}
+
+#dayun-grid tr:nth-child(2) td {
+    background: #fff;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+#dayun-grid tr:last-child td {
+    font-size: 13px;
+    color: #888;
+}
+
+/* 进度项目容器滚动 */
+#progress-items-container {
+    scrollbar-width: thin;
+    scrollbar-color: #d4af37 #f0f0f0;
+}
+
+#progress-items-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+#progress-items-container::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+#progress-items-container::-webkit-scrollbar-thumb {
+    background: var(--secondary-color);
+    border-radius: 4px;
+}
+
+/* 响应式大运表格 */
+@media (max-width: 768px) {
+    #dayun-grid table {
+        font-size: 12px;
     }
-    
-    if (!validateForm()) {
-        alert('请填写完整的个人信息');
-        return;
+    #dayun-grid th,
+    #dayun-grid td {
+        padding: 6px 8px;
     }
-    
-    const resultServiceName = document.getElementById('result-service-name');
-    if (resultServiceName) {
-        resultServiceName.textContent = STATE.currentService + '分析报告';
+}
+
+@media (max-width: 480px) {
+    #dayun-grid table {
+        font-size: 11px;
     }
-    
-    STATE.fullAnalysisResult = '';
-    STATE.baziData = null;
-    STATE.partnerBaziData = null;
-    STATE.isPaymentUnlocked = false;
-    STATE.isDownloadLocked = true;
-    lockDownloadButton();
-    animateButtonStretch();
-    showLoadingModal();
-    
-    // 重置进度
-    updateProgress(1, 5, '准备分析数据...');
-    
-    try {
-        // 步骤1: 收集用户数据 (5%-15%)
-        collectUserData();
-        updateProgress(1, 10, '已收集用户信息');
-        
-        const freeAnalysisText = UI.freeAnalysisText();
-        if (freeAnalysisText) {
-            freeAnalysisText.innerHTML = '<div class="loading-text">正在生成分析结果...</div>';
-        }
-        
-        displayPredictorInfo();
-        updateProgress(1, 15, '验证用户信息完成');
-        
-        // 步骤2: 生成提示词 (15%-20%)
-        const serviceModule = SERVICE_MODULES[STATE.currentService];
-        if (!serviceModule) {
-            throw new Error(`未找到服务模块: ${STATE.currentService}`);
-        }
-        
-        let prompt;
-        try {
-            prompt = serviceModule.getPrompt(STATE.userData, STATE.partnerData);
-        } catch (error) {
-            console.error('生成提示词失败:', error);
-            alert(error.message);
-            hideLoadingModal();
-            return;
-        }
-        
-        console.log('生成的分析提示词长度:', prompt.length);
-        console.log('当前服务:', STATE.currentService);
-        updateProgress(2, 25, '正在连接AI分析引擎...');
-        
-        // 步骤3: 调用DeepSeek API (20%-70%)
-        updateProgress(2, 35, 'AI正在分析您的命理信息...');
-        
-        // 模拟进度更新
-        let progressInterval = setInterval(() => {
-            const currentBar = document.getElementById('progress-bar');
-            if (currentBar) {
-                const currentWidth = parseFloat(currentBar.style.width) || 35;
-                if (currentWidth < 65) {
-                    const newWidth = currentWidth + 0.5;
-                    currentBar.style.width = newWidth + '%';
-                    const percentEl = document.getElementById('progress-percent');
-                    if (percentEl) percentEl.textContent = Math.round(newWidth) + '%';
-                }
-            }
-        }, 800);
-        
-        console.log('正在调用DeepSeek API...');
-        const analysisResult = await callDeepSeekAPI(prompt, STATE.currentService);
-        
-        clearInterval(progressInterval);
-        
-        console.log('DeepSeek API调用成功，响应长度:', analysisResult.length);
-        updateProgress(3, 75, 'AI分析完成，正在生成排盘结果...');
-        
-        // 步骤4: 处理结果 (70%-90%)
-        STATE.fullAnalysisResult = analysisResult;
-        
-        const parsedBaziData = parseBaziData(analysisResult);
-        STATE.baziData = parsedBaziData.userBazi;
-        STATE.partnerBaziData = parsedBaziData.partnerBazi;
-        
-        displayBaziPan();
-        updateProgress(3, 80, '八字排盘生成完成');
-        
-        // 解析并显示大运排盘
-        const dayunData = parseDayunData(analysisResult);
-        displayDayunPan(dayunData);
-        updateProgress(3, 85, '大运排盘生成完成');
-        
-        processAndDisplayAnalysis(analysisResult);
-        updateProgress(4, 92, '分析报告整理中...');
-        
-        hideLoadingModal();
-        updateProgress(4, 100, '✅ 分析完成！');
-        
-        showAnalysisResult();
-        
-        console.log('命理分析完成，结果已显示');
-        
-        PaymentManager.saveAnalysisBeforePayment();
-        
-        const paymentData = PaymentManager.getPaymentData();
-        if (paymentData && paymentData.verified) {
-            const savedService = localStorage.getItem('last_analysis_service');
-            if (savedService === STATE.currentService && !STATE.isPaymentUnlocked) {
-                console.log('当前服务已支付，自动解锁');
-                setTimeout(() => {
-                    PaymentManager.updateUIAfterPayment();
-                }, 500);
-            }
-        }
-        
-    } catch (error) {
-        console.error('分析失败:', error);
-        hideLoadingModal();
-        
-        let errorMessage = '命理分析失败，请稍后再试。';
-        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-            errorMessage = 'API密钥错误，请联系管理员。';
-        } else if (error.message.includes('429')) {
-            errorMessage = '请求过于频繁，请稍后再试。';
-        } else if (error.message.includes('网络') || error.message.includes('Network')) {
-            errorMessage = '网络连接失败，请检查您的网络设置。';
-        } else if (error.message.includes('超时') || error.message.includes('timeout')) {
-            errorMessage = '分析请求超时，请稍后再试。';
-        }
-        alert(errorMessage + '\n\n错误详情：' + error.message);
+    #dayun-grid th,
+    #dayun-grid td {
+        padding: 4px 6px;
     }
 }
 

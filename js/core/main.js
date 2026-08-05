@@ -281,6 +281,9 @@ import { checkAPIStatus, parseBaziData, callDeepSeekAPI } from './api.js';
 import {
     UI, initFormOptions, setDefaultValues, updateServiceDisplay,
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,
+    displayDayunPan,  // 新增
+    updateProgress,   // 新增
+    parseDayunData,   // 新增
     processAndDisplayAnalysis, showPaymentModal, closePaymentModal,
     updateUnlockInterface, showFullAnalysisContent, lockDownloadButton,
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
@@ -452,10 +455,12 @@ function preloadImages() {
 
 async function startAnalysis() {
     console.log('开始命理分析...');
+    
     if (STATE.apiStatus !== 'online') {
         alert('⚠️ API连接异常，请稍后再试或检查网络连接。');
         return;
     }
+    
     if (!validateForm()) {
         alert('请填写完整的个人信息');
         return;
@@ -475,14 +480,23 @@ async function startAnalysis() {
     animateButtonStretch();
     showLoadingModal();
     
+    // 重置进度
+    updateProgress(1, 5, '准备分析数据...');
+    
     try {
+        // 步骤1: 收集用户数据 (5%-15%)
         collectUserData();
+        updateProgress(1, 10, '已收集用户信息');
+        
         const freeAnalysisText = UI.freeAnalysisText();
         if (freeAnalysisText) {
             freeAnalysisText.innerHTML = '<div class="loading-text">正在生成分析结果...</div>';
         }
-        displayPredictorInfo();
         
+        displayPredictorInfo();
+        updateProgress(1, 15, '验证用户信息完成');
+        
+        // 步骤2: 生成提示词 (15%-20%)
         const serviceModule = SERVICE_MODULES[STATE.currentService];
         if (!serviceModule) {
             throw new Error(`未找到服务模块: ${STATE.currentService}`);
@@ -500,11 +514,34 @@ async function startAnalysis() {
         
         console.log('生成的分析提示词长度:', prompt.length);
         console.log('当前服务:', STATE.currentService);
+        updateProgress(2, 25, '正在连接AI分析引擎...');
+        
+        // 步骤3: 调用DeepSeek API (20%-70%)
+        updateProgress(2, 35, 'AI正在分析您的命理信息...');
+        
+        // 模拟进度更新
+        let progressInterval = setInterval(() => {
+            const currentBar = document.getElementById('progress-bar');
+            if (currentBar) {
+                const currentWidth = parseFloat(currentBar.style.width) || 35;
+                if (currentWidth < 65) {
+                    const newWidth = currentWidth + 0.5;
+                    currentBar.style.width = newWidth + '%';
+                    const percentEl = document.getElementById('progress-percent');
+                    if (percentEl) percentEl.textContent = Math.round(newWidth) + '%';
+                }
+            }
+        }, 800);
         
         console.log('正在调用DeepSeek API...');
         const analysisResult = await callDeepSeekAPI(prompt, STATE.currentService);
-        console.log('DeepSeek API调用成功，响应长度:', analysisResult.length);
         
+        clearInterval(progressInterval);
+        
+        console.log('DeepSeek API调用成功，响应长度:', analysisResult.length);
+        updateProgress(3, 75, 'AI分析完成，正在生成排盘结果...');
+        
+        // 步骤4: 处理结果 (70%-90%)
         STATE.fullAnalysisResult = analysisResult;
         
         const parsedBaziData = parseBaziData(analysisResult);
@@ -512,16 +549,25 @@ async function startAnalysis() {
         STATE.partnerBaziData = parsedBaziData.partnerBazi;
         
         displayBaziPan();
+        updateProgress(3, 80, '八字排盘生成完成');
+        
+        // 解析并显示大运排盘
+        const dayunData = parseDayunData(analysisResult);
+        displayDayunPan(dayunData);
+        updateProgress(3, 85, '大运排盘生成完成');
+        
         processAndDisplayAnalysis(analysisResult);
+        updateProgress(4, 92, '分析报告整理中...');
+        
         hideLoadingModal();
+        updateProgress(4, 100, '✅ 分析完成！');
+        
         showAnalysisResult();
         
         console.log('命理分析完成，结果已显示');
         
-        // 保存分析结果以便支付后恢复
         PaymentManager.saveAnalysisBeforePayment();
         
-        // 检查是否已支付
         const paymentData = PaymentManager.getPaymentData();
         if (paymentData && paymentData.verified) {
             const savedService = localStorage.getItem('last_analysis_service');
@@ -536,6 +582,7 @@ async function startAnalysis() {
     } catch (error) {
         console.error('分析失败:', error);
         hideLoadingModal();
+        
         let errorMessage = '命理分析失败，请稍后再试。';
         if (error.message.includes('401') || error.message.includes('Unauthorized')) {
             errorMessage = 'API密钥错误，请联系管理员。';
@@ -543,6 +590,8 @@ async function startAnalysis() {
             errorMessage = '请求过于频繁，请稍后再试。';
         } else if (error.message.includes('网络') || error.message.includes('Network')) {
             errorMessage = '网络连接失败，请检查您的网络设置。';
+        } else if (error.message.includes('超时') || error.message.includes('timeout')) {
+            errorMessage = '分析请求超时，请稍后再试。';
         }
         alert(errorMessage + '\n\n错误详情：' + error.message);
     }

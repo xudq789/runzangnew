@@ -3,19 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 新增 Meta Description -->
     <meta name="description" content="润藏八字提供专业的八字算命、八字排盘、命理分析服务，包括流年运程、人生详批、八字合婚等。免费测算验证，基于传统命理学说为您提供精准分析报告。">
     <title>润藏八字、八字算命、八字排盘、八字命理、命理分析服务平台</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <!-- 新增 H1 标题（隐藏显示，仅用于SEO） -->
     <h1 style="display: none;">润藏八字命理分析平台</h1>
     
-    <!-- API状态指示器 -->
     <div id="api-status" class="api-status">API状态</div>
     
-    <!-- 免责声明滚动条 -->
     <div class="disclaimer-bar">
         <div class="disclaimer-wrapper">
             <div class="disclaimer-content">
@@ -24,7 +20,6 @@
         </div>
     </div>
 
-    <!-- 导航栏 -->
     <header>
         <ul class="service-nav">
             <li><a href="#" class="active" data-service="测算验证">测算验证</a></li>
@@ -34,15 +29,12 @@
         </ul>
     </header>
 
-    <!-- 无缝长图容器 -->
     <div class="seamless-container">
-        <!-- 英雄图部分 -->
         <section class="seamless-section hero-section">
             <div class="image-placeholder">正在加载图片...</div>
             <img id="hero-image" src="https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/1-1.jpg" alt="测算验证英雄区" class="hero-image">
         </section>
 
-        <!-- 信息填写区域 -->
         <section class="seamless-section info-section">
             <div class="section-title">
                 <h2 id="form-title">测算验证信息填写</h2>
@@ -51,14 +43,12 @@
             
             <div class="form-container">
                 <div class="form-grid">
-                    <!-- 姓名 -->
                     <div class="form-group">
                         <label for="name" class="required">姓名</label>
                         <input type="text" id="name" placeholder="请输入您的姓名">
                         <div class="error" id="name-error">请输入姓名</div>
                     </div>
                     
-                    <!-- 性别 -->
                     <div class="form-group">
                         <label for="gender" class="required">性别</label>
                         <select id="gender">
@@ -69,7 +59,6 @@
                         <div class="error" id="gender-error">请选择性别</div>
                     </div>
                     
-                    <!-- 出生城市 -->
                     <div class="form-group">
                         <label for="birth-city" class="required">出生城市</label>
                         <input type="text" id="birth-city" placeholder="请输入出生城市">
@@ -77,7 +66,6 @@
                     </div>
                 </div>
                 
-                <!-- 出生时间组 -->
                 <div class="birth-time-group">
                     <label class="required">出生公历时间</label>
                     <div class="form-row">
@@ -117,7 +105,6 @@
                     </div>
                 </div>
                 
-                <!-- 伴侣信息区域 (八字合婚时显示) -->
                 <div id="partner-info-section" class="partner-info-section" style="display: none;">
                     <h3>伴侣信息</h3>
                     
@@ -185,21 +172,18 @@
                     </div>
                 </div>
                 
-                <!-- 立即测算按钮 -->
                 <button id="analyze-btn" class="dynamic-pulse-btn">
                     <span id="btn-text">立即测算</span>
                 </button>
             </div>
         </section>
 
-        <!-- 明细图部分 -->
         <section class="seamless-section detail-section">
             <div class="image-placeholder">正在加载图片...</div>
             <img id="detail-image" src="https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/1-2.jpg" alt="测算验证服务明细" class="detail-image">
         </section>
     </div>
 
-    <!-- 分析结果区域 -->
     <section id="analysis-result-section" class="analysis-result-section">
         <div class="result-container">
             <div class="section-title">
@@ -213,49 +197,34 @@
             </div>
             
             <div class="result-content">
-                <!-- 预测者信息 -->
                 <div class="predictor-info-card" id="predictor-info">
                     <h4>预测者信息</h4>
-                    <div class="predictor-info-grid" id="predictor-info-grid">
-                        <!-- 这里将通过JavaScript动态填充 -->
-                    </div>
+                    <div class="predictor-info-grid" id="predictor-info-grid"></div>
                 </div>
                 
-                <!-- 八字排盘结果 -->
                 <div class="bazi-pan-card" id="bazi-pan">
                     <h4>八字排盘结果</h4>
-                    <div class="bazi-grid" id="bazi-grid">
-                        <!-- 这里将通过JavaScript动态填充 -->
-                    </div>
+                    <div class="bazi-grid" id="bazi-grid"></div>
                 </div>
                 
-                <!-- 免费内容区域 -->
                 <div class="free-content" id="free-content">
                     <h4>免费分析内容</h4>
-                    <div id="free-analysis-text">
-                        <!-- 这里将通过JavaScript动态填充免费内容 -->
-                    </div>
+                    <div id="free-analysis-text"></div>
                 </div>
                 
-                <!-- 锁定内容区域 - 优化版 -->
                 <div class="locked-content" id="locked-content">
                     <div class="locked-overlay" id="locked-overlay">
-                        <!-- 解锁标题区域 -->
                         <div class="unlock-header">
                             <div class="lock-icon">🔒</div>
                             <h4>完整内容已锁定</h4>
                             <p>解锁完整分析报告，查看全部命理分析内容</p>
                         </div>
                         
-                        <!-- 待解锁项目列表 - 直接显示在解锁界面上方 -->
                         <div class="unlock-items">
                             <h5>解锁后可查看以下分析项目</h5>
-                            <ul id="unlock-items-list">
-                                <!-- 这里将通过JavaScript动态填充 -->
-                            </ul>
+                            <ul id="unlock-items-list"></ul>
                         </div>
                         
-                        <!-- 解锁按钮区域 -->
                         <div class="unlock-btn-container">
                             <button id="unlock-btn" class="unlock-btn">
                                 解锁完整报告 (¥<span id="unlock-price">19.9</span>)
@@ -266,15 +235,11 @@
                         </div>
                     </div>
                     
-                    <!-- 原始锁定内容（隐藏） -->
-                    <div id="locked-analysis-text" style="display: none;">
-                        <!-- 这里将通过JavaScript动态填充完整内容 -->
-                    </div>
+                    <div id="locked-analysis-text" style="display: none;"></div>
                 </div>
             </div>
             
             <div class="result-actions">
-                <!-- 下载报告按钮 - 初始为锁定状态 -->
                 <button id="download-report-btn" class="dynamic-pulse-btn download-btn-locked" style="max-width: 200px;" disabled>
                     <span id="download-btn-text">下载报告</span>
                 </button>
@@ -284,171 +249,95 @@
     </section>
 
     <!-- 支付弹窗 -->
-<div id="payment-modal" class="modal">
-    <div class="modal-content">
-        <span id="close-payment" class="close">&times;</span>
-        <h3 style="color: var(--primary-color); text-align: center; margin-bottom: 15px; font-size: 18px;">
-            支付解锁完整报告
-        </h3>
-        
-        <div class="order-info">
-            <p><strong>服务项目:</strong> <span id="payment-service-type" style="color: var(--primary-color); font-weight: 600;"></span></p>
-            <p><strong>支付金额:</strong> <span id="payment-amount" style="color: var(--secondary-color); font-weight: bold; font-size: 16px;"></span></p>
-            <p><strong>订单编号:</strong> <span id="payment-order-id" style="color: #7d6e63; font-family: monospace;"></span></p>
-            <p><strong>支付方式:</strong> <span style="color: #1677FF; font-weight: 600;">支付宝安全支付</span></p>
-        </div>
-        
-        <!-- 支付方式选择将动态生成 -->
-        <div class="payment-methods" style="text-align: center; margin: 20px 0;">
-            <div id="alipay-redirect-container">
-                <!-- 支付宝跳转按钮将动态插入 -->
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-payment" class="close">&times;</span>
+            <h3 style="color: var(--primary-color); text-align: center; margin-bottom: 15px; font-size: 18px;">
+                支付解锁完整报告
+            </h3>
+            
+            <div class="order-info">
+                <p><strong>服务项目:</strong> <span id="payment-service-type" style="color: var(--primary-color); font-weight: 600;"></span></p>
+                <p><strong>支付金额:</strong> <span id="payment-amount" style="color: var(--secondary-color); font-weight: bold; font-size: 16px;"></span></p>
+                <p><strong>订单编号:</strong> <span id="payment-order-id" style="color: #7d6e63; font-family: monospace;"></span></p>
+                <p><strong>支付方式:</strong> <span style="color: #1677FF; font-weight: 600;">支付宝安全支付</span></p>
+            </div>
+            
+            <div class="payment-methods" style="text-align: center; margin: 20px 0;">
+                <div id="alipay-redirect-container"></div>
+            </div>
+            
+            <div style="text-align: center; margin: 15px 0; padding: 12px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #1677FF; font-size: 14px;">
+                <p id="payment-status-text">请在新打开的支付宝页面完成支付</p>
+                <p style="font-size: 13px; color: #7d6e63; margin-top: 8px;">
+                    支付完成后，页面将自动刷新解锁内容<br>
+                    如遇问题，可点击下方"我已支付"手动确认
+                </p>
+            </div>
+            
+            <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+                <button id="confirm-payment-btn" class="dynamic-pulse-btn" style="max-width: 150px; padding: 10px 20px; font-size: 14px; background: linear-gradient(135deg, #5c3d2e, #7d6e63);">
+                    <span>我已支付</span>
+                </button>
+                <button id="cancel-payment-btn" class="dynamic-pulse-btn" style="max-width: 150px; padding: 10px 20px; font-size: 14px; background: linear-gradient(135deg, #666, #999);">
+                    <span>取消支付</span>
+                </button>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 10px; background-color: #fff8e1; border-radius: 6px; font-size: 12px; color: #7d6e63; text-align: left;">
+                <p style="margin: 5px 0;"><strong>安全提示：</strong></p>
+                <ul style="margin: 5px 0; padding-left: 20px;">
+                    <li>支付过程由支付宝官方安全系统保障</li>
+                    <li>本平台不存储您的支付密码等敏感信息</li>
+                    <li>支付成功后请及时下载报告，关闭页面后无法找回</li>
+                    <li>如有问题，请联系客服微信：runzang888</li>
+                </ul>
             </div>
         </div>
-        
-        <div style="text-align: center; margin: 15px 0; padding: 12px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #1677FF; font-size: 14px;">
-            <p id="payment-status-text">请在新打开的支付宝页面完成支付</p>
-            <p style="font-size: 13px; color: #7d6e63; margin-top: 8px;">
-                支付完成后，页面将自动刷新解锁内容<br>
-                如遇问题，可点击下方"我已支付"手动确认
+    </div>
+
+    <!-- 加载弹窗 - 优化版 -->
+    <div id="loading-modal" class="modal">
+        <div class="modal-content" style="text-align: center; padding: 40px 25px; max-width: 450px;">
+            <div class="spinner"></div>
+            <div class="loading-text" id="loading-title">润藏八字正在为您进行深度命理分析</div>
+            
+            <div style="margin: 25px 0 15px 0;">
+                <div style="background: #f0f0f0; border-radius: 10px; height: 8px; overflow: hidden; width: 100%;">
+                    <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-radius: 10px; transition: width 0.5s ease;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: #999;">
+                    <span id="progress-label">准备分析...</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+            </div>
+            
+            <div id="progress-steps" style="text-align: left; margin: 15px 0; padding: 15px; background: #f8f5f0; border-radius: 8px; font-size: 13px; color: #666; min-height: 80px;">
+                <div id="step-1" style="display: flex; align-items: center; gap: 10px; padding: 6px 0; opacity: 0.5;">
+                    <span style="color: var(--secondary-color);">⏳</span>
+                    <span>准备分析数据...</span>
+                </div>
+                <div id="step-2" style="display: flex; align-items: center; gap: 10px; padding: 6px 0; opacity: 0.3;">
+                    <span>⏳</span>
+                    <span>调用AI进行命理分析...</span>
+                </div>
+                <div id="step-3" style="display: flex; align-items: center; gap: 10px; padding: 6px 0; opacity: 0.3;">
+                    <span>⏳</span>
+                    <span>生成八字排盘结果...</span>
+                </div>
+                <div id="step-4" style="display: flex; align-items: center; gap: 10px; padding: 6px 0; opacity: 0.3;">
+                    <span>⏳</span>
+                    <span>整理分析报告...</span>
+                </div>
+            </div>
+            
+            <p style="color: #7d6e63; margin-top: 10px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span>⏱️</span>
+                <span id="loading-timer">预计需要 1-3 分钟，请耐心等待</span>
             </p>
         </div>
-        
-        <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
-            <button id="confirm-payment-btn" class="dynamic-pulse-btn" style="max-width: 150px; padding: 10px 20px; font-size: 14px; background: linear-gradient(135deg, #5c3d2e, #7d6e63);">
-                <span>我已支付</span>
-            </button>
-            <button id="cancel-payment-btn" class="dynamic-pulse-btn" style="max-width: 150px; padding: 10px 20px; font-size: 14px; background: linear-gradient(135deg, #666, #999);">
-                <span>取消支付</span>
-            </button>
-        </div>
-        
-        <!-- 支付安全提示 -->
-        <div style="margin-top: 20px; padding: 10px; background-color: #fff8e1; border-radius: 6px; font-size: 12px; color: #7d6e63; text-align: left;">
-            <p style="margin: 5px 0;"><strong>安全提示：</strong></p>
-            <ul style="margin: 5px 0; padding-left: 20px;">
-                <li>支付过程由支付宝官方安全系统保障</li>
-                <li>本平台不存储您的支付密码等敏感信息</li>
-                <li>支付成功后请及时下载报告，关闭页面后无法找回</li>
-                <li>如有问题，请联系客服微信：runzang888</li>
-            </ul>
-        </div>
-    </div>
-</div>
-
-    <!-- 加载弹窗 -->
-    <div id="loading-modal" class="modal">
-        <div class="modal-content" style="text-align: center; padding: 40px 25px;">
-            <div class="spinner"></div>
-            <div class="loading-text">润藏八字正在为您进行深度命理分析，请稍候...</div>
-            <p style="color: #7d6e63; margin-top: 15px; font-size: 14px;">大约需要1-3分钟，不要关闭</p>
-        </div>
     </div>
 
-    <!-- 模块化JavaScript文件 -->
     <script src="js/core/main.js" type="module"></script>
 </body>
 </html>
-
-<script>
-// 应急解锁按钮
-const emergencyBtn = document.getElementById('emergency-unlock-btn');
-
-// 检查是否需要显示应急按钮
-function checkEmergency() {
-    try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const hasAlipayCallback = urlParams.has('out_trade_no');
-        const lockedOverlay = document.getElementById('locked-overlay');
-        const isLocked = lockedOverlay && lockedOverlay.style.display !== 'none';
-        
-        if (hasAlipayCallback && isLocked) {
-            emergencyBtn.style.display = 'block';
-        }
-    } catch (error) {
-        console.error('应急检查失败:', error);
-    }
-}
-
-// 应急解锁功能
-if (emergencyBtn) {
-    emergencyBtn.addEventListener('click', function() {
-        // 获取订单号
-        const urlParams = new URLSearchParams(window.location.search);
-        const orderId = urlParams.get('out_trade_no');
-        
-        if (orderId) {
-            // 标记为已支付
-            localStorage.setItem('paid_order_id', orderId);
-            
-            // 检查 PaymentManager 是否已定义
-            if (window.PaymentManager && typeof window.PaymentManager.unlockContent === 'function') {
-                // 使用全局的 PaymentManager 解锁
-                window.PaymentManager.unlockContent(orderId);
-            } else {
-                // 直接解锁内容（简化版）
-                unlockAllContent();
-            }
-            
-            // 清理URL
-            try {
-                window.history.replaceState({}, '', window.location.pathname);
-            } catch (e) {
-                console.log('URL清理失败:', e);
-            }
-            
-            // 隐藏按钮
-            this.style.display = 'none';
-            
-            alert('✅ 应急解锁成功！');
-        } else {
-            alert('未找到订单号');
-        }
-    });
-}
-
-// 直接解锁内容的函数（当 PaymentManager 不可用时）
-function unlockAllContent() {
-    // 设置状态
-    if (window.STATE) {
-        window.STATE.isPaymentUnlocked = true;
-        window.STATE.isDownloadLocked = false;
-    }
-    
-    // 解锁界面
-    const lockedOverlay = document.getElementById('locked-overlay');
-    if (lockedOverlay) {
-        // 更新解锁界面
-        const lockIcon = lockedOverlay.querySelector('.lock-icon');
-        const headerTitle = lockedOverlay.querySelector('h4');
-        const headerDesc = lockedOverlay.querySelector('p');
-        
-        if (lockIcon) lockIcon.textContent = '✅';
-        if (headerTitle) headerTitle.textContent = '完整报告已解锁';
-        if (headerDesc) headerDesc.textContent = '您可以查看全部命理分析内容';
-        
-        // 解锁下载按钮
-        const downloadBtn = document.getElementById('download-report-btn');
-        if (downloadBtn) {
-            downloadBtn.disabled = false;
-            downloadBtn.classList.remove('download-btn-locked');
-            const downloadBtnText = document.getElementById('download-btn-text');
-            if (downloadBtnText) downloadBtnText.textContent = '下载报告';
-        }
-        
-        // 显示完整内容
-        const lockedAnalysisText = document.getElementById('locked-analysis-text');
-        const freeAnalysisText = document.getElementById('free-analysis-text');
-        if (lockedAnalysisText && lockedAnalysisText.textContent.trim() && freeAnalysisText) {
-            const currentContent = freeAnalysisText.innerHTML;
-            freeAnalysisText.innerHTML = currentContent + lockedAnalysisText.innerHTML;
-        }
-    }
-}
-
-// 页面加载后检查
-window.addEventListener('load', checkEmergency);
-</script>
-
-
-
-

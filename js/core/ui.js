@@ -4,7 +4,6 @@ import { SERVICES, STATE, API_CONFIG } from './config.js';
 
 // UI元素集合
 export const UI = {
-    // 表单元素
     name: () => DOM.id('name'),
     gender: () => DOM.id('gender'),
     birthCity: () => DOM.id('birth-city'),
@@ -14,7 +13,6 @@ export const UI = {
     birthHour: () => DOM.id('birth-hour'),
     birthMinute: () => DOM.id('birth-minute'),
     
-    // 伴侣信息元素
     partnerName: () => DOM.id('partner-name'),
     partnerGender: () => DOM.id('partner-gender'),
     partnerBirthCity: () => DOM.id('partner-birth-city'),
@@ -24,7 +22,6 @@ export const UI = {
     partnerBirthHour: () => DOM.id('partner-birth-hour'),
     partnerBirthMinute: () => DOM.id('partner-birth-minute'),
     
-    // 按钮
     analyzeBtn: () => DOM.id('analyze-btn'),
     unlockBtn: () => DOM.id('unlock-btn'),
     downloadReportBtn: () => DOM.id('download-report-btn'),
@@ -33,15 +30,12 @@ export const UI = {
     cancelPaymentBtn: () => DOM.id('cancel-payment-btn'),
     closePaymentBtn: () => DOM.id('close-payment'),
     
-    // 图片
     heroImage: () => DOM.id('hero-image'),
     detailImage: () => DOM.id('detail-image'),
     
-    // 模态框
     paymentModal: () => DOM.id('payment-modal'),
     loadingModal: () => DOM.id('loading-modal'),
     
-    // 结果区域
     analysisResultSection: () => DOM.id('analysis-result-section'),
     predictorInfoGrid: () => DOM.id('predictor-info-grid'),
     baziGrid: () => DOM.id('bazi-grid'),
@@ -53,13 +47,11 @@ export const UI = {
     resultServiceName: () => DOM.id('result-service-name'),
     analysisTime: () => DOM.id('analysis-time'),
     
-    // 支付弹窗
     paymentServiceType: () => DOM.id('payment-service-type'),
     paymentAmount: () => DOM.id('payment-amount'),
     paymentOrderId: () => DOM.id('payment-order-id')
 };
 
-// 初始化表单选项
 export function initFormOptions() {
     const years = [];
     for (let i = 1900; i <= 2024; i++) years.push(i);
@@ -92,7 +84,6 @@ export function initFormOptions() {
     fillSelect('partner-birth-minute', minutes, '分');
 }
 
-// 设置默认表单值
 export function setDefaultValues() {
     UI.name().value = '张三';
     UI.gender().value = 'male';
@@ -112,7 +103,6 @@ export function setDefaultValues() {
     UI.partnerBirthMinute().value = 30;
 }
 
-// 更新服务显示
 export function updateServiceDisplay(serviceName) {
     DOM.getAll('.service-nav a').forEach(link => {
         link.classList.remove('active');
@@ -151,7 +141,6 @@ export function updateServiceDisplay(serviceName) {
     updateUnlockInfo();
 }
 
-// 更新解锁价格和项目
 export function updateUnlockInfo() {
     const serviceConfig = SERVICES[STATE.currentService];
     if (!serviceConfig) return;
@@ -179,7 +168,6 @@ export function updateUnlockInfo() {
     }
 }
 
-// 显示预测者信息
 export function displayPredictorInfo() {
     const predictorInfoGrid = UI.predictorInfoGrid();
     if (!predictorInfoGrid || !STATE.userData) return;
@@ -215,7 +203,6 @@ export function displayPredictorInfo() {
     });
 }
 
-// 显示八字排盘结果
 export function displayBaziPan() {
     const baziGrid = UI.baziGrid();
     if (!baziGrid) return;
@@ -329,7 +316,6 @@ export function displayBaziPan() {
     }
 }
 
-// 计算伴侣八字
 function calculatePartnerBazi() {
     if (!STATE.partnerData) return null;
     return calculateBazi({
@@ -341,7 +327,206 @@ function calculatePartnerBazi() {
     });
 }
 
-// 处理并显示分析结果
+// ============ 新增：大运排盘显示 ============
+export function displayDayunPan(dayunData) {
+    console.log('显示大运排盘...', dayunData);
+    
+    let dayunCard = DOM.id('dayun-pan-card');
+    if (!dayunCard) {
+        const baziPan = DOM.id('bazi-pan');
+        if (baziPan) {
+            const card = document.createElement('div');
+            card.id = 'dayun-pan-card';
+            card.className = 'dayun-pan-card';
+            card.style.display = 'block';
+            card.innerHTML = `
+                <h4>大运排盘</h4>
+                <div id="dayun-grid"></div>
+            `;
+            baziPan.parentNode.insertBefore(card, baziPan.nextSibling);
+            dayunCard = card;
+        }
+    }
+    
+    if (!dayunCard) return;
+    
+    const dayunGrid = DOM.id('dayun-grid');
+    if (!dayunGrid) return;
+    
+    dayunGrid.innerHTML = '';
+    
+    if (!dayunData || !dayunData.ages || !dayunData.dayuns || dayunData.ages.length === 0) {
+        dayunGrid.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">暂无大运数据</p>';
+        return;
+    }
+    
+    const table = document.createElement('table');
+    table.style.cssText = 'width:100%; border-collapse: collapse; margin-top: 10px;';
+    
+    const trHeader = document.createElement('tr');
+    const thLabel = document.createElement('th');
+    thLabel.textContent = '大运';
+    thLabel.style.cssText = 'padding: 8px 12px; background: var(--primary-color); color: white; text-align: center; font-weight: 600;';
+    trHeader.appendChild(thLabel);
+    
+    const ages = dayunData.ages || [];
+    ages.forEach(age => {
+        const th = document.createElement('th');
+        th.textContent = age + '岁';
+        th.style.cssText = 'padding: 8px 12px; background: var(--primary-color); color: white; text-align: center; font-weight: 600;';
+        trHeader.appendChild(th);
+    });
+    table.appendChild(trHeader);
+    
+    const trDayun = document.createElement('tr');
+    const tdLabel = document.createElement('td');
+    tdLabel.textContent = '干支';
+    tdLabel.style.cssText = 'padding: 8px 12px; background: #f5f1e8; text-align: center; font-weight: 600; color: var(--dark-color);';
+    trDayun.appendChild(tdLabel);
+    
+    const dayuns = dayunData.dayuns || [];
+    dayuns.forEach(dayun => {
+        const td = document.createElement('td');
+        td.textContent = dayun;
+        td.style.cssText = 'padding: 8px 12px; text-align: center; font-weight: 500; color: var(--primary-color); border-bottom: 1px solid #eee;';
+        trDayun.appendChild(td);
+    });
+    table.appendChild(trDayun);
+    
+    if (dayunData.elements && dayunData.elements.length > 0) {
+        const trElement = document.createElement('tr');
+        const tdElementLabel = document.createElement('td');
+        tdElementLabel.textContent = '纳音';
+        tdElementLabel.style.cssText = 'padding: 8px 12px; background: #f5f1e8; text-align: center; font-weight: 600; color: var(--dark-color);';
+        trElement.appendChild(tdElementLabel);
+        
+        dayunData.elements.forEach(element => {
+            const td = document.createElement('td');
+            td.textContent = element || '';
+            td.style.cssText = 'padding: 8px 12px; text-align: center; font-size: 13px; color: #666; border-bottom: 1px solid #eee;';
+            trElement.appendChild(td);
+        });
+        table.appendChild(trElement);
+    }
+    
+    dayunGrid.appendChild(table);
+    dayunCard.style.display = 'block';
+}
+
+// ============ 新增：进度更新函数 ============
+export function updateProgress(step, percent, message) {
+    console.log(`📊 进度更新: step=${step}, percent=${percent}%, message=${message}`);
+    
+    const progressBar = DOM.id('progress-bar');
+    const progressPercent = DOM.id('progress-percent');
+    const progressLabel = DOM.id('progress-label');
+    
+    if (progressBar) {
+        progressBar.style.width = Math.min(percent, 100) + '%';
+    }
+    if (progressPercent) {
+        progressPercent.textContent = Math.min(percent, 100) + '%';
+    }
+    if (progressLabel) {
+        progressLabel.textContent = message || '处理中...';
+    }
+    
+    const steps = [
+        { id: 'step-1', text: '准备分析数据...' },
+        { id: 'step-2', text: '调用AI进行命理分析...' },
+        { id: 'step-3', text: '生成八字排盘结果...' },
+        { id: 'step-4', text: '整理分析报告...' }
+    ];
+    
+    steps.forEach((s, index) => {
+        const el = DOM.id(s.id);
+        if (el) {
+            const stepNum = index + 1;
+            if (stepNum < step) {
+                el.style.opacity = '1';
+                const span = el.querySelector('span:first-child');
+                if (span) span.textContent = '✅';
+                el.style.color = 'var(--success-color)';
+                el.style.animation = 'none';
+            } else if (stepNum === step) {
+                el.style.opacity = '1';
+                const span = el.querySelector('span:first-child');
+                if (span) span.textContent = '⏳';
+                el.style.color = 'var(--secondary-color)';
+                el.style.animation = 'pulseStep 1s ease-in-out infinite';
+            } else {
+                el.style.opacity = '0.4';
+                const span = el.querySelector('span:first-child');
+                if (span) span.textContent = '⏳';
+                el.style.color = '#999';
+                el.style.animation = 'none';
+            }
+        }
+    });
+}
+
+// ============ 新增：解析大运数据 ============
+export function parseDayunData(analysisResult) {
+    console.log('解析大运数据...');
+    
+    const result = {
+        ages: [],
+        dayuns: [],
+        elements: []
+    };
+    
+    const dayunMatch = analysisResult.match(/【大运排盘】([\s\S]*?)(?=【|$)/);
+    if (!dayunMatch) {
+        console.log('未找到大运排盘数据');
+        return result;
+    }
+    
+    const dayunText = dayunMatch[1];
+    
+    const ageMatch = dayunText.match(/岁[：:]\s*([\d\s]+)/);
+    if (ageMatch) {
+        const ageStr = ageMatch[1].trim();
+        result.ages = ageStr.split(/\s+/).map(Number).filter(a => !isNaN(a));
+    }
+    
+    const dayunMatch2 = dayunText.match(/大运[：:]\s*([^\n]+)/);
+    if (dayunMatch2) {
+        const dayunStr = dayunMatch2[1].trim();
+        result.dayuns = dayunStr.split(/\s+/).filter(d => d.length > 0);
+    }
+    
+    if (result.ages.length === 0 || result.dayuns.length === 0) {
+        const lines = dayunText.split('\n');
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.includes('岁')) {
+                const nums = trimmed.match(/\d+/g);
+                if (nums) {
+                    result.ages = nums.map(Number);
+                }
+            }
+            if (trimmed.includes('大运') && !trimmed.includes('起运')) {
+                const parts = trimmed.split(/[：:]\s*/);
+                if (parts.length > 1) {
+                    const dayunStr = parts[1].trim();
+                    const dayunList = dayunStr.split(/\s+/).filter(d => d.length > 0 && /[\u4e00-\u9fa5]/.test(d));
+                    if (dayunList.length > 0) {
+                        result.dayuns = dayunList;
+                    }
+                }
+            }
+        }
+    }
+    
+    const maxLen = Math.min(8, result.ages.length, result.dayuns.length);
+    result.ages = result.ages.slice(0, maxLen);
+    result.dayuns = result.dayuns.slice(0, maxLen);
+    
+    console.log('解析到的大运数据:', result);
+    return result;
+}
+
+// ============ 原有函数 ============
 export function processAndDisplayAnalysis(result) {
     const freeSections = ['【八字排盘】', '【大运排盘】', '【八字喜用分析】', '【性格特点】', '【适宜行业职业推荐】'];
     let freeContent = '';
@@ -350,7 +535,7 @@ export function processAndDisplayAnalysis(result) {
     for (let i = 1; i < sections.length; i++) {
         const section = '【' + sections[i];
         const sectionTitle = section.split('】')[0] + '】';
-        if (sectionTitle === '【八字排盘】' || sectionTitle === '【大运排盘】') continue;
+        if (sectionTitle === '【八字排盘】') continue;
         if (freeSections.includes(sectionTitle)) {
             freeContent += section + '\n\n';
         } else {
@@ -410,7 +595,6 @@ export function processAndDisplayAnalysis(result) {
     }
 }
 
-// 显示支付弹窗
 export async function showPaymentModal() {
     console.log('调用支付接口...');
     const serviceConfig = SERVICES[STATE.currentService];
@@ -511,7 +695,6 @@ export async function showPaymentModal() {
     }
 }
 
-// 轮询支付状态
 function startPollingPaymentStatus(orderId) {
     let pollCount = 0;
     const maxPolls = 60;
@@ -560,7 +743,6 @@ function startPollingPaymentStatus(orderId) {
     }, pollInterval);
 }
 
-// 更新支付状态提示
 function updatePaymentStatusText(text) {
     let statusElement = document.getElementById('payment-status-text');
     if (!statusElement) {
@@ -576,7 +758,6 @@ function updatePaymentStatusText(text) {
     if (statusElement) statusElement.textContent = text;
 }
 
-// 直接处理支付成功
 function handlePaymentSuccessDirect(orderId) {
     STATE.isPaymentUnlocked = true;
     STATE.isDownloadLocked = false;
@@ -595,7 +776,6 @@ function handlePaymentSuccessDirect(orderId) {
     }
 }
 
-// 关闭支付弹窗
 export function closePaymentModal() {
     const paymentModal = UI.paymentModal();
     if (paymentModal) {
@@ -608,7 +788,6 @@ export function closePaymentModal() {
     }
 }
 
-// 更新解锁界面状态
 export function updateUnlockInterface() {
     const lockedOverlay = DOM.id('locked-overlay');
     if (!lockedOverlay) return;
@@ -646,7 +825,6 @@ export function updateUnlockInterface() {
     }
 }
 
-// 显示完整分析内容
 export function showFullAnalysisContent() {
     const lockedAnalysisText = UI.lockedAnalysisText();
     const freeAnalysisText = UI.freeAnalysisText();
@@ -655,7 +833,6 @@ export function showFullAnalysisContent() {
     }
 }
 
-// 锁定下载按钮
 export function lockDownloadButton() {
     const downloadBtn = UI.downloadReportBtn();
     const downloadBtnText = DOM.id('download-btn-text');
@@ -667,7 +844,6 @@ export function lockDownloadButton() {
     }
 }
 
-// 解锁下载按钮
 export function unlockDownloadButton() {
     const downloadBtn = UI.downloadReportBtn();
     const downloadBtnText = DOM.id('download-btn-text');
@@ -681,7 +857,6 @@ export function unlockDownloadButton() {
     }
 }
 
-// 重置解锁界面
 export function resetUnlockInterface() {
     const lockedOverlay = DOM.id('locked-overlay');
     if (!lockedOverlay) return;
@@ -724,7 +899,6 @@ export function resetUnlockInterface() {
     }
 }
 
-// 按钮拉伸动画
 export function animateButtonStretch() {
     const button = UI.analyzeBtn();
     if (!button) return;
@@ -738,7 +912,6 @@ export function animateButtonStretch() {
     }, 800);
 }
 
-// 显示加载弹窗
 export function showLoadingModal() {
     const loadingModal = UI.loadingModal();
     if (loadingModal) {
@@ -747,7 +920,6 @@ export function showLoadingModal() {
     }
 }
 
-// 隐藏加载弹窗
 export function hideLoadingModal() {
     const loadingModal = UI.loadingModal();
     if (loadingModal) {
@@ -756,7 +928,6 @@ export function hideLoadingModal() {
     }
 }
 
-// 显示分析结果区域
 export function showAnalysisResult() {
     const analysisResultSection = UI.analysisResultSection();
     if (analysisResultSection) {
@@ -766,7 +937,6 @@ export function showAnalysisResult() {
     }
 }
 
-// 隐藏分析结果区域
 export function hideAnalysisResult() {
     const analysisResultSection = UI.analysisResultSection();
     if (analysisResultSection) {
@@ -774,14 +944,12 @@ export function hideAnalysisResult() {
     }
 }
 
-// 重置表单错误状态
 export function resetFormErrors() {
     DOM.getAll('.error').forEach(error => {
         error.style.display = 'none';
     });
 }
 
-// 验证表单
 export function validateForm() {
     let isValid = true;
     resetFormErrors();
@@ -820,7 +988,6 @@ export function validateForm() {
     return isValid;
 }
 
-// 收集用户数据
 export function collectUserData() {
     STATE.userData = {
         name: UI.name().value,

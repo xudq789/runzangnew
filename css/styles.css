@@ -1167,3 +1167,72 @@ input:focus, select:focus {
         grid-template-columns: 1fr;
     }
 }
+
+/* 进度步骤动画 */
+@keyframes pulseStep {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* 大运排盘卡片 */
+#dayun-pan-card {
+    display: none;
+    margin-top: 20px;
+}
+
+#dayun-grid table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+#dayun-grid th,
+#dayun-grid td {
+    padding: 10px 14px;
+    text-align: center;
+    border: 1px solid #eee;
+}
+
+#dayun-grid th {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
+}
+
+#dayun-grid td {
+    background: #faf8f5;
+}
+
+#dayun-grid tr:nth-child(2) td {
+    background: #fff;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+#dayun-grid tr:last-child td {
+    font-size: 13px;
+    color: #888;
+}
+
+/* 响应式大运表格 */
+@media (max-width: 768px) {
+    #dayun-grid table {
+        font-size: 12px;
+    }
+    #dayun-grid th,
+    #dayun-grid td {
+        padding: 6px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    #dayun-grid table {
+        font-size: 11px;
+    }
+    #dayun-grid th,
+    #dayun-grid td {
+        padding: 4px 6px;
+    }
+}

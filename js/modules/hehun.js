@@ -1,6 +1,4 @@
-// 八字合婚模块
-import { calculateBazi } from '../core/utils.js';
-
+// hehun.js
 export class HehunModule {
     static getServiceConfig() {
         return {
@@ -18,107 +16,49 @@ export class HehunModule {
         };
     }
     
-    static getPrompt(userData, partnerData) {
+    static getPrompt(userData, partnerData = null, baziText = '') {
         if (!partnerData) {
             throw new Error('伴侣信息是八字合婚服务的必填项');
         }
         
-        return `任务：你是职业命理大师，精通梁湘润论命体系。请根据双方出生信息，严格执行真太阳时排盘，进行八字合婚分析。
+        // 对于合婚，baziText 已经包含了双方的八字信息
+        return `任务：你是职业命理大师，精通梁湘润论命体系。请根据以下已排盘好的八字信息进行八字合婚分析。
 
 【用户信息】
 姓名：${userData.name}
 性别：${userData.gender}
-出生时间：${userData.birthYear}年${userData.birthMonth}月${userData.birthDay}日${userData.birthHour}时${userData.birthMinute}分
 出生城市：${userData.birthCity}
 
 【伴侣信息】
 姓名：${partnerData.partnerName}
 性别：${partnerData.partnerGender}
-出生时间：${partnerData.partnerBirthYear}年${partnerData.partnerBirthMonth}月${partnerData.partnerBirthDay}日${partnerData.partnerBirthHour}时${partnerData.partnerBirthMinute}分
 出生城市：${partnerData.partnerBirthCity}
 
-【计算步骤】（必须按顺序执行，双方各自计算）
+${baziText}
 
-第1步：真太阳时计算（双方各自计算）
-根据出生城市经度，将北京时间换算为真太阳时。
-公式：真太阳时 = 北京时间 - (120 - 当地经度) × 4分钟
-
-第2步：确定时辰（双方各自确定）
-根据真太阳时确定对应的地支时辰
-
-第3步：八字排盘（双方各自排盘，日柱必须精确计算！）
-
-第4步：大运排盘（双方各自排盘）
-起运岁数计算，必须分步执行：
-第一步：判断年柱天干阴阳与命主性别，确定顺排或逆排。
-第二步：找"节"（立春、惊蛰、清明、立夏、芒种、小暑、立秋、白露、寒露、立冬、大雪、小寒）。顺排找未来最近的"节"，逆排找过去最近的"节"，计算精确天数（保留小数）。
-第三步：天数 ÷ 3 = 精确起运岁数（保留小数）。
-第四步：取整为整数岁数输出。
-
-【自检机制】
-输出前必须检查：真太阳时对应的时辰 === 八字时柱的地支。不相等则重新计算。
-
-【输出格式】
-使用纯文本，不使用markdown符号。严格按照以下格式：
-
-【用户八字排盘】
-年柱：[年柱干支] ([纳音])
-月柱：[月柱干支] ([纳音])
-日柱：[日柱干支] ([纳音])
-时柱：[时柱干支] ([纳音])
-
-【用户大运排盘】
-岁：[第一步大运岁数] [第二步] [第三步] [第四步] [第五步] [第六步] [第七步] [第八步]
-大运：[第一步大运干支] [第二步] [第三步] [第四步] [第五步] [第六步] [第七步] [第八步]
-
-【伴侣八字排盘】
-年柱：[年柱干支] ([纳音])
-月柱：[月柱干支] ([纳音])
-日柱：[日柱干支] ([纳音])
-时柱：[时柱干支] ([纳音])
-
-【伴侣大运排盘】
-岁：[第一步大运岁数] [第二步] [第三步] [第四步] [第五步] [第六步] [第七步] [第八步]
-大运：[第一步大运干支] [第二步] [第三步] [第四步] [第五步] [第六步] [第七步] [第八步]
-
-【八字喜用分析】
-索引《穷通宝鉴》分析调侯用神
-索引《子平真诠》分析格局用神
-索引《三命通会》日时断分析日时柱吉凶
-
+请解读以下内容（每个部分以【标题】开头）：
 【性格特点】
-详细解读用户性格特点（优点、缺点、个性倾向）
+详细解读双方性格特点
 
 【双方八字契合度分析】
 分析双方八字的契合程度
-五行互补分析
-十神关系分析
 
 【感情发展趋势解读】
 解读双方感情发展的趋势
-指出关键时期和注意事项
 
 【婚姻稳定性分析】
 分析双方婚姻的稳定性
-指出潜在问题和解决方法
 
 【双方性格匹配度分析】
 分析双方性格的匹配程度
-指出互补和冲突的方面
 
 【婚姻建议和注意事项】
 提供婚姻生活的具体建议
-列出需要注意的事项
 
 要求：
 1. 回复字数3000-3200字
 2. 纯文本格式，不用markdown符号
 3. 专业详细但易懂
-4. 不要用"首先"、"然后"等连接词
-5. 每个部分以【标题】开头`;
-    }
-    
-    static calculateBazi(userData) {
-        return calculateBazi(userData);
+4. 每个部分以【标题】开头`;
     }
 }

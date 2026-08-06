@@ -616,7 +616,7 @@ async function startAnalysis() {
             STATE.dayunData = dayunData;
             // 强制刷新大运显示
             displayDayunPan(dayunData);
-            console.log('✅ 已从 DeepSeek 解析并显示真实大运数据:', dayunData);
+            console.log('✅ 已从 DeepSeek 解析并显示大运数据，共', dayunData.dayuns.length, '步:', dayunData);
         } else {
             console.warn('⚠️ 未能从 DeepSeek 解析到大运数据');
             // 显示提示信息

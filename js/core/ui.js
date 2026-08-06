@@ -208,7 +208,6 @@ export function displayBaziPan() {
     if (!baziGrid) return;
     baziGrid.innerHTML = '';
     
-    // 直接从 STATE.baziData 读取（来自 lunar-python 排盘）
     const bazi = STATE.baziData;
     if (!bazi) {
         console.warn('没有排盘数据');
@@ -256,7 +255,6 @@ function calculatePartnerBazi() {
 export function displayDayunPan(dayunData) {
     console.log('📊 显示大运排盘...', dayunData);
     
-    // 查找或创建大运卡片
     let dayunCard = document.getElementById('dayun-pan-card');
     if (!dayunCard) {
         const baziPan = document.getElementById('bazi-pan');
@@ -318,14 +316,14 @@ export function displayDayunPan(dayunData) {
         return;
     }
     
-    // 只显示前8步大运
-    const displayList = dayunList.slice(0, 8);
+    // 显示所有大运（不限制只显示8步）
+    const displayList = dayunList;
     
     // 构建大运表格
     const table = document.createElement('table');
     table.style.cssText = 'width:100%; border-collapse: collapse; margin-top: 10px; border-radius: 8px; overflow: hidden;';
     
-    // 表头
+    // 表头 - 动态列数
     const trHeader = document.createElement('tr');
     const thLabel = document.createElement('th');
     thLabel.textContent = '大运';
@@ -341,7 +339,7 @@ export function displayDayunPan(dayunData) {
             ageLabel = `${startAge + index * 10}岁`;
         }
         th.textContent = ageLabel;
-        th.style.cssText = `padding: 8px 12px; background: ${index % 2 === 0 ? 'var(--primary-color)' : '#a0522d'}; color: white; text-align: center; font-weight: 600;`;
+        th.style.cssText = `padding: 8px 12px; background: ${index % 2 === 0 ? 'var(--primary-color)' : '#a0522d'}; color: white; text-align: center; font-weight: 600; white-space: nowrap;`;
         trHeader.appendChild(th);
     });
     table.appendChild(trHeader);
@@ -356,7 +354,7 @@ export function displayDayunPan(dayunData) {
     displayList.forEach((dy, index) => {
         const td = document.createElement('td');
         td.textContent = dy.ganzhi || '--';
-        td.style.cssText = `padding: 8px 12px; text-align: center; font-weight: 500; color: var(--primary-color); ${index % 2 === 0 ? 'background: #faf8f5;' : 'background: #fff;'}`;
+        td.style.cssText = `padding: 8px 12px; text-align: center; font-weight: 500; color: var(--primary-color); ${index % 2 === 0 ? 'background: #faf8f5;' : 'background: #fff;'}; white-space: nowrap;`;
         trGanzhi.appendChild(td);
     });
     table.appendChild(trGanzhi);
@@ -430,11 +428,7 @@ export function parseDayunData(analysisResult) {
         }
     }
     
-    const maxLen = Math.min(8, result.ages.length, result.dayuns.length);
-    result.ages = result.ages.slice(0, maxLen);
-    result.dayuns = result.dayuns.slice(0, maxLen);
-    result.elements = result.elements.slice(0, maxLen);
-    
+    // 不限制长度，返回所有解析到的大运数据
     console.log('✅ 大运数据:', result);
     return result;
 }
@@ -443,7 +437,6 @@ export function parseDayunData(analysisResult) {
 export function updateProgress(currentStep, totalSteps, stepName, percent, message) {
     console.log(`📊 进度: ${stepName} (${currentStep}/${totalSteps}) ${percent}%`);
     
-    // 更新进度条
     const progressBar = document.getElementById('progress-bar');
     const progressPercent = document.getElementById('progress-percent');
     const progressLabel = document.getElementById('progress-label');
@@ -458,7 +451,6 @@ export function updateProgress(currentStep, totalSteps, stepName, percent, messa
         progressLabel.textContent = message || '分析中...';
     }
     
-    // 更新项目列表 - 从config获取当前服务的步骤
     const serviceConfig = SERVICES[STATE.currentService];
     if (!serviceConfig) return;
     
@@ -466,7 +458,6 @@ export function updateProgress(currentStep, totalSteps, stepName, percent, messa
     const container = document.getElementById('progress-items-container');
     if (!container) return;
     
-    // 构建项目列表HTML
     let html = '';
     steps.forEach((step, index) => {
         const stepNum = index + 1;
@@ -507,16 +498,25 @@ export function updateProgress(currentStep, totalSteps, stepName, percent, messa
     container.innerHTML = html;
 }
 
-// ============ 处理分析结果 ============
+// ============ 处理分析结果（移除大运排盘，添加字体大小区分） ============
 export function processAndDisplayAnalysis(result) {
-    const freeSections = ['【八字排盘】', '【大运排盘】', '【八字喜用分析】', '【性格特点】', '【适宜行业职业推荐】'];
+    // 需要移除的大运排盘部分
+    const freeSections = ['【八字排盘】', '【八字喜用分析】', '【性格特点】', '【适宜行业职业推荐】'];
+    // 大运排盘单独移除（已在大运卡片中显示）
+    const sectionsToRemove = ['【大运排盘】'];
+    
     let freeContent = '';
     let lockedContent = '';
     const sections = result.split('【');
+    
     for (let i = 1; i < sections.length; i++) {
         const section = '【' + sections[i];
         const sectionTitle = section.split('】')[0] + '】';
+        
+        // 跳过八字排盘和大运排盘（八字已在卡片中显示，大运也已单独显示）
         if (sectionTitle === '【八字排盘】') continue;
+        if (sectionTitle === '【大运排盘】') continue;
+        
         if (freeSections.includes(sectionTitle)) {
             freeContent += section + '\n\n';
         } else {
@@ -524,6 +524,7 @@ export function processAndDisplayAnalysis(result) {
         }
     }
     
+    // 备用解析
     if (freeContent.length < 100) {
         freeContent = '';
         for (const freeSection of freeSections) {
@@ -534,9 +535,19 @@ export function processAndDisplayAnalysis(result) {
                 freeContent += result.substring(startIndex, endIndex) + '\n\n';
             }
         }
+        // 同时移除大运排盘
+        for (const removeSection of sectionsToRemove) {
+            const startIndex = freeContent.indexOf(removeSection);
+            if (startIndex !== -1) {
+                let endIndex = freeContent.indexOf('【', startIndex + 1);
+                if (endIndex === -1) endIndex = freeContent.length;
+                freeContent = freeContent.replace(freeContent.substring(startIndex, endIndex), '');
+            }
+        }
         if (freeContent) lockedContent = result.replace(freeContent, '');
     }
     
+    // ============ 格式化分析内容：结论大字体，分析小字体 ============
     const freeAnalysisText = UI.freeAnalysisText();
     if (freeAnalysisText) {
         let formattedContent = '';
@@ -546,16 +557,65 @@ export function processAndDisplayAnalysis(result) {
                 const titleMatch = section.match(/【([^】]+)】/);
                 if (titleMatch) {
                     const title = titleMatch[1];
-                    const content = section.replace(titleMatch[0], '').trim();
-                    formattedContent += `<div class="analysis-section"><h5>${title}</h5><div class="analysis-content">${content.replace(/\n/g, '<br>')}</div></div>`;
+                    let content = section.replace(titleMatch[0], '').trim();
+                    
+                    // 判断是否为结论性章节（根据标题关键词）
+                    const conclusionKeywords = ['评估', '分析', '总结', '建议', '指导', '吉凶', '趋势', '走向', '提醒', '注意事项'];
+                    const isConclusion = conclusionKeywords.some(keyword => title.includes(keyword));
+                    
+                    // 判断是否为喜用分析（需要突出显示）
+                    const isXiyong = title.includes('喜用');
+                    
+                    let titleFontSize = '18px';
+                    let contentFontSize = '15px';
+                    let titleColor = 'var(--primary-color)';
+                    let contentColor = '#333';
+                    
+                    if (isXiyong) {
+                        // 喜用分析：大标题突出
+                        titleFontSize = '22px';
+                        titleColor = '#c0392b';
+                    } else if (isConclusion) {
+                        // 结论性内容：大字体
+                        titleFontSize = '20px';
+                        contentFontSize = '17px';
+                        titleColor = '#2c3e50';
+                    } else {
+                        // 一般分析：小字体
+                        titleFontSize = '16px';
+                        contentFontSize = '14px';
+                        titleColor = 'var(--primary-color)';
+                        contentColor = '#555';
+                    }
+                    
+                    // 对内容中的关键结论加粗突出
+                    let formattedContentText = content.replace(/\n/g, '<br>');
+                    // 加粗关键结论（包含"建议"、"注意"、"关键"等词）
+                    const highlightKeywords = ['建议', '注意', '关键', '重要', '提醒', '重点', '吉', '凶', '旺', '衰'];
+                    highlightKeywords.forEach(keyword => {
+                        const regex = new RegExp(`([^。]*${keyword}[^。]*。)`, 'g');
+                        formattedContentText = formattedContentText.replace(regex, '<strong style="color:#c0392b;font-size:inherit;">$1</strong>');
+                    });
+                    
+                    formattedContent += `
+                        <div class="analysis-section" style="margin-bottom:25px;">
+                            <h5 style="color:${titleColor};font-size:${titleFontSize};margin-bottom:10px;padding-left:12px;border-left:4px solid ${isXiyong ? '#c0392b' : 'var(--secondary-color)'};font-weight:${isXiyong ? '900' : '700'};">
+                                ${title}
+                            </h5>
+                            <div class="analysis-content" style="line-height:1.9;color:${contentColor};font-size:${contentFontSize};padding:8px 0;text-align:justify;">
+                                ${formattedContentText}
+                            </div>
+                        </div>
+                    `;
                 } else {
-                    formattedContent += `<div class="analysis-content">${section.replace(/\n/g, '<br>')}</div>`;
+                    formattedContent += `<div class="analysis-content" style="line-height:1.9;color:#555;font-size:14px;padding:8px 0;">${section.replace(/\n/g, '<br>')}</div>`;
                 }
             }
         });
         freeAnalysisText.innerHTML = formattedContent;
     }
     
+    // 处理锁定内容
     const lockedAnalysisText = UI.lockedAnalysisText();
     if (lockedAnalysisText) {
         let formattedLockedContent = '';
@@ -566,9 +626,34 @@ export function processAndDisplayAnalysis(result) {
                 if (titleMatch) {
                     const title = titleMatch[1];
                     const content = section.replace(titleMatch[0], '').trim();
-                    formattedLockedContent += `<div class="analysis-section"><h5>${title}</h5><div class="analysis-content">${content.replace(/\n/g, '<br>')}</div></div>`;
+                    
+                    // 锁定内容也用大字体突出结论
+                    const conclusionKeywords = ['评估', '分析', '总结', '建议', '指导', '吉凶', '趋势', '走向', '提醒', '注意事项'];
+                    const isConclusion = conclusionKeywords.some(keyword => title.includes(keyword));
+                    
+                    const titleFontSize = isConclusion ? '20px' : '16px';
+                    const contentFontSize = isConclusion ? '17px' : '14px';
+                    const titleColor = isConclusion ? '#2c3e50' : 'var(--primary-color)';
+                    
+                    let formattedContentText = content.replace(/\n/g, '<br>');
+                    const highlightKeywords = ['建议', '注意', '关键', '重要', '提醒', '重点', '吉', '凶', '旺', '衰'];
+                    highlightKeywords.forEach(keyword => {
+                        const regex = new RegExp(`([^。]*${keyword}[^。]*。)`, 'g');
+                        formattedContentText = formattedContentText.replace(regex, '<strong style="color:#c0392b;font-size:inherit;">$1</strong>');
+                    });
+                    
+                    formattedLockedContent += `
+                        <div class="analysis-section" style="margin-bottom:25px;">
+                            <h5 style="color:${titleColor};font-size:${titleFontSize};margin-bottom:10px;padding-left:12px;border-left:4px solid var(--secondary-color);font-weight:700;">
+                                ${title}
+                            </h5>
+                            <div class="analysis-content" style="line-height:1.9;color:#555;font-size:${contentFontSize};padding:8px 0;text-align:justify;">
+                                ${formattedContentText}
+                            </div>
+                        </div>
+                    `;
                 } else {
-                    formattedLockedContent += `<div class="analysis-content">${section.replace(/\n/g, '<br>')}</div>`;
+                    formattedLockedContent += `<div class="analysis-content" style="line-height:1.9;color:#555;font-size:14px;padding:8px 0;">${section.replace(/\n/g, '<br>')}</div>`;
                 }
             }
         });

@@ -457,6 +457,24 @@ function sleep(ms) {
     return new Promise(function(resolve) { setTimeout(resolve, ms); });
 }
 
+// 格式化排盘数据用于 Prompt
+function formatBaziForPrompt(baziRawData) {
+    if (!baziRawData) return '';
+    const bazi = baziRawData.bazi;
+    const dayun = baziRawData.dayun;
+    
+    let text = `【八字排盘】（由专业排盘系统精确计算）\n`;
+    text += `年柱：${bazi.year.ganzhi}（${bazi.year.nayin}） 生肖：${bazi.year.zodiac}\n`;
+    text += `月柱：${bazi.month.ganzhi}（${bazi.month.nayin}）\n`;
+    text += `日柱：${bazi.day.ganzhi}（${bazi.day.nayin}）\n`;
+    text += `时柱：${bazi.hour.ganzhi}（${bazi.hour.nayin}）\n`;
+    text += `\n【大运排盘】\n起运年龄：${dayun.start_age}岁\n`;
+    dayun.list.slice(0, 8).forEach((dy, i) => {
+        text += `第${i+1}步大运：${dy.age_start}-${dy.age_end}岁  ${dy.ganzhi}\n`;
+    });
+    return text;
+}
+
 // ============ 核心分析函数 ============
 async function startAnalysis() {
     console.log('开始命理分析...');
@@ -502,7 +520,51 @@ async function startAnalysis() {
             freeAnalysisText.innerHTML = '<div class="loading-text">正在生成分析结果...</div>';
         }
         
-        displayPredictorInfo();
+        // ============ 【新增】调用排盘服务 ============
+        console.log('🔮 调用排盘服务...');
+        try {
+            const baziResponse = await fetch('https://119.29.160.189:36667/api/bazi/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: STATE.userData.name,
+                    gender: STATE.userData.gender,
+                    birthYear: STATE.userData.birthYear,
+                    birthMonth: STATE.userData.birthMonth,
+                    birthDay: STATE.userData.birthDay,
+                    birthHour: STATE.userData.birthHour,
+                    birthMinute: STATE.userData.birthMinute,
+                    birthCity: STATE.userData.birthCity
+                })
+            });
+            
+            const baziResult = await baziResponse.json();
+            
+            if (!baziResult.success) {
+                throw new Error(baziResult.error || '排盘失败');
+            }
+            
+            // 保存排盘数据到 STATE
+            STATE.baziData = baziResult.data.bazi;
+            STATE.dayunData = baziResult.data.dayun;
+            STATE.baziRawData = baziResult.data;
+            
+            console.log('✅ 排盘成功:', STATE.baziData);
+            
+            // 立即显示排盘结果
+            displayPredictorInfo();
+            displayBaziPan();
+            if (STATE.dayunData) {
+                displayDayunPan(STATE.dayunData);
+            }
+            
+        } catch (error) {
+            console.error('❌ 排盘失败:', error);
+            alert('八字排盘失败：' + error.message);
+            hideLoadingModal();
+            return;
+        }
+        
         progressPercent = 10;
         updateProgress(currentStep, totalSteps, '准备分析数据', progressPercent, '用户信息验证完成');
         await sleep(300);
@@ -512,15 +574,11 @@ async function startAnalysis() {
             throw new Error('未找到服务模块: ' + STATE.currentService);
         }
         
-        var prompt;
-        try {
-            prompt = serviceModule.getPrompt(STATE.userData, STATE.partnerData);
-        } catch (error) {
-            console.error('生成提示词失败:', error);
-            alert(error.message);
-            hideLoadingModal();
-            return;
-        }
+        // 格式化排盘数据用于 Prompt
+        const baziText = formatBaziForPrompt(STATE.baziRawData);
+        
+        // 生成 Prompt（传入排盘数据）
+        const prompt = serviceModule.getPrompt(STATE.userData, STATE.partnerData, baziText);
         
         console.log('生成的分析提示词长度:', prompt.length);
         console.log('当前服务:', STATE.currentService);
@@ -548,18 +606,17 @@ async function startAnalysis() {
         console.log('DeepSeek API调用成功，响应长度:', analysisResult.length);
         STATE.fullAnalysisResult = analysisResult;
         
-        var parsedBaziData = parseBaziData(analysisResult);
-        STATE.baziData = parsedBaziData.userBazi;
-        STATE.partnerBaziData = parsedBaziData.partnerBazi;
-        
+        // 注意：不再从 AI 解析八字，因为我们已经有了精确的排盘数据
+        // 只处理分析内容
         currentStep = 3;
         progressPercent = 70;
         updateProgress(currentStep, totalSteps, '生成排盘结果', progressPercent, '八字排盘生成完成');
-        displayBaziPan();
         await sleep(300);
         
-        var dayunData = parseDayunData(analysisResult);
-        displayDayunPan(dayunData);
+        // 显示大运（如果还没显示）
+        if (STATE.dayunData) {
+            displayDayunPan(STATE.dayunData);
+        }
         progressPercent = 80;
         updateProgress(currentStep, totalSteps, '生成排盘结果', progressPercent, '大运排盘生成完成');
         await sleep(300);
@@ -648,11 +705,8 @@ function downloadReport() {
     }
     
     var baziInfo = '';
-    if (STATE.currentService === '八字合婚' && STATE.partnerData && STATE.partnerBaziData) {
-        baziInfo = STATE.userData.name + ' 八字排盘：\n年柱：' + STATE.baziData.yearColumn + ' (' + STATE.baziData.yearElement + ')\n月柱：' + STATE.baziData.monthColumn + ' (' + STATE.baziData.monthElement + ')\n日柱：' + STATE.baziData.dayColumn + ' (' + STATE.baziData.dayElement + ')\n时柱：' + STATE.baziData.hourColumn + ' (' + STATE.baziData.hourElement + ')\n\n' + STATE.partnerData.partnerName + ' 八字排盘：\n年柱：' + STATE.partnerBaziData.yearColumn + ' (' + STATE.partnerBaziData.yearElement + ')\n月柱：' + STATE.partnerBaziData.monthColumn + ' (' + STATE.partnerBaziData.monthElement + ')\n日柱：' + STATE.partnerBaziData.dayColumn + ' (' + STATE.partnerBaziData.dayElement + ')\n时柱：' + STATE.partnerBaziData.hourColumn + ' (' + STATE.partnerBaziData.hourElement + ')';
-    } else {
-        var baziDataToDisplay = STATE.baziData;
-        baziInfo = '八字排盘：\n年柱：' + baziDataToDisplay.yearColumn + ' (' + baziDataToDisplay.yearElement + ')\n月柱：' + baziDataToDisplay.monthColumn + ' (' + baziDataToDisplay.monthElement + ')\n日柱：' + baziDataToDisplay.dayColumn + ' (' + baziDataToDisplay.dayElement + ')\n时柱：' + baziDataToDisplay.hourColumn + ' (' + baziDataToDisplay.hourElement + ')';
+    if (STATE.baziData) {
+        baziInfo = '八字排盘：\n年柱：' + STATE.baziData.year.ganzhi + ' (' + STATE.baziData.year.nayin + ')\n月柱：' + STATE.baziData.month.ganzhi + ' (' + STATE.baziData.month.nayin + ')\n日柱：' + STATE.baziData.day.ganzhi + ' (' + STATE.baziData.day.nayin + ')\n时柱：' + STATE.baziData.hour.ganzhi + ' (' + STATE.baziData.hour.nayin + ')';
     }
     
     var reportContent = '命理分析报告 - ' + STATE.currentService + '\n\n' + predictorInfo + '\n\n' + baziInfo + '\n\n' + STATE.fullAnalysisResult + '\n\n--- 命理分析服务平台 ---\n分析时间：' + new Date().toLocaleString('zh-CN') + '\n使用技术：DeepSeek AI命理分析系统';
@@ -699,3 +753,4 @@ window.newAnalysis = newAnalysis;
 window.handlePaymentSuccess = handlePaymentSuccess;
 window.PaymentManager = PaymentManager;
 window.STATE = STATE;
+window.formatBaziForPrompt = formatBaziForPrompt;

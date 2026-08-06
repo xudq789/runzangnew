@@ -208,8 +208,6 @@ const PaymentManager = {
                 }
             }
             
-            const parsedBaziData = parseBaziData(savedResult);
-            STATE.baziData = parsedBaziData.userBazi;
             updateServiceDisplay(savedService);
             displayPredictorInfo();
             displayBaziPan();
@@ -277,7 +275,7 @@ const PaymentManager = {
 
 // ============ 【原有主应用代码】 ============
 import { SERVICES, STATE, API_CONFIG } from './config.js';
-import { checkAPIStatus, parseBaziData, callDeepSeekAPI } from './api.js';
+import { checkAPIStatus, callDeepSeekAPI } from './api.js';
 import {
     UI, initFormOptions, setDefaultValues, updateServiceDisplay,
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,
@@ -423,6 +421,7 @@ function switchService(serviceName) {
         STATE.currentOrderId = null;
         STATE.userData = null;
         STATE.partnerData = null;
+        STATE.dayunData = null;
         console.log('✅ 所有状态已重置');
     }
     STATE.currentService = serviceName;
@@ -457,7 +456,7 @@ function sleep(ms) {
     return new Promise(function(resolve) { setTimeout(resolve, ms); });
 }
 
-// ============ 格式化排盘数据用于 Prompt（只传八字，不传假大运） ============
+// ============ 格式化排盘数据用于 Prompt ============
 function formatBaziForPrompt(baziRawData) {
     if (!baziRawData) return '';
     const bazi = baziRawData.bazi;
@@ -467,7 +466,6 @@ function formatBaziForPrompt(baziRawData) {
     text += `月柱：${bazi.month.ganzhi}（${bazi.month.nayin}）\n`;
     text += `日柱：${bazi.day.ganzhi}（${bazi.day.nayin}）\n`;
     text += `时柱：${bazi.hour.ganzhi}（${bazi.hour.nayin}）\n`;
-    // 不再传入大运数据，让 AI 自己计算
     return text;
 }
 
@@ -540,16 +538,13 @@ async function startAnalysis() {
                 throw new Error(baziResult.error || '排盘失败');
             }
             
-            // 保存排盘数据到 STATE（只保存八字，不保存假大运）
             STATE.baziData = baziResult.data.bazi;
             STATE.baziRawData = baziResult.data;
             
             console.log('✅ 排盘成功:', STATE.baziData);
             
-            // 立即显示排盘结果（八字）
             displayPredictorInfo();
             displayBaziPan();
-            // 注意：这里不显示大运，等 DeepSeek 计算后再显示
             
         } catch (error) {
             console.error('❌ 排盘失败:', error);
@@ -567,10 +562,7 @@ async function startAnalysis() {
             throw new Error('未找到服务模块: ' + STATE.currentService);
         }
         
-        // 格式化八字数据用于 Prompt（只传八字）
         const baziText = formatBaziForPrompt(STATE.baziRawData);
-        
-        // 生成 Prompt（传入八字数据）
         const prompt = serviceModule.getPrompt(STATE.userData, STATE.partnerData, baziText);
         
         console.log('生成的分析提示词长度:', prompt.length);
@@ -599,8 +591,6 @@ async function startAnalysis() {
         console.log('DeepSeek API调用成功，响应长度:', analysisResult.length);
         STATE.fullAnalysisResult = analysisResult;
         
-        // 注意：不再从 AI 解析八字，因为我们已经有了精确的排盘数据
-        // 只处理分析内容
         currentStep = 3;
         progressPercent = 70;
         updateProgress(currentStep, totalSteps, '生成排盘结果', progressPercent, '八字排盘生成完成');
@@ -614,12 +604,10 @@ async function startAnalysis() {
         const dayunData = parseDayunData(analysisResult);
         if (dayunData && dayunData.dayuns && dayunData.dayuns.length > 0) {
             STATE.dayunData = dayunData;
-            // 强制刷新大运显示
             displayDayunPan(dayunData);
-            console.log('✅ 已从 DeepSeek 解析并显示大运数据，共', dayunData.dayuns.length, '步:', dayunData);
+            console.log('✅ 已从 DeepSeek 解析并显示大运数据，共', dayunData.dayuns.length, '步');
         } else {
             console.warn('⚠️ 未能从 DeepSeek 解析到大运数据');
-            // 显示提示信息
             const dayunGrid = document.getElementById('dayun-grid');
             if (dayunGrid) {
                 dayunGrid.innerHTML = `
@@ -760,4 +748,3 @@ window.newAnalysis = newAnalysis;
 window.handlePaymentSuccess = handlePaymentSuccess;
 window.PaymentManager = PaymentManager;
 window.STATE = STATE;
-window.formatBaziForPrompt = formatBaziForPrompt;

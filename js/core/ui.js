@@ -316,18 +316,19 @@ export function displayDayunPan(dayunData) {
         return;
     }
     
-    // 显示所有大运（不限制只显示8步）
+    // 显示所有大运
     const displayList = dayunList;
     
     // 构建大运表格
     const table = document.createElement('table');
-    table.style.cssText = 'width:100%; border-collapse: collapse; margin-top: 10px; border-radius: 8px; overflow: hidden;';
+    table.style.cssText = 'width:100%; border-collapse: collapse; margin-top: 10px; border-radius: 8px; overflow: auto; display: block;';
     
-    // 表头 - 动态列数
+    // 表头
+    const thead = document.createElement('thead');
     const trHeader = document.createElement('tr');
     const thLabel = document.createElement('th');
     thLabel.textContent = '大运';
-    thLabel.style.cssText = 'padding: 8px 12px; background: var(--primary-color); color: white; text-align: center; font-weight: 600; min-width: 60px;';
+    thLabel.style.cssText = 'padding: 8px 12px; background: var(--primary-color); color: white; text-align: center; font-weight: 600; min-width: 60px; border: 1px solid #8b4513;';
     trHeader.appendChild(thLabel);
     
     displayList.forEach((dy, index) => {
@@ -339,25 +340,28 @@ export function displayDayunPan(dayunData) {
             ageLabel = `${startAge + index * 10}岁`;
         }
         th.textContent = ageLabel;
-        th.style.cssText = `padding: 8px 12px; background: ${index % 2 === 0 ? 'var(--primary-color)' : '#a0522d'}; color: white; text-align: center; font-weight: 600; white-space: nowrap;`;
+        th.style.cssText = `padding: 8px 12px; background: ${index % 2 === 0 ? 'var(--primary-color)' : '#a0522d'}; color: white; text-align: center; font-weight: 600; white-space: nowrap; border: 1px solid #8b4513;`;
         trHeader.appendChild(th);
     });
-    table.appendChild(trHeader);
+    thead.appendChild(trHeader);
+    table.appendChild(thead);
     
     // 干支行
+    const tbody = document.createElement('tbody');
     const trGanzhi = document.createElement('tr');
     const tdGanzhiLabel = document.createElement('td');
     tdGanzhiLabel.textContent = '干支';
-    tdGanzhiLabel.style.cssText = 'padding: 8px 12px; background: #f5f1e8; text-align: center; font-weight: 600; color: var(--dark-color);';
+    tdGanzhiLabel.style.cssText = 'padding: 8px 12px; background: #f5f1e8; text-align: center; font-weight: 600; color: var(--dark-color); border: 1px solid #ddd;';
     trGanzhi.appendChild(tdGanzhiLabel);
     
     displayList.forEach((dy, index) => {
         const td = document.createElement('td');
         td.textContent = dy.ganzhi || '--';
-        td.style.cssText = `padding: 8px 12px; text-align: center; font-weight: 500; color: var(--primary-color); ${index % 2 === 0 ? 'background: #faf8f5;' : 'background: #fff;'}; white-space: nowrap;`;
+        td.style.cssText = `padding: 8px 12px; text-align: center; font-weight: 500; color: var(--primary-color); ${index % 2 === 0 ? 'background: #faf8f5;' : 'background: #fff;'}; white-space: nowrap; border: 1px solid #ddd;`;
         trGanzhi.appendChild(td);
     });
-    table.appendChild(trGanzhi);
+    tbody.appendChild(trGanzhi);
+    table.appendChild(tbody);
     
     dayunGrid.appendChild(table);
     dayunCard.style.display = 'block';
@@ -369,29 +373,37 @@ export function parseDayunData(analysisResult) {
     
     const result = { ages: [], dayuns: [], elements: [] };
     
-    // 方法1：匹配标准格式
+    // 方法1：匹配标准格式 - 匹配【大运排盘】之后的内容
     const dayunMatch = analysisResult.match(/【大运排盘】([\s\S]*?)(?=【|$)/);
     if (dayunMatch) {
         const dayunText = dayunMatch[1];
+        console.log('📝 找到大运排盘文本:', dayunText);
         
+        // 匹配 "岁：[数字] [数字] ..." 格式
         const ageMatch = dayunText.match(/岁[：:]\s*([\d\s]+)/);
         if (ageMatch) {
             result.ages = ageMatch[1].trim().split(/\s+/).map(Number).filter(a => !isNaN(a) && a > 0);
+            console.log('✅ 解析到年龄:', result.ages);
         }
         
+        // 匹配 "大运：[干支] [干支] ..." 格式
         const dayunMatch2 = dayunText.match(/大运[：:]\s*([^\n]+)/);
         if (dayunMatch2) {
             result.dayuns = dayunMatch2[1].trim().split(/\s+/).filter(d => d.length > 0);
+            console.log('✅ 解析到大运干支:', result.dayuns);
         }
         
+        // 匹配 "纳音：[纳音] [纳音] ..." 格式
         const elementMatch = dayunText.match(/纳音[：:]\s*([^\n]+)/);
         if (elementMatch) {
             result.elements = elementMatch[1].trim().split(/\s+/).filter(e => e.length > 0);
+            console.log('✅ 解析到纳音:', result.elements);
         }
     }
     
-    // 方法2：逐行解析
+    // 方法2：如果方法1没有解析到，尝试逐行解析
     if (result.ages.length === 0 || result.dayuns.length === 0) {
+        console.log('🔄 方法1未解析到，使用逐行解析...');
         const lines = analysisResult.split('\n');
         let foundDayunSection = false;
         let tempAges = [], tempDayuns = [], tempElements = [];
@@ -405,19 +417,31 @@ export function parseDayunData(analysisResult) {
             if (foundDayunSection && trimmed.match(/^【/)) break;
             if (!foundDayunSection) continue;
             
-            const ageNumbers = trimmed.match(/\d+/g);
-            if (ageNumbers && trimmed.includes('岁')) {
-                tempAges = ageNumbers.map(Number);
+            // 匹配 "岁：[数字] [数字] ..." 
+            if (trimmed.includes('岁') && trimmed.includes('：')) {
+                const ageNumbers = trimmed.match(/\d+/g);
+                if (ageNumbers && ageNumbers.length > 0) {
+                    tempAges = ageNumbers.map(Number);
+                    console.log('✅ 逐行解析到年龄:', tempAges);
+                }
             }
             
-            const dayunMatches = trimmed.match(/[\u4e00-\u9fa5]{2}/g);
-            if (dayunMatches && trimmed.includes('大运')) {
-                tempDayuns = dayunMatches;
+            // 匹配 "大运：[干支] [干支] ..."
+            if (trimmed.includes('大运') && trimmed.includes('：')) {
+                const dayunMatches = trimmed.match(/[\u4e00-\u9fa5]{2}/g);
+                if (dayunMatches && dayunMatches.length > 0) {
+                    tempDayuns = dayunMatches;
+                    console.log('✅ 逐行解析到大运:', tempDayuns);
+                }
             }
             
-            if (trimmed.includes('纳音')) {
-                const elementMatches = trimmed.match(/[\u4e00-\u9fa5]{2}/g);
-                if (elementMatches) tempElements = elementMatches;
+            // 匹配 "纳音：[纳音] [纳音] ..."
+            if (trimmed.includes('纳音') && trimmed.includes('：')) {
+                const elementMatches = trimmed.match(/[\u4e00-\u9fa5]{2,3}/g);
+                if (elementMatches && elementMatches.length > 0) {
+                    tempElements = elementMatches;
+                    console.log('✅ 逐行解析到纳音:', tempElements);
+                }
             }
         }
         
@@ -428,8 +452,42 @@ export function parseDayunData(analysisResult) {
         }
     }
     
-    // 不限制长度，返回所有解析到的大运数据
-    console.log('✅ 大运数据:', result);
+    // 方法3：如果还是没有解析到，尝试匹配 "岁：[数字]" 和 "大运：[干支]" 在同一行或跨行
+    if (result.ages.length === 0 || result.dayuns.length === 0) {
+        console.log('🔄 方法2未解析到，尝试跨行解析...');
+        const fullText = analysisResult;
+        const dayunSection = fullText.match(/【大运排盘】([\s\S]*?)(?=【|$)/);
+        if (dayunSection) {
+            const text = dayunSection[1];
+            // 提取所有数字作为年龄
+            const allNumbers = text.match(/\d+/g);
+            if (allNumbers && allNumbers.length > 0) {
+                result.ages = allNumbers.map(Number).filter(a => a > 0 && a < 100);
+                console.log('✅ 跨行解析到年龄:', result.ages);
+            }
+            // 提取所有双字词作为干支
+            const allGanzhi = text.match(/[\u4e00-\u9fa5]{2}/g);
+            if (allGanzhi && allGanzhi.length > 0) {
+                // 过滤掉常见的非干支词
+                const excludeWords = ['大运', '纳音', '岁数', '起运', '步骤', '计算', '结果', '展示', '过程', '全部'];
+                result.dayuns = allGanzhi.filter(w => !excludeWords.includes(w));
+                console.log('✅ 跨行解析到大运:', result.dayuns);
+            }
+        }
+    }
+    
+    // 确保年龄和大运数量一致
+    const maxLen = Math.min(result.ages.length, result.dayuns.length);
+    if (maxLen > 0) {
+        result.ages = result.ages.slice(0, maxLen);
+        result.dayuns = result.dayuns.slice(0, maxLen);
+        result.elements = result.elements.slice(0, maxLen);
+    } else if (result.dayuns.length > 0 && result.ages.length === 0) {
+        // 只有大运没有年龄，生成默认年龄
+        result.ages = result.dayuns.map((_, i) => 7 + i * 10);
+    }
+    
+    console.log('✅ 最终大运数据:', result);
     return result;
 }
 
@@ -498,12 +556,12 @@ export function updateProgress(currentStep, totalSteps, stepName, percent, messa
     container.innerHTML = html;
 }
 
-// ============ 处理分析结果（移除大运排盘，添加字体大小区分） ============
+// ============ 处理分析结果（移除大运排盘，结论大字体） ============
 export function processAndDisplayAnalysis(result) {
-    // 需要移除的大运排盘部分
-    const freeSections = ['【八字排盘】', '【八字喜用分析】', '【性格特点】', '【适宜行业职业推荐】'];
-    // 大运排盘单独移除（已在大运卡片中显示）
-    const sectionsToRemove = ['【大运排盘】'];
+    // 需要保留的免费章节
+    const freeSections = ['【八字喜用分析】', '【性格特点】', '【适宜行业职业推荐】'];
+    // 需要移除的章节
+    const sectionsToRemove = ['【八字排盘】', '【大运排盘】'];
     
     let freeContent = '';
     let lockedContent = '';
@@ -513,9 +571,8 @@ export function processAndDisplayAnalysis(result) {
         const section = '【' + sections[i];
         const sectionTitle = section.split('】')[0] + '】';
         
-        // 跳过八字排盘和大运排盘（八字已在卡片中显示，大运也已单独显示）
-        if (sectionTitle === '【八字排盘】') continue;
-        if (sectionTitle === '【大运排盘】') continue;
+        // 跳过需要移除的章节
+        if (sectionsToRemove.includes(sectionTitle)) continue;
         
         if (freeSections.includes(sectionTitle)) {
             freeContent += section + '\n\n';
@@ -532,16 +589,28 @@ export function processAndDisplayAnalysis(result) {
             if (startIndex !== -1) {
                 let endIndex = result.indexOf('【', startIndex + 1);
                 if (endIndex === -1) endIndex = result.length;
-                freeContent += result.substring(startIndex, endIndex) + '\n\n';
+                let sectionText = result.substring(startIndex, endIndex);
+                // 检查是否包含大运排盘，如果包含则移除
+                const dayunStart = sectionText.indexOf('【大运排盘】');
+                if (dayunStart !== -1) {
+                    const dayunEnd = sectionText.indexOf('【', dayunStart + 1);
+                    if (dayunEnd !== -1) {
+                        sectionText = sectionText.substring(0, dayunStart) + sectionText.substring(dayunEnd);
+                    } else {
+                        sectionText = sectionText.substring(0, dayunStart);
+                    }
+                }
+                freeContent += sectionText + '\n\n';
             }
         }
-        // 同时移除大运排盘
-        for (const removeSection of sectionsToRemove) {
-            const startIndex = freeContent.indexOf(removeSection);
-            if (startIndex !== -1) {
-                let endIndex = freeContent.indexOf('【', startIndex + 1);
-                if (endIndex === -1) endIndex = freeContent.length;
-                freeContent = freeContent.replace(freeContent.substring(startIndex, endIndex), '');
+        // 检查剩余内容中是否还有大运排盘
+        const dayunStart = freeContent.indexOf('【大运排盘】');
+        if (dayunStart !== -1) {
+            const dayunEnd = freeContent.indexOf('【', dayunStart + 1);
+            if (dayunEnd !== -1) {
+                freeContent = freeContent.substring(0, dayunStart) + freeContent.substring(dayunEnd);
+            } else {
+                freeContent = freeContent.substring(0, dayunStart);
             }
         }
         if (freeContent) lockedContent = result.replace(freeContent, '');
@@ -559,11 +628,9 @@ export function processAndDisplayAnalysis(result) {
                     const title = titleMatch[1];
                     let content = section.replace(titleMatch[0], '').trim();
                     
-                    // 判断是否为结论性章节（根据标题关键词）
-                    const conclusionKeywords = ['评估', '分析', '总结', '建议', '指导', '吉凶', '趋势', '走向', '提醒', '注意事项'];
+                    // 判断是否为结论性章节
+                    const conclusionKeywords = ['评估', '分析', '总结', '建议', '指导', '吉凶', '趋势', '走向', '提醒', '注意事项', '层次', '高低点', '流年'];
                     const isConclusion = conclusionKeywords.some(keyword => title.includes(keyword));
-                    
-                    // 判断是否为喜用分析（需要突出显示）
                     const isXiyong = title.includes('喜用');
                     
                     let titleFontSize = '18px';
@@ -572,16 +639,14 @@ export function processAndDisplayAnalysis(result) {
                     let contentColor = '#333';
                     
                     if (isXiyong) {
-                        // 喜用分析：大标题突出
                         titleFontSize = '22px';
                         titleColor = '#c0392b';
+                        contentFontSize = '16px';
                     } else if (isConclusion) {
-                        // 结论性内容：大字体
                         titleFontSize = '20px';
                         contentFontSize = '17px';
                         titleColor = '#2c3e50';
                     } else {
-                        // 一般分析：小字体
                         titleFontSize = '16px';
                         contentFontSize = '14px';
                         titleColor = 'var(--primary-color)';
@@ -590,8 +655,7 @@ export function processAndDisplayAnalysis(result) {
                     
                     // 对内容中的关键结论加粗突出
                     let formattedContentText = content.replace(/\n/g, '<br>');
-                    // 加粗关键结论（包含"建议"、"注意"、"关键"等词）
-                    const highlightKeywords = ['建议', '注意', '关键', '重要', '提醒', '重点', '吉', '凶', '旺', '衰'];
+                    const highlightKeywords = ['建议', '注意', '关键', '重要', '提醒', '重点', '吉', '凶', '旺', '衰', '宜', '忌', '最佳', '适宜', '不宜'];
                     highlightKeywords.forEach(keyword => {
                         const regex = new RegExp(`([^。]*${keyword}[^。]*。)`, 'g');
                         formattedContentText = formattedContentText.replace(regex, '<strong style="color:#c0392b;font-size:inherit;">$1</strong>');
@@ -627,8 +691,7 @@ export function processAndDisplayAnalysis(result) {
                     const title = titleMatch[1];
                     const content = section.replace(titleMatch[0], '').trim();
                     
-                    // 锁定内容也用大字体突出结论
-                    const conclusionKeywords = ['评估', '分析', '总结', '建议', '指导', '吉凶', '趋势', '走向', '提醒', '注意事项'];
+                    const conclusionKeywords = ['评估', '分析', '总结', '建议', '指导', '吉凶', '趋势', '走向', '提醒', '注意事项', '层次', '高低点', '流年'];
                     const isConclusion = conclusionKeywords.some(keyword => title.includes(keyword));
                     
                     const titleFontSize = isConclusion ? '20px' : '16px';
@@ -636,7 +699,7 @@ export function processAndDisplayAnalysis(result) {
                     const titleColor = isConclusion ? '#2c3e50' : 'var(--primary-color)';
                     
                     let formattedContentText = content.replace(/\n/g, '<br>');
-                    const highlightKeywords = ['建议', '注意', '关键', '重要', '提醒', '重点', '吉', '凶', '旺', '衰'];
+                    const highlightKeywords = ['建议', '注意', '关键', '重要', '提醒', '重点', '吉', '凶', '旺', '衰', '宜', '忌', '最佳', '适宜', '不宜'];
                     highlightKeywords.forEach(keyword => {
                         const regex = new RegExp(`([^。]*${keyword}[^。]*。)`, 'g');
                         formattedContentText = formattedContentText.replace(regex, '<strong style="color:#c0392b;font-size:inherit;">$1</strong>');

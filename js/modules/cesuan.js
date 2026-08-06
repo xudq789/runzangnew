@@ -1,4 +1,6 @@
-// cesuan.js - 修改 getPrompt 方法
+// 测算验证模块
+import { calculateBazi } from '../core/utils.js';
+
 export class CesuanModule {
     static getServiceConfig() {
         return {
@@ -16,7 +18,6 @@ export class CesuanModule {
         };
     }
     
-    // 修改：增加 baziText 参数
     static getPrompt(userData, partnerData = null, baziText = '') {
         return `任务：你是职业命理大师，精通梁湘润论命体系。请根据以下已排盘好的八字信息进行命理解读。
 
@@ -55,7 +56,6 @@ ${baziText}
     }
     
     static calculateBazi(userData) {
-        // 不再需要，由后端排盘
-        return null;
+        return calculateBazi(userData);
     }
 }

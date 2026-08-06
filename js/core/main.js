@@ -624,6 +624,12 @@ async function startAnalysis() {
         currentStep = 4;
         progressPercent = 88;
         updateProgress(currentStep, totalSteps, '整理分析报告', progressPercent, '正在整理分析报告...');
+        // 从 AI 返回结果中解析大运数据
+        const dayunData = parseDayunData(analysisResult);
+        if (dayunData && dayunData.dayuns && dayunData.dayuns.length > 0) {
+            STATE.dayunData = dayunData;
+            displayDayunPan(dayunData);
+        }
         processAndDisplayAnalysis(analysisResult);
         await sleep(300);
         

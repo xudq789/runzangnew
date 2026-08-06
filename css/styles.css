@@ -93,7 +93,7 @@ header {
     box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
 }
 
-/* 主容器 - 无缝长图效果 */
+/* 主容器 */
 .seamless-container {
     position: relative;
     width: 100%;
@@ -101,7 +101,6 @@ header {
     margin: 0 auto;
 }
 
-/* 无缝长图部分 */
 .seamless-section {
     position: relative;
     width: 100%;
@@ -109,7 +108,7 @@ header {
     padding: 0;
 }
 
-/* 英雄图部分 - 优化图片显示 */
+/* 英雄图 */
 .hero-section {
     height: 50vh;
     min-height: 300px;
@@ -133,7 +132,6 @@ header {
     opacity: 1;
 }
 
-/* 图片加载中的占位符 */
 .image-placeholder {
     position: absolute;
     top: 0;
@@ -149,7 +147,7 @@ header {
     font-weight: 600;
 }
 
-/* 信息填写区域 - 无缝连接 */
+/* 信息填写区域 */
 .info-section {
     background: white;
     padding: 20px 25px;
@@ -199,7 +197,7 @@ header {
     margin-top: 8px;
 }
 
-/* 优化表单布局 */
+/* 表单 */
 .form-container {
     width: 100%;
     margin: 0 auto;
@@ -282,7 +280,7 @@ input:focus, select:focus {
     display: none;
 }
 
-/* 伴侣信息区域 */
+/* 伴侣信息 */
 .partner-info-section {
     background: linear-gradient(135deg, #f9f5f0, #f0e6d6);
     padding: 15px;
@@ -298,7 +296,7 @@ input:focus, select:focus {
     font-size: 18px;
 }
 
-/* 明细图部分 - 优化图片显示 */
+/* 明细图 */
 .detail-section {
     height: 50vh;
     min-height: 300px;
@@ -323,7 +321,7 @@ input:focus, select:focus {
     opacity: 1;
 }
 
-/* 动态拉伸按钮样式 */
+/* 按钮 */
 .dynamic-pulse-btn {
     display: block;
     width: 100%;
@@ -343,7 +341,6 @@ input:focus, select:focus {
     transform-origin: center;
 }
 
-/* 动态拉伸动画 */
 .dynamic-pulse-btn.stretching {
     animation: stretchAnimation 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
@@ -369,29 +366,6 @@ input:focus, select:focus {
     background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
 }
 
-.dynamic-pulse-btn:active {
-    transform: translateY(-1px);
-}
-
-.dynamic-pulse-btn::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-}
-
-.dynamic-pulse-btn:hover::before {
-    width: 300px;
-    height: 300px;
-}
-
-/* 禁用状态的按钮 */
 .dynamic-pulse-btn:disabled {
     background: linear-gradient(135deg, #cccccc, #999999);
     cursor: not-allowed;
@@ -400,11 +374,7 @@ input:focus, select:focus {
     box-shadow: none !important;
 }
 
-.dynamic-pulse-btn:disabled::before {
-    display: none;
-}
-
-/* 分析结果区域 */
+/* 分析结果 */
 .analysis-result-section {
     display: none;
     margin: 40px 0;
@@ -433,11 +403,7 @@ input:focus, select:focus {
     margin-bottom: 8px;
 }
 
-.result-content {
-    margin: 25px 0;
-}
-
-/* 卡片样式 */
+/* 卡片 */
 .predictor-info-card,
 .bazi-pan-card,
 .dayun-pan-card,
@@ -463,7 +429,7 @@ input:focus, select:focus {
     border-bottom: 2px solid var(--light-color);
 }
 
-/* 预测者信息网格 */
+/* 预测者信息 */
 .predictor-info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -524,32 +490,95 @@ input:focus, select:focus {
     font-size: 12px;
 }
 
-/* 大运排盘 - 优化为行排列 */
+/* 大运 */
 .dayun-pan-card {
     display: none;
 }
 
-/* 免费内容区域 */
+#dayun-grid table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+#dayun-grid th,
+#dayun-grid td {
+    padding: 10px 14px;
+    text-align: center;
+    border: 1px solid #eee;
+}
+
+#dayun-grid th {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
+}
+
+#dayun-grid td {
+    background: #faf8f5;
+}
+
+#dayun-grid tr:nth-child(2) td {
+    background: #fff;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+/* 免费内容 */
 .analysis-section {
     margin-bottom: 20px;
 }
 
-.analysis-section h5 {
-    color: var(--primary-color);
-    font-size: 16px;
-    margin-bottom: 8px;
-    padding-left: 12px;
-    border-left: 4px solid var(--secondary-color);
+/* ============ DeepSeek 格式化的报告样式 ============ */
+/* 结论部分 - 大字体突出 */
+.conclusion {
+    font-size: 19px;
+    font-weight: 600;
+    color: #2c3e50;
+    background: #fef9e7;
+    padding: 12px 18px;
+    border-radius: 8px;
+    border-left: 5px solid #c0392b;
+    margin-bottom: 12px;
+    line-height: 1.8;
 }
 
-.analysis-content {
-    line-height: 1.8;
-    color: var(--text-color);
-    padding: 8px 0;
+.conclusion strong {
+    color: #c0392b;
+    font-size: 21px;
+}
+
+/* 分析部分 - 正常字体 */
+.analysis {
+    font-size: 15px;
+    color: #444;
+    line-height: 2;
+    padding: 0 4px;
+}
+
+.analysis cite {
+    color: #7f8c8d;
+    font-style: italic;
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 3px;
     font-size: 14px;
 }
 
-/* 锁定内容区域 - 优化布局 */
+/* 标题样式 */
+.free-content h3 {
+    font-size: 22px;
+    color: #2c3e50;
+    margin: 25px 0 10px 0;
+    padding: 8px 0 5px 14px;
+    border-left: 6px solid #c0392b;
+    background: #fafafa;
+    border-radius: 0 4px 4px 0;
+}
+
+/* 锁定内容 */
 .locked-content {
     position: relative;
     background: linear-gradient(135deg, #fff, #f9f9f9);
@@ -560,7 +589,6 @@ input:focus, select:focus {
     padding: 25px;
 }
 
-/* 锁定覆盖层 - 优化布局结构 */
 .locked-overlay {
     position: relative;
     background: rgba(255, 255, 255, 0.98);
@@ -576,7 +604,6 @@ input:focus, select:focus {
     box-shadow: 0 8px 30px rgba(0,0,0,0.1);
 }
 
-/* 锁图标 */
 .lock-icon {
     font-size: 60px;
     color: var(--secondary-color);
@@ -592,7 +619,6 @@ input:focus, select:focus {
     100% { transform: scale(1); }
 }
 
-/* 解锁按钮上方内容区域 */
 .unlock-header {
     text-align: center;
     margin-bottom: 25px;
@@ -604,7 +630,6 @@ input:focus, select:focus {
     font-size: 22px;
     margin-bottom: 8px;
     font-weight: 700;
-    text-shadow: 0 1px 2px rgba(255,255,255,0.8);
 }
 
 .unlock-header p {
@@ -613,7 +638,6 @@ input:focus, select:focus {
     margin-top: 5px;
 }
 
-/* 解锁项目列表 - 直接显示在解锁界面上方 */
 .unlock-items {
     width: 100%;
     margin: 25px 0;
@@ -670,12 +694,6 @@ input:focus, select:focus {
     align-items: center;
 }
 
-.unlock-items li:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    border-color: var(--primary-color);
-}
-
 .unlock-items li::before {
     content: '🔒';
     position: absolute;
@@ -684,7 +702,16 @@ input:focus, select:focus {
     color: var(--secondary-color);
 }
 
-/* 解锁按钮容器 */
+.unlock-items li.unlocked-item {
+    border-left: 4px solid var(--success-color) !important;
+    background: linear-gradient(135deg, rgba(240, 255, 244, 1), rgba(232, 245, 233, 1)) !important;
+}
+
+.unlock-items li.unlocked-item::before {
+    content: '✅' !important;
+    color: var(--success-color) !important;
+}
+
 .unlock-btn-container {
     margin-top: 20px;
     width: 100%;
@@ -711,23 +738,17 @@ input:focus, select:focus {
     background: linear-gradient(135deg, #e6b800, var(--secondary-color));
 }
 
-/* 解锁价格显示 */
+.unlock-btn:disabled {
+    background: linear-gradient(135deg, var(--success-color), #28c76f);
+    cursor: default;
+    opacity: 0.8;
+}
+
 .unlock-price {
     font-size: 18px;
     font-weight: bold;
     color: var(--secondary-color);
     margin-top: 8px;
-}
-
-/* 已解锁样式 */
-.unlocked-item {
-    border-left: 4px solid var(--success-color) !important;
-    background: linear-gradient(135deg, rgba(240, 255, 244, 1), rgba(232, 245, 233, 1)) !important;
-}
-
-.unlocked-item::before {
-    content: '✅' !important;
-    color: var(--success-color) !important;
 }
 
 /* 结果操作按钮 */
@@ -741,7 +762,6 @@ input:focus, select:focus {
     flex-wrap: wrap;
 }
 
-/* 下载按钮锁定样式 */
 .download-btn-locked {
     position: relative;
     overflow: hidden;
@@ -756,7 +776,7 @@ input:focus, select:focus {
     font-size: 16px;
 }
 
-/* 模态框 - 修复手机端滚动问题 */
+/* 模态框 */
 .modal {
     display: none;
     position: fixed;
@@ -813,7 +833,7 @@ input:focus, select:focus {
     color: var(--primary-color);
 }
 
-/* 支付弹窗 - 优化手机端显示 */
+/* 支付弹窗 */
 .order-info {
     background: #f9f5f0;
     padding: 15px;
@@ -826,38 +846,6 @@ input:focus, select:focus {
     margin: 8px 0;
     display: flex;
     justify-content: space-between;
-}
-
-.qr-codes {
-    display: flex;
-    justify-content: space-around;
-    margin: 20px 0;
-    gap: 20px;
-    flex-wrap: wrap;
-}
-
-.qr-code {
-    text-align: center;
-    flex: 1;
-    min-width: 150px;
-}
-
-.qr-code img {
-    width: 100%;
-    max-width: 150px;
-    height: auto;
-    aspect-ratio: 1/1;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-    padding: 8px;
-    background: white;
-    margin-bottom: 8px;
-}
-
-.qr-code p {
-    font-weight: 600;
-    color: var(--primary-color);
-    font-size: 14px;
 }
 
 /* 加载弹窗 */
@@ -882,7 +870,7 @@ input:focus, select:focus {
     margin-bottom: 12px;
 }
 
-/* API状态指示器 */
+/* API状态 */
 .api-status {
     position: fixed;
     top: 10px;
@@ -907,385 +895,13 @@ input:focus, select:focus {
     display: block;
 }
 
-/* 响应式设计 - 优化图片显示 */
-@media (max-width: 768px) {
-    .service-nav {
-        gap: 8px;
-    }
-    
-    .service-nav a {
-        padding: 5px 12px;
-        font-size: 12px;
-    }
-    
-    .hero-section, .detail-section {
-        height: 40vh;
-        min-height: 250px;
-    }
-    
-    .hero-image, .detail-image {
-        object-fit: cover;
-        object-position: top center;
-    }
-    
-    .info-section {
-        padding: 15px;
-    }
-    
-    .form-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    
-    .form-row {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .form-row .form-group {
-        min-width: 100%;
-    }
-    
-    .birth-time-group {
-        padding: 12px;
-    }
-    
-    .result-actions {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .qr-codes {
-        flex-direction: column;
-        align-items: center;
-        gap: 15px;
-    }
-    
-    .qr-code {
-        min-width: 100%;
-        max-width: 200px;
-    }
-    
-    .result-container {
-        padding: 20px;
-    }
-    
-    .modal-content {
-        padding: 20px 15px;
-        margin: 10% auto;
-        max-height: 85vh;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    .order-info {
-        padding: 12px;
-        font-size: 13px;
-    }
-    
-    .order-info p {
-        flex-direction: column;
-        gap: 5px;
-    }
-    
-    .section-title h2 {
-        font-size: 18px;
-    }
-    
-    .predictor-info-card h4,
-    .bazi-pan-card h4,
-    .dayun-pan-card h4,
-    .free-content h4,
-    .locked-content h4 {
-        font-size: 16px;
-    }
-    
-    .bazi-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-    }
-    
-    .bazi-column {
-        padding: 10px;
-    }
-    
-    .bazi-value {
-        font-size: 18px;
-    }
-    
-    /* 移动端锁定内容优化 */
-    .locked-content {
-        padding: 20px 15px;
-    }
-    
-    .locked-overlay {
-        padding: 20px 15px;
-    }
-    
-    .unlock-items {
-        padding: 18px 12px;
-        margin: 20px 0;
-    }
-    
-    .unlock-items ul {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    
-    .unlock-items li {
-        padding: 12px 15px;
-        padding-left: 40px;
-        font-size: 13px;
-    }
-    
-    .unlock-btn {
-        padding: 12px 30px;
-        font-size: 15px;
-        min-width: 200px;
-    }
-    
-    .dynamic-pulse-btn {
-        max-width: 220px;
-        padding: 12px 20px;
-        font-size: 14px;
-    }
-}
-
-@media (max-width: 480px) {
-    .bazi-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .predictor-info-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .hero-section, .detail-section {
-        height: 35vh;
-        min-height: 200px;
-    }
-    
-    .hero-image, .detail-image {
-        object-fit: cover;
-        object-position: center center;
-    }
-    
-    .unlock-items {
-        padding: 16px 10px;
-    }
-    
-    .unlock-items li {
-        font-size: 12px;
-        padding: 10px 12px;
-        padding-left: 35px;
-    }
-    
-    .modal-content {
-        padding: 15px 12px;
-        margin: 5% auto;
-        max-height: 90vh;
-    }
-    
-    .qr-codes {
-        gap: 10px;
-    }
-    
-    .qr-code img {
-        max-width: 130px;
-    }
-}
-
-/* 桌面端图片优化 */
-@media (min-width: 769px) {
-    .hero-section {
-        height: 55vh;
-        min-height: 400px;
-        max-height: 600px;
-    }
-    
-    .detail-section {
-        height: 55vh;
-        min-height: 400px;
-        max-height: 600px;
-    }
-    
-    .hero-image, .detail-image {
-        object-fit: cover;
-        object-position: center center;
-    }
-    
-    .unlock-items ul {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .modal-content {
-        max-height: 80vh;
-    }
-}
-
-/* 大屏幕优化 */
-@media (min-width: 1200px) {
-    .hero-section {
-        height: 60vh;
-        min-height: 500px;
-        max-height: 700px;
-    }
-    
-    .detail-section {
-        height: 60vh;
-        min-height: 500px;
-        max-height: 700px;
-    }
-    
-    .unlock-items ul {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* 八字排盘区域样式优化 */
-.bazi-section {
-    margin-bottom: 25px;
-    padding: 15px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #f9f5f0, #f0e6d6);
-}
-
-.bazi-section-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-}
-
-@media (max-width: 768px) {
-    .bazi-section-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 480px) {
-    .bazi-section-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* 进度步骤动画 */
+/* 进度动画 */
 @keyframes pulseStep {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
 }
 
-/* 大运排盘卡片 */
-#dayun-pan-card {
-    display: none;
-    margin-top: 20px;
-}
-
-#dayun-grid table {
-    width: 100%;
-    border-collapse: collapse;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-
-#dayun-grid th,
-#dayun-grid td {
-    padding: 10px 14px;
-    text-align: center;
-    border: 1px solid #eee;
-}
-
-#dayun-grid th {
-    background: var(--primary-color);
-    color: white;
-    font-weight: 600;
-}
-
-#dayun-grid td {
-    background: #faf8f5;
-}
-
-#dayun-grid tr:nth-child(2) td {
-    background: #fff;
-    font-weight: 500;
-    color: var(--primary-color);
-}
-
-#dayun-grid tr:last-child td {
-    font-size: 13px;
-    color: #888;
-}
-
-/* 响应式大运表格 */
-@media (max-width: 768px) {
-    #dayun-grid table {
-        font-size: 12px;
-    }
-    #dayun-grid th,
-    #dayun-grid td {
-        padding: 6px 8px;
-    }
-}
-
-@media (max-width: 480px) {
-    #dayun-grid table {
-        font-size: 11px;
-    }
-    #dayun-grid th,
-    #dayun-grid td {
-        padding: 4px 6px;
-    }
-}
-
-/* 进度步骤动画 */
-@keyframes pulseStep {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
-/* 大运排盘卡片 */
-#dayun-pan-card {
-    display: none;
-    margin-top: 20px;
-}
-
-#dayun-grid table {
-    width: 100%;
-    border-collapse: collapse;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-
-#dayun-grid th,
-#dayun-grid td {
-    padding: 10px 14px;
-    text-align: center;
-    border: 1px solid #eee;
-}
-
-#dayun-grid th {
-    background: var(--primary-color);
-    color: white;
-    font-weight: 600;
-}
-
-#dayun-grid td {
-    background: #faf8f5;
-}
-
-#dayun-grid tr:nth-child(2) td {
-    background: #fff;
-    font-weight: 500;
-    color: var(--primary-color);
-}
-
-#dayun-grid tr:last-child td {
-    font-size: 13px;
-    color: #888;
-}
-
-/* 进度项目容器滚动 */
+/* 进度容器滚动 */
 #progress-items-container {
     scrollbar-width: thin;
     scrollbar-color: #d4af37 #f0f0f0;
@@ -1305,66 +921,93 @@ input:focus, select:focus {
     border-radius: 4px;
 }
 
-/* 响应式大运表格 */
+/* 响应式 */
 @media (max-width: 768px) {
-    #dayun-grid table {
+    .service-nav {
+        gap: 8px;
+    }
+    .service-nav a {
+        padding: 5px 12px;
         font-size: 12px;
     }
-    #dayun-grid th,
-    #dayun-grid td {
-        padding: 6px 8px;
+    .hero-section, .detail-section {
+        height: 40vh;
+        min-height: 250px;
     }
-}
-
-@media (max-width: 480px) {
-    #dayun-grid table {
-        font-size: 11px;
+    .info-section {
+        padding: 15px;
     }
-    #dayun-grid th,
-    #dayun-grid td {
-        padding: 4px 6px;
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
     }
-}
-
-/* ============ DeepSeek 格式化的报告样式 ============ */
-
-/* 结论部分 - 大字体突出 */
-.conclusion {
-    font-size: 19px;
-    font-weight: 600;
-    color: #2c3e50;
-    background: #fef9e7;
-    padding: 12px 18px;
-    border-radius: 8px;
-    border-left: 5px solid #c0392b;
-    margin-bottom: 12px;
-    line-height: 1.8;
-}
-
-.conclusion strong {
-    color: #c0392b;
-    font-size: 21px;
-}
-
-/* 分析部分 - 正常字体 */
-.analysis {
-    font-size: 15px;
-    color: #444;
-    line-height: 2;
-    padding: 0 4px;
-}
-
-.analysis cite {
-    color: #7f8c8d;
-    font-style: italic;
-    background: #f8f9fa;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 14px;
-}
-
-/* 移动端适配 */
-@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .form-row .form-group {
+        min-width: 100%;
+    }
+    .birth-time-group {
+        padding: 12px;
+    }
+    .result-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    .result-container {
+        padding: 20px;
+    }
+    .modal-content {
+        padding: 20px 15px;
+        margin: 10% auto;
+        max-height: 85vh;
+    }
+    .order-info p {
+        flex-direction: column;
+        gap: 5px;
+    }
+    .section-title h2 {
+        font-size: 18px;
+    }
+    .bazi-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .bazi-column {
+        padding: 10px;
+    }
+    .bazi-value {
+        font-size: 18px;
+    }
+    .locked-content {
+        padding: 20px 15px;
+    }
+    .locked-overlay {
+        padding: 20px 15px;
+    }
+    .unlock-items {
+        padding: 18px 12px;
+    }
+    .unlock-items ul {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .unlock-items li {
+        padding: 12px 15px;
+        padding-left: 40px;
+        font-size: 13px;
+    }
+    .unlock-btn {
+        padding: 12px 30px;
+        font-size: 15px;
+        min-width: 200px;
+    }
+    .dynamic-pulse-btn {
+        max-width: 220px;
+        padding: 12px 20px;
+        font-size: 14px;
+    }
     .conclusion {
         font-size: 17px;
         padding: 10px 14px;
@@ -1375,4 +1018,108 @@ input:focus, select:focus {
     .analysis {
         font-size: 14px;
     }
+    .free-content h3 {
+        font-size: 19px;
+    }
+    #dayun-grid table {
+        font-size: 12px;
+    }
+    #dayun-grid th,
+    #dayun-grid td {
+        padding: 6px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .bazi-grid {
+        grid-template-columns: 1fr;
+    }
+    .predictor-info-grid {
+        grid-template-columns: 1fr;
+    }
+    .hero-section, .detail-section {
+        height: 35vh;
+        min-height: 200px;
+    }
+    .unlock-items {
+        padding: 16px 10px;
+    }
+    .unlock-items li {
+        font-size: 12px;
+        padding: 10px 12px;
+        padding-left: 35px;
+    }
+    .modal-content {
+        padding: 15px 12px;
+        margin: 5% auto;
+        max-height: 90vh;
+    }
+    #dayun-grid table {
+        font-size: 11px;
+    }
+    #dayun-grid th,
+    #dayun-grid td {
+        padding: 4px 6px;
+    }
+}
+
+@media (min-width: 769px) {
+    .hero-section {
+        height: 55vh;
+        min-height: 400px;
+        max-height: 600px;
+    }
+    .detail-section {
+        height: 55vh;
+        min-height: 400px;
+        max-height: 600px;
+    }
+    .unlock-items ul {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .modal-content {
+        max-height: 80vh;
+    }
+}
+
+@media (min-width: 1200px) {
+    .hero-section {
+        height: 60vh;
+        min-height: 500px;
+        max-height: 700px;
+    }
+    .detail-section {
+        height: 60vh;
+        min-height: 500px;
+        max-height: 700px;
+    }
+    .unlock-items ul {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* 大运表格滚动 */
+#dayun-grid {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 进度项目容器 */
+#progress-items-container {
+    scrollbar-width: thin;
+    scrollbar-color: #d4af37 #f0f0f0;
+}
+
+#progress-items-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+#progress-items-container::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+#progress-items-container::-webkit-scrollbar-thumb {
+    background: var(--secondary-color);
+    border-radius: 4px;
 }

@@ -1,6 +1,4 @@
 // 测算验证模块
-import { calculateBazi } from '../core/utils.js';
-
 export class CesuanModule {
     static getServiceConfig() {
         return {
@@ -116,9 +114,5 @@ ${baziText}
 4. 不要用"首先"、"然后"等连接词
 5. 每个部分以【标题】开头
 6. 每个部分必须结论在前，分析在后`;
-    }
-    
-    static calculateBazi(userData) {
-        return calculateBazi(userData);
     }
 }

@@ -265,7 +265,7 @@ export function displayDayunPan(dayunData) {
             card.style.display = 'block';
             card.innerHTML = `
                 <h4>大运排盘</h4>
-                <div id="dayun-grid" style="overflow-x:auto; -webkit-overflow-scrolling:touch;"></div>
+                <div id="dayun-grid" style="overflow-x:auto; -webkit-overflow-scrolling:touch; margin-top:10px;"></div>
             `;
             baziPan.parentNode.insertBefore(card, baziPan.nextSibling);
             dayunCard = card;
@@ -286,7 +286,6 @@ export function displayDayunPan(dayunData) {
     if (dayunData && dayunData.dayuns && Array.isArray(dayunData.dayuns) && dayunData.dayuns.length > 0) {
         const ages = dayunData.ages || [];
         const dayuns = dayunData.dayuns || [];
-        // 确保年龄和大运数量匹配
         const len = Math.min(ages.length, dayuns.length);
         dayunList = [];
         for (let i = 0; i < len; i++) {
@@ -296,7 +295,6 @@ export function displayDayunPan(dayunData) {
                 ganzhi: dayuns[i] || ''
             });
         }
-        // 如果大运数量多于年龄，用默认年龄补齐
         if (dayuns.length > ages.length) {
             for (let i = ages.length; i < dayuns.length; i++) {
                 dayunList.push({
@@ -309,13 +307,11 @@ export function displayDayunPan(dayunData) {
         startAge = ages[0] || 6;
         console.log('✅ 使用 DeepSeek 格式的大运数据，共', dayunList.length, '步:', dayunList);
     }
-    // 检查是否是 lunar-python 格式（有 list 字段）
     else if (dayunData && dayunData.list && Array.isArray(dayunData.list) && dayunData.list.length > 0) {
         dayunList = dayunData.list;
         startAge = dayunData.start_age || 6;
         console.log('✅ 使用 lunar-python 格式的大运数据:', dayunList);
     }
-    // 检查是否是直接数组
     else if (Array.isArray(dayunData) && dayunData.length > 0) {
         dayunList = dayunData;
         console.log('✅ 使用数组格式的大运数据:', dayunList);
@@ -331,18 +327,18 @@ export function displayDayunPan(dayunData) {
         return;
     }
     
-    // 显示所有大运
     const displayList = dayunList;
     const totalCount = displayList.length;
     console.log('📊 准备显示', totalCount, '步大运');
     
-    // 构建大运表格 - 使用 div 布局避免表格列数限制
-    let html = '<div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:2px;padding:5px 0;">';
+    // ============ 使用表格布局，两行显示 ============
+    let html = `
+        <table style="width:100%; border-collapse:collapse; min-width:${Math.max(totalCount * 70, 400)}px; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+            <thead>
+                <tr>
+                    <th style="padding:10px 14px; background:var(--primary-color); color:white; text-align:center; font-weight:600; border:1px solid #8b4513; min-width:60px; white-space:nowrap;">大运</th>
+    `;
     
-    // 表头行：大运标签
-    html += `<div style="min-width:60px;flex-shrink:0;background:var(--primary-color);color:white;text-align:center;padding:8px 12px;font-weight:600;border-radius:4px 0 0 4px;display:flex;align-items:center;justify-content:center;">大运</div>`;
-    
-    // 每个大运的年龄列
     displayList.forEach((dy, index) => {
         let ageLabel = '';
         if (dy.age_start !== undefined && dy.age_start !== null) {
@@ -351,21 +347,32 @@ export function displayDayunPan(dayunData) {
             ageLabel = `${startAge + index * 10}岁`;
         }
         const bgColor = index % 2 === 0 ? 'var(--primary-color)' : '#a0522d';
-        html += `<div style="min-width:70px;flex-shrink:0;background:${bgColor};color:white;text-align:center;padding:8px 10px;font-weight:600;white-space:nowrap;">${ageLabel}</div>`;
+        html += `
+                    <th style="padding:10px 14px; background:${bgColor}; color:white; text-align:center; font-weight:600; border:1px solid #8b4513; min-width:70px; white-space:nowrap;">${ageLabel}</th>
+        `;
     });
     
-    // 干支行
-    html += `<div style="min-width:60px;flex-shrink:0;background:#f5f1e8;text-align:center;padding:8px 12px;font-weight:600;color:var(--dark-color);border-radius:0 0 0 4px;display:flex;align-items:center;justify-content:center;">干支</div>`;
+    html += `
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding:10px 14px; background:#f5f1e8; text-align:center; font-weight:600; color:var(--dark-color); border:1px solid #ddd; min-width:60px; white-space:nowrap;">干支</td>
+    `;
     
     displayList.forEach((dy, index) => {
         const bgColor = index % 2 === 0 ? '#faf8f5' : '#fff';
-        html += `<div style="min-width:70px;flex-shrink:0;background:${bgColor};text-align:center;padding:8px 10px;font-weight:500;color:var(--primary-color);white-space:nowrap;">${dy.ganzhi || '--'}</div>`;
+        html += `
+                    <td style="padding:10px 14px; background:${bgColor}; text-align:center; font-weight:500; color:var(--primary-color); border:1px solid #ddd; min-width:70px; white-space:nowrap;">${dy.ganzhi || '--'}</td>
+        `;
     });
     
-    html += '</div>';
-    
-    // 添加额外信息：总数
-    html += `<div style="text-align:center;margin-top:8px;font-size:12px;color:#999;">共 ${totalCount} 步大运</div>`;
+    html += `
+                </tr>
+            </tbody>
+        </table>
+        <div style="text-align:center; margin-top:8px; font-size:12px; color:#999;">共 ${totalCount} 步大运</div>
+    `;
     
     dayunGrid.innerHTML = html;
     dayunCard.style.display = 'block';

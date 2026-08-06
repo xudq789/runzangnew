@@ -265,7 +265,7 @@ export function displayDayunPan(dayunData) {
             card.style.display = 'block';
             card.innerHTML = `
                 <h4>大运排盘</h4>
-                <div id="dayun-grid"></div>
+                <div id="dayun-grid" style="overflow-x:auto; -webkit-overflow-scrolling:touch;"></div>
             `;
             baziPan.parentNode.insertBefore(card, baziPan.nextSibling);
             dayunCard = card;
@@ -280,24 +280,39 @@ export function displayDayunPan(dayunData) {
     dayunGrid.innerHTML = '';
     
     let dayunList = [];
-    let startAge = 8;
+    let startAge = 6;
     
-    // 优先检查是否是 parseDayunData 的格式（有 dayuns 字段）- 来自 DeepSeek
+    // 检查是否是 parseDayunData 的格式（有 dayuns 字段）
     if (dayunData && dayunData.dayuns && Array.isArray(dayunData.dayuns) && dayunData.dayuns.length > 0) {
         const ages = dayunData.ages || [];
         const dayuns = dayunData.dayuns || [];
-        dayunList = ages.map((age, i) => ({
-            age_start: age,
-            age_end: age + 10,
-            ganzhi: dayuns[i] || ''
-        }));
-        startAge = ages[0] || 8;
-        console.log('✅ 使用 DeepSeek 格式的大运数据:', dayunList);
+        // 确保年龄和大运数量匹配
+        const len = Math.min(ages.length, dayuns.length);
+        dayunList = [];
+        for (let i = 0; i < len; i++) {
+            dayunList.push({
+                age_start: ages[i] || (startAge + i * 10),
+                age_end: (ages[i] || (startAge + i * 10)) + 10,
+                ganzhi: dayuns[i] || ''
+            });
+        }
+        // 如果大运数量多于年龄，用默认年龄补齐
+        if (dayuns.length > ages.length) {
+            for (let i = ages.length; i < dayuns.length; i++) {
+                dayunList.push({
+                    age_start: startAge + i * 10,
+                    age_end: startAge + i * 10 + 10,
+                    ganzhi: dayuns[i] || ''
+                });
+            }
+        }
+        startAge = ages[0] || 6;
+        console.log('✅ 使用 DeepSeek 格式的大运数据，共', dayunList.length, '步:', dayunList);
     }
     // 检查是否是 lunar-python 格式（有 list 字段）
     else if (dayunData && dayunData.list && Array.isArray(dayunData.list) && dayunData.list.length > 0) {
         dayunList = dayunData.list;
-        startAge = dayunData.start_age || 8;
+        startAge = dayunData.start_age || 6;
         console.log('✅ 使用 lunar-python 格式的大运数据:', dayunList);
     }
     // 检查是否是直接数组
@@ -318,52 +333,41 @@ export function displayDayunPan(dayunData) {
     
     // 显示所有大运
     const displayList = dayunList;
+    const totalCount = displayList.length;
+    console.log('📊 准备显示', totalCount, '步大运');
     
-    // 构建大运表格
-    const table = document.createElement('table');
-    table.style.cssText = 'width:100%; border-collapse: collapse; margin-top: 10px; border-radius: 8px; overflow: auto; display: block;';
+    // 构建大运表格 - 使用 div 布局避免表格列数限制
+    let html = '<div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:2px;padding:5px 0;">';
     
-    // 表头
-    const thead = document.createElement('thead');
-    const trHeader = document.createElement('tr');
-    const thLabel = document.createElement('th');
-    thLabel.textContent = '大运';
-    thLabel.style.cssText = 'padding: 8px 12px; background: var(--primary-color); color: white; text-align: center; font-weight: 600; min-width: 60px; border: 1px solid #8b4513;';
-    trHeader.appendChild(thLabel);
+    // 表头行：大运标签
+    html += `<div style="min-width:60px;flex-shrink:0;background:var(--primary-color);color:white;text-align:center;padding:8px 12px;font-weight:600;border-radius:4px 0 0 4px;display:flex;align-items:center;justify-content:center;">大运</div>`;
     
+    // 每个大运的年龄列
     displayList.forEach((dy, index) => {
-        const th = document.createElement('th');
         let ageLabel = '';
         if (dy.age_start !== undefined && dy.age_start !== null) {
             ageLabel = `${dy.age_start}岁`;
         } else {
             ageLabel = `${startAge + index * 10}岁`;
         }
-        th.textContent = ageLabel;
-        th.style.cssText = `padding: 8px 12px; background: ${index % 2 === 0 ? 'var(--primary-color)' : '#a0522d'}; color: white; text-align: center; font-weight: 600; white-space: nowrap; border: 1px solid #8b4513;`;
-        trHeader.appendChild(th);
+        const bgColor = index % 2 === 0 ? 'var(--primary-color)' : '#a0522d';
+        html += `<div style="min-width:70px;flex-shrink:0;background:${bgColor};color:white;text-align:center;padding:8px 10px;font-weight:600;white-space:nowrap;">${ageLabel}</div>`;
     });
-    thead.appendChild(trHeader);
-    table.appendChild(thead);
     
     // 干支行
-    const tbody = document.createElement('tbody');
-    const trGanzhi = document.createElement('tr');
-    const tdGanzhiLabel = document.createElement('td');
-    tdGanzhiLabel.textContent = '干支';
-    tdGanzhiLabel.style.cssText = 'padding: 8px 12px; background: #f5f1e8; text-align: center; font-weight: 600; color: var(--dark-color); border: 1px solid #ddd;';
-    trGanzhi.appendChild(tdGanzhiLabel);
+    html += `<div style="min-width:60px;flex-shrink:0;background:#f5f1e8;text-align:center;padding:8px 12px;font-weight:600;color:var(--dark-color);border-radius:0 0 0 4px;display:flex;align-items:center;justify-content:center;">干支</div>`;
     
     displayList.forEach((dy, index) => {
-        const td = document.createElement('td');
-        td.textContent = dy.ganzhi || '--';
-        td.style.cssText = `padding: 8px 12px; text-align: center; font-weight: 500; color: var(--primary-color); ${index % 2 === 0 ? 'background: #faf8f5;' : 'background: #fff;'}; white-space: nowrap; border: 1px solid #ddd;`;
-        trGanzhi.appendChild(td);
+        const bgColor = index % 2 === 0 ? '#faf8f5' : '#fff';
+        html += `<div style="min-width:70px;flex-shrink:0;background:${bgColor};text-align:center;padding:8px 10px;font-weight:500;color:var(--primary-color);white-space:nowrap;">${dy.ganzhi || '--'}</div>`;
     });
-    tbody.appendChild(trGanzhi);
-    table.appendChild(tbody);
     
-    dayunGrid.appendChild(table);
+    html += '</div>';
+    
+    // 添加额外信息：总数
+    html += `<div style="text-align:center;margin-top:8px;font-size:12px;color:#999;">共 ${totalCount} 步大运</div>`;
+    
+    dayunGrid.innerHTML = html;
     dayunCard.style.display = 'block';
 }
 
@@ -373,15 +377,16 @@ export function parseDayunData(analysisResult) {
     
     const result = { ages: [], dayuns: [], elements: [] };
     
-    // 方法1：匹配标准格式 - 匹配【大运排盘】之后的内容
+    // 查找【大运排盘】部分
     const dayunMatch = analysisResult.match(/【大运排盘】([\s\S]*?)(?=【|$)/);
     if (dayunMatch) {
         const dayunText = dayunMatch[1];
-        console.log('📝 找到大运排盘文本:', dayunText);
+        console.log('📝 大运排盘原始内容:', dayunText);
         
-        // 匹配 "岁：[数字] [数字] ..." 格式
+        // 匹配 "岁：[数字] [数字] ..." 格式（多个数字）
         const ageMatch = dayunText.match(/岁[：:]\s*([\d\s]+)/);
         if (ageMatch) {
+            // 按空格分割，过滤空字符串，转为数字
             result.ages = ageMatch[1].trim().split(/\s+/).map(Number).filter(a => !isNaN(a) && a > 0);
             console.log('✅ 解析到年龄:', result.ages);
         }
@@ -389,102 +394,68 @@ export function parseDayunData(analysisResult) {
         // 匹配 "大运：[干支] [干支] ..." 格式
         const dayunMatch2 = dayunText.match(/大运[：:]\s*([^\n]+)/);
         if (dayunMatch2) {
-            result.dayuns = dayunMatch2[1].trim().split(/\s+/).filter(d => d.length > 0);
-            console.log('✅ 解析到大运干支:', result.dayuns);
+            // 按空格分割，过滤空字符串
+            const dayunStr = dayunMatch2[1].trim();
+            // 提取所有中文双字词
+            const dayunList = dayunStr.match(/[\u4e00-\u9fa5]{2}/g);
+            if (dayunList) {
+                result.dayuns = dayunList;
+                console.log('✅ 解析到大运:', result.dayuns);
+            } else {
+                // 如果中文双字词匹配失败，按空格分割
+                result.dayuns = dayunStr.split(/\s+/).filter(d => d.length > 0);
+                console.log('✅ 解析到大运(空格分割):', result.dayuns);
+            }
         }
         
-        // 匹配 "纳音：[纳音] [纳音] ..." 格式
+        // 匹配纳音（如果有）
         const elementMatch = dayunText.match(/纳音[：:]\s*([^\n]+)/);
         if (elementMatch) {
-            result.elements = elementMatch[1].trim().split(/\s+/).filter(e => e.length > 0);
-            console.log('✅ 解析到纳音:', result.elements);
+            const elementStr = elementMatch[1].trim();
+            const elementList = elementStr.match(/[\u4e00-\u9fa5]{2,3}/g);
+            if (elementList) {
+                result.elements = elementList;
+                console.log('✅ 解析到纳音:', result.elements);
+            }
         }
     }
     
-    // 方法2：如果方法1没有解析到，尝试逐行解析
+    // 如果上面的方法没有解析到，尝试直接在整个文本中搜索
     if (result.ages.length === 0 || result.dayuns.length === 0) {
-        console.log('🔄 方法1未解析到，使用逐行解析...');
-        const lines = analysisResult.split('\n');
-        let foundDayunSection = false;
-        let tempAges = [], tempDayuns = [], tempElements = [];
+        console.log('🔄 尝试全文搜索大运数据...');
         
-        for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed.includes('【大运排盘】')) {
-                foundDayunSection = true;
-                continue;
-            }
-            if (foundDayunSection && trimmed.match(/^【/)) break;
-            if (!foundDayunSection) continue;
-            
-            // 匹配 "岁：[数字] [数字] ..." 
-            if (trimmed.includes('岁') && trimmed.includes('：')) {
-                const ageNumbers = trimmed.match(/\d+/g);
-                if (ageNumbers && ageNumbers.length > 0) {
-                    tempAges = ageNumbers.map(Number);
-                    console.log('✅ 逐行解析到年龄:', tempAges);
-                }
-            }
-            
-            // 匹配 "大运：[干支] [干支] ..."
-            if (trimmed.includes('大运') && trimmed.includes('：')) {
-                const dayunMatches = trimmed.match(/[\u4e00-\u9fa5]{2}/g);
-                if (dayunMatches && dayunMatches.length > 0) {
-                    tempDayuns = dayunMatches;
-                    console.log('✅ 逐行解析到大运:', tempDayuns);
-                }
-            }
-            
-            // 匹配 "纳音：[纳音] [纳音] ..."
-            if (trimmed.includes('纳音') && trimmed.includes('：')) {
-                const elementMatches = trimmed.match(/[\u4e00-\u9fa5]{2,3}/g);
-                if (elementMatches && elementMatches.length > 0) {
-                    tempElements = elementMatches;
-                    console.log('✅ 逐行解析到纳音:', tempElements);
-                }
-            }
+        // 搜索 "岁：[数字]" 行
+        const ageLineMatch = analysisResult.match(/岁[：:]\s*([\d\s]+)/);
+        if (ageLineMatch) {
+            result.ages = ageLineMatch[1].trim().split(/\s+/).map(Number).filter(a => !isNaN(a) && a > 0);
+            console.log('✅ 全文搜索-年龄:', result.ages);
         }
         
-        if (tempAges.length > 0 && tempDayuns.length > 0) {
-            result.ages = tempAges;
-            result.dayuns = tempDayuns;
-            if (tempElements.length > 0) result.elements = tempElements;
-        }
-    }
-    
-    // 方法3：如果还是没有解析到，尝试匹配 "岁：[数字]" 和 "大运：[干支]" 在同一行或跨行
-    if (result.ages.length === 0 || result.dayuns.length === 0) {
-        console.log('🔄 方法2未解析到，尝试跨行解析...');
-        const fullText = analysisResult;
-        const dayunSection = fullText.match(/【大运排盘】([\s\S]*?)(?=【|$)/);
-        if (dayunSection) {
-            const text = dayunSection[1];
-            // 提取所有数字作为年龄
-            const allNumbers = text.match(/\d+/g);
-            if (allNumbers && allNumbers.length > 0) {
-                result.ages = allNumbers.map(Number).filter(a => a > 0 && a < 100);
-                console.log('✅ 跨行解析到年龄:', result.ages);
-            }
-            // 提取所有双字词作为干支
-            const allGanzhi = text.match(/[\u4e00-\u9fa5]{2}/g);
-            if (allGanzhi && allGanzhi.length > 0) {
-                // 过滤掉常见的非干支词
-                const excludeWords = ['大运', '纳音', '岁数', '起运', '步骤', '计算', '结果', '展示', '过程', '全部'];
-                result.dayuns = allGanzhi.filter(w => !excludeWords.includes(w));
-                console.log('✅ 跨行解析到大运:', result.dayuns);
+        // 搜索 "大运：[干支]" 行
+        const dayunLineMatch = analysisResult.match(/大运[：:]\s*([^\n]+)/);
+        if (dayunLineMatch) {
+            const dayunStr = dayunLineMatch[1].trim();
+            const dayunList = dayunStr.match(/[\u4e00-\u9fa5]{2}/g);
+            if (dayunList) {
+                result.dayuns = dayunList;
+                console.log('✅ 全文搜索-大运:', result.dayuns);
+            } else {
+                result.dayuns = dayunStr.split(/\s+/).filter(d => d.length > 0);
+                console.log('✅ 全文搜索-大运(空格分割):', result.dayuns);
             }
         }
     }
     
-    // 确保年龄和大运数量一致
-    const maxLen = Math.min(result.ages.length, result.dayuns.length);
-    if (maxLen > 0) {
-        result.ages = result.ages.slice(0, maxLen);
-        result.dayuns = result.dayuns.slice(0, maxLen);
-        result.elements = result.elements.slice(0, maxLen);
-    } else if (result.dayuns.length > 0 && result.ages.length === 0) {
-        // 只有大运没有年龄，生成默认年龄
-        result.ages = result.dayuns.map((_, i) => 7 + i * 10);
+    // 确保年龄和大运数量匹配
+    if (result.ages.length > 0 && result.dayuns.length > 0) {
+        // 如果年龄数量多于大运数量，截断年龄
+        if (result.ages.length > result.dayuns.length) {
+            result.ages = result.ages.slice(0, result.dayuns.length);
+        }
+        // 如果大运数量多于年龄数量，截断大运
+        if (result.dayuns.length > result.ages.length) {
+            result.dayuns = result.dayuns.slice(0, result.ages.length);
+        }
     }
     
     console.log('✅ 最终大运数据:', result);

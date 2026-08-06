@@ -281,17 +281,11 @@ export function displayDayunPan(dayunData) {
     
     dayunGrid.innerHTML = '';
     
-    // 处理数据格式
     let dayunList = [];
     let startAge = 8;
     
-    // 检查是否是 lunar-python 格式（有 list 字段）
-    if (dayunData && dayunData.list && Array.isArray(dayunData.list) && dayunData.list.length > 0) {
-        dayunList = dayunData.list;
-        startAge = dayunData.start_age || 8;
-    } 
-    // 检查是否是旧格式（有 dayuns 字段）
-    else if (dayunData && dayunData.dayuns && Array.isArray(dayunData.dayuns) && dayunData.dayuns.length > 0) {
+    // 优先检查是否是 parseDayunData 的格式（有 dayuns 字段）- 来自 DeepSeek
+    if (dayunData && dayunData.dayuns && Array.isArray(dayunData.dayuns) && dayunData.dayuns.length > 0) {
         const ages = dayunData.ages || [];
         const dayuns = dayunData.dayuns || [];
         dayunList = ages.map((age, i) => ({
@@ -300,10 +294,18 @@ export function displayDayunPan(dayunData) {
             ganzhi: dayuns[i] || ''
         }));
         startAge = ages[0] || 8;
+        console.log('✅ 使用 DeepSeek 格式的大运数据:', dayunList);
+    }
+    // 检查是否是 lunar-python 格式（有 list 字段）
+    else if (dayunData && dayunData.list && Array.isArray(dayunData.list) && dayunData.list.length > 0) {
+        dayunList = dayunData.list;
+        startAge = dayunData.start_age || 8;
+        console.log('✅ 使用 lunar-python 格式的大运数据:', dayunList);
     }
     // 检查是否是直接数组
     else if (Array.isArray(dayunData) && dayunData.length > 0) {
         dayunList = dayunData;
+        console.log('✅ 使用数组格式的大运数据:', dayunList);
     }
     
     if (!dayunList || dayunList.length === 0) {
@@ -323,7 +325,7 @@ export function displayDayunPan(dayunData) {
     const table = document.createElement('table');
     table.style.cssText = 'width:100%; border-collapse: collapse; margin-top: 10px; border-radius: 8px; overflow: hidden;';
     
-    // 表头：大运 + 各步大运
+    // 表头
     const trHeader = document.createElement('tr');
     const thLabel = document.createElement('th');
     thLabel.textContent = '大运';
@@ -333,7 +335,7 @@ export function displayDayunPan(dayunData) {
     displayList.forEach((dy, index) => {
         const th = document.createElement('th');
         let ageLabel = '';
-        if (dy.age_start !== undefined) {
+        if (dy.age_start !== undefined && dy.age_start !== null) {
             ageLabel = `${dy.age_start}岁`;
         } else {
             ageLabel = `${startAge + index * 10}岁`;
@@ -344,7 +346,7 @@ export function displayDayunPan(dayunData) {
     });
     table.appendChild(trHeader);
     
-    // 第二行：干支
+    // 干支行
     const trGanzhi = document.createElement('tr');
     const tdGanzhiLabel = document.createElement('td');
     tdGanzhiLabel.textContent = '干支';

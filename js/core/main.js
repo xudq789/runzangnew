@@ -457,7 +457,7 @@ function sleep(ms) {
     return new Promise(function(resolve) { setTimeout(resolve, ms); });
 }
 
-// 格式化排盘数据用于 Prompt
+// ============ 格式化排盘数据用于 Prompt ============
 function formatBaziForPrompt(baziRawData) {
     if (!baziRawData) return '';
     const bazi = baziRawData.bazi;
@@ -520,7 +520,7 @@ async function startAnalysis() {
             freeAnalysisText.innerHTML = '<div class="loading-text">正在生成分析结果...</div>';
         }
         
-        // ============ 【新增】调用排盘服务 ============
+        // ============ 【调用排盘服务】 ============
         console.log('🔮 调用排盘服务...');
         try {
             const baziResponse = await fetch('https://119.29.160.189:36667/api/bazi/calculate', {

@@ -208,112 +208,37 @@ export function displayBaziPan() {
     if (!baziGrid) return;
     baziGrid.innerHTML = '';
     
-    if (STATE.currentService === '八字合婚' && STATE.partnerData) {
-        const userSection = document.createElement('div');
-        userSection.className = 'bazi-section';
-        const userTitle = document.createElement('h5');
-        userTitle.textContent = `${STATE.userData.name} 的八字排盘`;
-        userTitle.style.cssText = 'color:var(--primary-color);margin-bottom:15px;text-align:center;';
-        userSection.appendChild(userTitle);
-        const userGrid = document.createElement('div');
-        userGrid.className = 'bazi-section-grid';
-        const userBaziData = STATE.baziData || STATE.userBaziData;
-        if (userBaziData) {
-            const userColumns = [
-                { label: '年柱', value: userBaziData.yearColumn, element: userBaziData.yearElement },
-                { label: '月柱', value: userBaziData.monthColumn, element: userBaziData.monthElement },
-                { label: '日柱', value: userBaziData.dayColumn, element: userBaziData.dayElement },
-                { label: '时柱', value: userBaziData.hourColumn, element: userBaziData.hourElement }
-            ];
-            userColumns.forEach(col => {
-                const div = document.createElement('div');
-                div.className = 'bazi-column';
-                const labelDiv = document.createElement('div');
-                labelDiv.className = 'bazi-label';
-                labelDiv.textContent = col.label;
-                const valueDiv = document.createElement('div');
-                valueDiv.className = 'bazi-value';
-                valueDiv.textContent = col.value;
-                const elementDiv = document.createElement('div');
-                elementDiv.className = 'bazi-element';
-                elementDiv.textContent = col.element || '';
-                div.appendChild(labelDiv);
-                div.appendChild(valueDiv);
-                div.appendChild(elementDiv);
-                userGrid.appendChild(div);
-            });
-        }
-        userSection.appendChild(userGrid);
-        baziGrid.appendChild(userSection);
-        
-        const separator = document.createElement('div');
-        separator.style.cssText = 'height:2px;background:linear-gradient(to right,transparent,var(--secondary-color),transparent);margin:20px 0;';
-        baziGrid.appendChild(separator);
-        
-        const partnerSection = document.createElement('div');
-        partnerSection.className = 'bazi-section';
-        const partnerTitle = document.createElement('h5');
-        partnerTitle.textContent = `${STATE.partnerData.partnerName} 的八字排盘`;
-        partnerTitle.style.cssText = 'color:var(--primary-color);margin-bottom:15px;text-align:center;';
-        partnerSection.appendChild(partnerTitle);
-        const partnerGrid = document.createElement('div');
-        partnerGrid.className = 'bazi-section-grid';
-        const partnerBaziData = STATE.partnerBaziData || calculatePartnerBazi();
-        if (partnerBaziData) {
-            const partnerColumns = [
-                { label: '年柱', value: partnerBaziData.yearColumn, element: partnerBaziData.yearElement },
-                { label: '月柱', value: partnerBaziData.monthColumn, element: partnerBaziData.monthElement },
-                { label: '日柱', value: partnerBaziData.dayColumn, element: partnerBaziData.dayElement },
-                { label: '时柱', value: partnerBaziData.hourColumn, element: partnerBaziData.hourElement }
-            ];
-            partnerColumns.forEach(col => {
-                const div = document.createElement('div');
-                div.className = 'bazi-column';
-                const labelDiv = document.createElement('div');
-                labelDiv.className = 'bazi-label';
-                labelDiv.textContent = col.label;
-                const valueDiv = document.createElement('div');
-                valueDiv.className = 'bazi-value';
-                valueDiv.textContent = col.value;
-                const elementDiv = document.createElement('div');
-                elementDiv.className = 'bazi-element';
-                elementDiv.textContent = col.element || '';
-                div.appendChild(labelDiv);
-                div.appendChild(valueDiv);
-                div.appendChild(elementDiv);
-                partnerGrid.appendChild(div);
-            });
-            STATE.partnerBaziData = partnerBaziData;
-        }
-        partnerSection.appendChild(partnerGrid);
-        baziGrid.appendChild(partnerSection);
-    } else {
-        const baziDataToDisplay = STATE.baziData;
-        if (!baziDataToDisplay) return;
-        const columns = [
-            { label: '年柱', value: baziDataToDisplay.yearColumn, element: baziDataToDisplay.yearElement },
-            { label: '月柱', value: baziDataToDisplay.monthColumn, element: baziDataToDisplay.monthElement },
-            { label: '日柱', value: baziDataToDisplay.dayColumn, element: baziDataToDisplay.dayElement },
-            { label: '时柱', value: baziDataToDisplay.hourColumn, element: baziDataToDisplay.hourElement }
-        ];
-        columns.forEach(col => {
-            const div = document.createElement('div');
-            div.className = 'bazi-column';
-            const labelDiv = document.createElement('div');
-            labelDiv.className = 'bazi-label';
-            labelDiv.textContent = col.label;
-            const valueDiv = document.createElement('div');
-            valueDiv.className = 'bazi-value';
-            valueDiv.textContent = col.value;
-            const elementDiv = document.createElement('div');
-            elementDiv.className = 'bazi-element';
-            elementDiv.textContent = col.element || '';
-            div.appendChild(labelDiv);
-            div.appendChild(valueDiv);
-            div.appendChild(elementDiv);
-            baziGrid.appendChild(div);
-        });
+    // 直接从 STATE.baziData 读取（来自 lunar-python 排盘）
+    const bazi = STATE.baziData;
+    if (!bazi) {
+        console.warn('没有排盘数据');
+        return;
     }
+    
+    const columns = [
+        { label: '年柱', value: bazi.year.ganzhi, element: bazi.year.nayin },
+        { label: '月柱', value: bazi.month.ganzhi, element: bazi.month.nayin },
+        { label: '日柱', value: bazi.day.ganzhi, element: bazi.day.nayin },
+        { label: '时柱', value: bazi.hour.ganzhi, element: bazi.hour.nayin }
+    ];
+    
+    columns.forEach(col => {
+        const div = document.createElement('div');
+        div.className = 'bazi-column';
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'bazi-label';
+        labelDiv.textContent = col.label;
+        const valueDiv = document.createElement('div');
+        valueDiv.className = 'bazi-value';
+        valueDiv.textContent = col.value;
+        const elementDiv = document.createElement('div');
+        elementDiv.className = 'bazi-element';
+        elementDiv.textContent = col.element || '';
+        div.appendChild(labelDiv);
+        div.appendChild(valueDiv);
+        div.appendChild(elementDiv);
+        baziGrid.appendChild(div);
+    });
 }
 
 function calculatePartnerBazi() {

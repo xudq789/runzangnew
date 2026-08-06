@@ -296,34 +296,30 @@
         </div>
     </div>
 
-    <!-- 加载弹窗 - 优化版 -->
-<div id="loading-modal" class="modal">
-    <div class="modal-content" style="text-align: center; padding: 30px 20px; max-width: 480px;">
-        <div class="spinner"></div>
-        <div class="loading-text" id="loading-title" style="font-size: 17px;">润藏八字正在为您进行深度命理分析</div>
-        
-        <!-- 进度条 -->
-        <div style="margin: 18px 0 10px 0;">
-            <div style="background: #f0f0f0; border-radius: 10px; height: 8px; overflow: hidden; width: 100%;">
-                <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-radius: 10px; transition: width 0.5s ease;"></div>
+    <!-- 加载弹窗 -->
+    <div id="loading-modal" class="modal">
+        <div class="modal-content" style="text-align: center; padding: 30px 20px; max-width: 480px;">
+            <div class="spinner"></div>
+            <div class="loading-text" id="loading-title" style="font-size: 17px;">润藏八字正在为您进行深度命理分析</div>
+            
+            <div style="margin: 18px 0 10px 0;">
+                <div style="background: #f0f0f0; border-radius: 10px; height: 8px; overflow: hidden; width: 100%;">
+                    <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-radius: 10px; transition: width 0.5s ease;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 12px; color: #999;">
+                    <span id="progress-label">准备分析...</span>
+                    <span id="progress-percent">0%</span>
+                </div>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 12px; color: #999;">
-                <span id="progress-label">准备分析...</span>
-                <span id="progress-percent">0%</span>
-            </div>
+            
+            <div id="progress-items-container" style="text-align: left; margin: 10px 0 8px 0; padding: 12px 15px; background: #f8f5f0; border-radius: 8px; max-height: 300px; overflow-y: auto; font-size: 13px;"></div>
+            
+            <p style="color: #7d6e63; margin-top: 8px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span>⏱️</span>
+                <span id="loading-timer">预计需要 1 分钟，请耐心等待</span>
+            </p>
         </div>
-        
-        <!-- 分析项目列表 -->
-        <div id="progress-items-container" style="text-align: left; margin: 10px 0 8px 0; padding: 12px 15px; background: #f8f5f0; border-radius: 8px; max-height: 300px; overflow-y: auto; font-size: 13px;">
-            <!-- 动态生成 -->
-        </div>
-        
-        <p style="color: #7d6e63; margin-top: 8px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <span>⏱️</span>
-            <span id="loading-timer">预计需要 1 分钟，请耐心等待</span>
-        </p>
     </div>
-</div>
 
     <script src="js/core/main.js" type="module"></script>
 </body>

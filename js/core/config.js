@@ -10,7 +10,6 @@ export const SERVICES = {
             '过往关键流年验证', 
             '专业建议与指导'
         ],
-        // 新增：分析项目列表（用于进度显示）
         analysisSteps: [
             '八字排盘',
             '大运排盘',
@@ -116,16 +115,17 @@ export const STATE = {
     partnerData: null,
     apiStatus: null,
     isPaymentUnlocked: false,
-    isDownloadLocked: true
+    isDownloadLocked: true,
+    dayunData: null,
+    baziRawData: null
 };
 
-// API配置 - 指向你的支付后端
+// API配置
 export const API_CONFIG = {
-    BACKEND_URL: 'https://119.29.160.189:3001',  // 改为HTTPS
+    BACKEND_URL: 'https://119.29.160.189:3001',
     TIMEOUT: 120000
 };
 
-// 支付配置
 export const PAYMENT_CONFIG = {
     GATEWAY_URL: `${API_CONFIG.BACKEND_URL}/api/payment`
 };

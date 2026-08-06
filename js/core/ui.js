@@ -1,8 +1,7 @@
 // UI控制模块
-import { DOM, formatDate, hideElement, showElement, generateOrderId, calculateBazi } from './utils.js';
+import { DOM, formatDate, hideElement, showElement } from './utils.js';
 import { SERVICES, STATE, API_CONFIG } from './config.js';
 
-// UI元素集合
 export const UI = {
     name: () => DOM.id('name'),
     gender: () => DOM.id('gender'),
@@ -240,18 +239,6 @@ export function displayBaziPan() {
     });
 }
 
-function calculatePartnerBazi() {
-    if (!STATE.partnerData) return null;
-    return calculateBazi({
-        birthYear: STATE.partnerData.partnerBirthYear,
-        birthMonth: STATE.partnerData.partnerBirthMonth,
-        birthDay: STATE.partnerData.partnerBirthDay,
-        birthHour: STATE.partnerData.partnerBirthHour,
-        birthMinute: STATE.partnerData.partnerBirthMinute
-    });
-}
-
-// ============ 大运排盘显示 ============
 export function displayDayunPan(dayunData) {
     console.log('📊 显示大运排盘...', dayunData);
     
@@ -282,7 +269,6 @@ export function displayDayunPan(dayunData) {
     let dayunList = [];
     let startAge = 6;
     
-    // 检查是否是 parseDayunData 的格式（有 dayuns 字段）
     if (dayunData && dayunData.dayuns && Array.isArray(dayunData.dayuns) && dayunData.dayuns.length > 0) {
         const ages = dayunData.ages || [];
         const dayuns = dayunData.dayuns || [];
@@ -304,17 +290,11 @@ export function displayDayunPan(dayunData) {
                 });
             }
         }
-        startAge = ages[0] || 6;
-        console.log('✅ 使用 DeepSeek 格式的大运数据，共', dayunList.length, '步:', dayunList);
-    }
-    else if (dayunData && dayunData.list && Array.isArray(dayunData.list) && dayunData.list.length > 0) {
+        console.log('✅ 大运数据，共', dayunList.length, '步');
+    } else if (dayunData && dayunData.list && Array.isArray(dayunData.list) && dayunData.list.length > 0) {
         dayunList = dayunData.list;
-        startAge = dayunData.start_age || 6;
-        console.log('✅ 使用 lunar-python 格式的大运数据:', dayunList);
-    }
-    else if (Array.isArray(dayunData) && dayunData.length > 0) {
+    } else if (Array.isArray(dayunData) && dayunData.length > 0) {
         dayunList = dayunData;
-        console.log('✅ 使用数组格式的大运数据:', dayunList);
     }
     
     if (!dayunList || dayunList.length === 0) {
@@ -329,9 +309,7 @@ export function displayDayunPan(dayunData) {
     
     const displayList = dayunList;
     const totalCount = displayList.length;
-    console.log('📊 准备显示', totalCount, '步大运');
     
-    // ============ 使用表格布局，两行显示 ============
     let html = `
         <table style="width:100%; border-collapse:collapse; min-width:${Math.max(totalCount * 70, 400)}px; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
             <thead>
@@ -378,44 +356,35 @@ export function displayDayunPan(dayunData) {
     dayunCard.style.display = 'block';
 }
 
-// ============ 解析大运数据 ============
 export function parseDayunData(analysisResult) {
     console.log('🔍 解析大运数据...');
     
     const result = { ages: [], dayuns: [], elements: [] };
     
-    // 查找【大运排盘】部分
     const dayunMatch = analysisResult.match(/【大运排盘】([\s\S]*?)(?=【|$)/);
     if (dayunMatch) {
         const dayunText = dayunMatch[1];
         console.log('📝 大运排盘原始内容:', dayunText);
         
-        // 匹配 "岁：[数字] [数字] ..." 格式（多个数字）
         const ageMatch = dayunText.match(/岁[：:]\s*([\d\s]+)/);
         if (ageMatch) {
-            // 按空格分割，过滤空字符串，转为数字
             result.ages = ageMatch[1].trim().split(/\s+/).map(Number).filter(a => !isNaN(a) && a > 0);
             console.log('✅ 解析到年龄:', result.ages);
         }
         
-        // 匹配 "大运：[干支] [干支] ..." 格式
         const dayunMatch2 = dayunText.match(/大运[：:]\s*([^\n]+)/);
         if (dayunMatch2) {
-            // 按空格分割，过滤空字符串
             const dayunStr = dayunMatch2[1].trim();
-            // 提取所有中文双字词
             const dayunList = dayunStr.match(/[\u4e00-\u9fa5]{2}/g);
             if (dayunList) {
                 result.dayuns = dayunList;
                 console.log('✅ 解析到大运:', result.dayuns);
             } else {
-                // 如果中文双字词匹配失败，按空格分割
                 result.dayuns = dayunStr.split(/\s+/).filter(d => d.length > 0);
                 console.log('✅ 解析到大运(空格分割):', result.dayuns);
             }
         }
         
-        // 匹配纳音（如果有）
         const elementMatch = dayunText.match(/纳音[：:]\s*([^\n]+)/);
         if (elementMatch) {
             const elementStr = elementMatch[1].trim();
@@ -427,18 +396,13 @@ export function parseDayunData(analysisResult) {
         }
     }
     
-    // 如果上面的方法没有解析到，尝试直接在整个文本中搜索
     if (result.ages.length === 0 || result.dayuns.length === 0) {
-        console.log('🔄 尝试全文搜索大运数据...');
-        
-        // 搜索 "岁：[数字]" 行
         const ageLineMatch = analysisResult.match(/岁[：:]\s*([\d\s]+)/);
         if (ageLineMatch) {
             result.ages = ageLineMatch[1].trim().split(/\s+/).map(Number).filter(a => !isNaN(a) && a > 0);
             console.log('✅ 全文搜索-年龄:', result.ages);
         }
         
-        // 搜索 "大运：[干支]" 行
         const dayunLineMatch = analysisResult.match(/大运[：:]\s*([^\n]+)/);
         if (dayunLineMatch) {
             const dayunStr = dayunLineMatch[1].trim();
@@ -453,13 +417,10 @@ export function parseDayunData(analysisResult) {
         }
     }
     
-    // 确保年龄和大运数量匹配
     if (result.ages.length > 0 && result.dayuns.length > 0) {
-        // 如果年龄数量多于大运数量，截断年龄
         if (result.ages.length > result.dayuns.length) {
             result.ages = result.ages.slice(0, result.dayuns.length);
         }
-        // 如果大运数量多于年龄数量，截断大运
         if (result.dayuns.length > result.ages.length) {
             result.dayuns = result.dayuns.slice(0, result.ages.length);
         }
@@ -469,7 +430,6 @@ export function parseDayunData(analysisResult) {
     return result;
 }
 
-// ============ 进度更新 - 按服务项目显示 ============
 export function updateProgress(currentStep, totalSteps, stepName, percent, message) {
     console.log(`📊 进度: ${stepName} (${currentStep}/${totalSteps}) ${percent}%`);
     
@@ -514,19 +474,16 @@ export function updateProgress(currentStep, totalSteps, stepName, percent, messa
             extraText = ' <span style="color:var(--secondary-color);font-size:12px;animation:pulseStep 1s ease-in-out infinite;">进行中...</span>';
         }
         
-        const isActive = status === 'active';
-        const isDone = status === 'done';
-        
         html += `
             <div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #f5f5f5;
-                ${isActive ? 'animation:pulseStep 1s ease-in-out infinite;' : ''}
-                ${isDone ? 'opacity:1;' : 'opacity:0.6;'}">
+                ${status === 'active' ? 'animation:pulseStep 1s ease-in-out infinite;' : ''}
+                ${status === 'done' ? 'opacity:1;' : 'opacity:0.6;'}">
                 <span style="color:${color};font-size:16px;min-width:24px;">${icon}</span>
-                <span style="flex:1;font-size:13px;${isDone ? 'color:#333;' : 'color:#999;'}">
+                <span style="flex:1;font-size:13px;${status === 'done' ? 'color:#333;' : 'color:#999;'}">
                     ${step}${extraText}
                 </span>
-                ${isDone ? '<span style="color:var(--success-color);font-size:12px;">✓</span>' : ''}
-                ${isActive ? `<span style="color:var(--secondary-color);font-size:12px;">⏳</span>` : ''}
+                ${status === 'done' ? '<span style="color:var(--success-color);font-size:12px;">✓</span>' : ''}
+                ${status === 'active' ? '<span style="color:var(--secondary-color);font-size:12px;">⏳</span>' : ''}
             </div>
         `;
     });
@@ -534,9 +491,7 @@ export function updateProgress(currentStep, totalSteps, stepName, percent, messa
     container.innerHTML = html;
 }
 
-// ============ 处理分析结果 ============
 export function processAndDisplayAnalysis(result) {
-    // 移除【八字排盘】和【大运排盘】部分（已在卡片中显示）
     let cleanedResult = result;
     const sectionsToRemove = ['【八字排盘】', '【大运排盘】'];
     
@@ -549,17 +504,13 @@ export function processAndDisplayAnalysis(result) {
         }
     });
     
-    // 清理多余空行
     cleanedResult = cleanedResult.replace(/\n{3,}/g, '\n\n');
     
-    // 直接显示 DeepSeek 返回的内容
     const freeAnalysisText = UI.freeAnalysisText();
     if (freeAnalysisText) {
-        // 将纯文本转为 HTML（保留换行）
         const formattedHtml = cleanedResult
             .replace(/\n/g, '<br>')
-            // 将【标题】改为大标题
-            .replace(/【([^】]+)】/g, '<h3 style="font-size:22px;color:#2c3e50;margin:25px 0 10px 0;padding:8px 0 5px 14px;border-left:6px solid #c0392b;background:#fafafa;border-radius:0 4px 4px 0;">【$1】</h3>');
+            .replace(/【([^】]+)】/g, '<h3>【$1】</h3>');
         
         freeAnalysisText.innerHTML = formattedHtml;
     }
@@ -606,7 +557,7 @@ export async function showPaymentModal() {
             return;
         }
         
-        const { orderId, outTradeNo, paymentUrl, paymentType, amount } = result.data;
+        const { orderId, outTradeNo, paymentUrl, amount } = result.data;
         
         UI.paymentServiceType().textContent = STATE.currentService;
         UI.paymentAmount().textContent = '¥' + amount;
@@ -779,13 +730,13 @@ export function updateUnlockInterface() {
     const unlockBtnContainer = lockedOverlay.querySelector('.unlock-btn-container');
     if (unlockBtnContainer) {
         const unlockBtn = unlockBtnContainer.querySelector('.unlock-btn');
-        const unlockPrice = unlockBtnContainer.querySelector('.unlock-price');
         if (unlockBtn) {
             unlockBtn.innerHTML = '✅ 已解锁完整报告';
             unlockBtn.style.background = 'linear-gradient(135deg, var(--success-color), #28c76f)';
             unlockBtn.style.cursor = 'default';
             unlockBtn.disabled = true;
         }
+        const unlockPrice = unlockBtnContainer.querySelector('.unlock-price');
         if (unlockPrice) {
             unlockPrice.innerHTML = '<span style="color: var(--success-color);">✅ 已解锁全部内容</span>';
         }

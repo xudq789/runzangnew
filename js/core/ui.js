@@ -534,171 +534,39 @@ export function updateProgress(currentStep, totalSteps, stepName, percent, messa
     container.innerHTML = html;
 }
 
-// ============ 处理分析结果（移除大运排盘，结论大字体） ============
+// ============ 处理分析结果 ============
 export function processAndDisplayAnalysis(result) {
-    // 需要保留的免费章节
-    const freeSections = ['【八字喜用分析】', '【性格特点】', '【适宜行业职业推荐】'];
-    // 需要移除的章节
+    // 移除【八字排盘】和【大运排盘】部分（已在卡片中显示）
+    let cleanedResult = result;
     const sectionsToRemove = ['【八字排盘】', '【大运排盘】'];
     
-    let freeContent = '';
-    let lockedContent = '';
-    const sections = result.split('【');
-    
-    for (let i = 1; i < sections.length; i++) {
-        const section = '【' + sections[i];
-        const sectionTitle = section.split('】')[0] + '】';
-        
-        // 跳过需要移除的章节
-        if (sectionsToRemove.includes(sectionTitle)) continue;
-        
-        if (freeSections.includes(sectionTitle)) {
-            freeContent += section + '\n\n';
-        } else {
-            lockedContent += section + '\n\n';
+    sectionsToRemove.forEach(section => {
+        const startIndex = cleanedResult.indexOf(section);
+        if (startIndex !== -1) {
+            let endIndex = cleanedResult.indexOf('【', startIndex + 1);
+            if (endIndex === -1) endIndex = cleanedResult.length;
+            cleanedResult = cleanedResult.substring(0, startIndex) + cleanedResult.substring(endIndex);
         }
-    }
+    });
     
-    // 备用解析
-    if (freeContent.length < 100) {
-        freeContent = '';
-        for (const freeSection of freeSections) {
-            const startIndex = result.indexOf(freeSection);
-            if (startIndex !== -1) {
-                let endIndex = result.indexOf('【', startIndex + 1);
-                if (endIndex === -1) endIndex = result.length;
-                let sectionText = result.substring(startIndex, endIndex);
-                // 检查是否包含大运排盘，如果包含则移除
-                const dayunStart = sectionText.indexOf('【大运排盘】');
-                if (dayunStart !== -1) {
-                    const dayunEnd = sectionText.indexOf('【', dayunStart + 1);
-                    if (dayunEnd !== -1) {
-                        sectionText = sectionText.substring(0, dayunStart) + sectionText.substring(dayunEnd);
-                    } else {
-                        sectionText = sectionText.substring(0, dayunStart);
-                    }
-                }
-                freeContent += sectionText + '\n\n';
-            }
-        }
-        // 检查剩余内容中是否还有大运排盘
-        const dayunStart = freeContent.indexOf('【大运排盘】');
-        if (dayunStart !== -1) {
-            const dayunEnd = freeContent.indexOf('【', dayunStart + 1);
-            if (dayunEnd !== -1) {
-                freeContent = freeContent.substring(0, dayunStart) + freeContent.substring(dayunEnd);
-            } else {
-                freeContent = freeContent.substring(0, dayunStart);
-            }
-        }
-        if (freeContent) lockedContent = result.replace(freeContent, '');
-    }
+    // 清理多余空行
+    cleanedResult = cleanedResult.replace(/\n{3,}/g, '\n\n');
     
-    // ============ 格式化分析内容：结论大字体，分析小字体 ============
+    // 直接显示 DeepSeek 返回的内容
     const freeAnalysisText = UI.freeAnalysisText();
     if (freeAnalysisText) {
-        let formattedContent = '';
-        const freeSectionsArray = freeContent.split('\n\n');
-        freeSectionsArray.forEach(section => {
-            if (section.trim()) {
-                const titleMatch = section.match(/【([^】]+)】/);
-                if (titleMatch) {
-                    const title = titleMatch[1];
-                    let content = section.replace(titleMatch[0], '').trim();
-                    
-                    // 判断是否为结论性章节
-                    const conclusionKeywords = ['评估', '分析', '总结', '建议', '指导', '吉凶', '趋势', '走向', '提醒', '注意事项', '层次', '高低点', '流年'];
-                    const isConclusion = conclusionKeywords.some(keyword => title.includes(keyword));
-                    const isXiyong = title.includes('喜用');
-                    
-                    let titleFontSize = '18px';
-                    let contentFontSize = '15px';
-                    let titleColor = 'var(--primary-color)';
-                    let contentColor = '#333';
-                    
-                    if (isXiyong) {
-                        titleFontSize = '22px';
-                        titleColor = '#c0392b';
-                        contentFontSize = '16px';
-                    } else if (isConclusion) {
-                        titleFontSize = '20px';
-                        contentFontSize = '17px';
-                        titleColor = '#2c3e50';
-                    } else {
-                        titleFontSize = '16px';
-                        contentFontSize = '14px';
-                        titleColor = 'var(--primary-color)';
-                        contentColor = '#555';
-                    }
-                    
-                    // 对内容中的关键结论加粗突出
-                    let formattedContentText = content.replace(/\n/g, '<br>');
-                    const highlightKeywords = ['建议', '注意', '关键', '重要', '提醒', '重点', '吉', '凶', '旺', '衰', '宜', '忌', '最佳', '适宜', '不宜'];
-                    highlightKeywords.forEach(keyword => {
-                        const regex = new RegExp(`([^。]*${keyword}[^。]*。)`, 'g');
-                        formattedContentText = formattedContentText.replace(regex, '<strong style="color:#c0392b;font-size:inherit;">$1</strong>');
-                    });
-                    
-                    formattedContent += `
-                        <div class="analysis-section" style="margin-bottom:25px;">
-                            <h5 style="color:${titleColor};font-size:${titleFontSize};margin-bottom:10px;padding-left:12px;border-left:4px solid ${isXiyong ? '#c0392b' : 'var(--secondary-color)'};font-weight:${isXiyong ? '900' : '700'};">
-                                ${title}
-                            </h5>
-                            <div class="analysis-content" style="line-height:1.9;color:${contentColor};font-size:${contentFontSize};padding:8px 0;text-align:justify;">
-                                ${formattedContentText}
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    formattedContent += `<div class="analysis-content" style="line-height:1.9;color:#555;font-size:14px;padding:8px 0;">${section.replace(/\n/g, '<br>')}</div>`;
-                }
-            }
-        });
-        freeAnalysisText.innerHTML = formattedContent;
+        // 将纯文本转为 HTML（保留换行）
+        const formattedHtml = cleanedResult
+            .replace(/\n/g, '<br>')
+            // 将【标题】改为大标题
+            .replace(/【([^】]+)】/g, '<h3 style="font-size:22px;color:#2c3e50;margin:25px 0 10px 0;padding:8px 0 5px 14px;border-left:6px solid #c0392b;background:#fafafa;border-radius:0 4px 4px 0;">【$1】</h3>');
+        
+        freeAnalysisText.innerHTML = formattedHtml;
     }
     
-    // 处理锁定内容
     const lockedAnalysisText = UI.lockedAnalysisText();
     if (lockedAnalysisText) {
-        let formattedLockedContent = '';
-        const lockedSectionsArray = lockedContent.split('\n\n');
-        lockedSectionsArray.forEach(section => {
-            if (section.trim()) {
-                const titleMatch = section.match(/【([^】]+)】/);
-                if (titleMatch) {
-                    const title = titleMatch[1];
-                    const content = section.replace(titleMatch[0], '').trim();
-                    
-                    const conclusionKeywords = ['评估', '分析', '总结', '建议', '指导', '吉凶', '趋势', '走向', '提醒', '注意事项', '层次', '高低点', '流年'];
-                    const isConclusion = conclusionKeywords.some(keyword => title.includes(keyword));
-                    
-                    const titleFontSize = isConclusion ? '20px' : '16px';
-                    const contentFontSize = isConclusion ? '17px' : '14px';
-                    const titleColor = isConclusion ? '#2c3e50' : 'var(--primary-color)';
-                    
-                    let formattedContentText = content.replace(/\n/g, '<br>');
-                    const highlightKeywords = ['建议', '注意', '关键', '重要', '提醒', '重点', '吉', '凶', '旺', '衰', '宜', '忌', '最佳', '适宜', '不宜'];
-                    highlightKeywords.forEach(keyword => {
-                        const regex = new RegExp(`([^。]*${keyword}[^。]*。)`, 'g');
-                        formattedContentText = formattedContentText.replace(regex, '<strong style="color:#c0392b;font-size:inherit;">$1</strong>');
-                    });
-                    
-                    formattedLockedContent += `
-                        <div class="analysis-section" style="margin-bottom:25px;">
-                            <h5 style="color:${titleColor};font-size:${titleFontSize};margin-bottom:10px;padding-left:12px;border-left:4px solid var(--secondary-color);font-weight:700;">
-                                ${title}
-                            </h5>
-                            <div class="analysis-content" style="line-height:1.9;color:#555;font-size:${contentFontSize};padding:8px 0;text-align:justify;">
-                                ${formattedContentText}
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    formattedLockedContent += `<div class="analysis-content" style="line-height:1.9;color:#555;font-size:14px;padding:8px 0;">${section.replace(/\n/g, '<br>')}</div>`;
-                }
-            }
-        });
-        lockedAnalysisText.innerHTML = formattedLockedContent;
+        lockedAnalysisText.innerHTML = '';
     }
 }
 

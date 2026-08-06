@@ -256,6 +256,7 @@ function calculatePartnerBazi() {
 export function displayDayunPan(dayunData) {
     console.log('📊 显示大运排盘...', dayunData);
     
+    // 查找或创建大运卡片
     let dayunCard = document.getElementById('dayun-pan-card');
     if (!dayunCard) {
         const baziPan = document.getElementById('bazi-pan');
@@ -280,63 +281,83 @@ export function displayDayunPan(dayunData) {
     
     dayunGrid.innerHTML = '';
     
-    if (!dayunData || !dayunData.ages || !dayunData.dayuns || dayunData.ages.length === 0) {
+    // 处理数据格式
+    let dayunList = [];
+    let startAge = 8;
+    
+    // 检查是否是 lunar-python 格式（有 list 字段）
+    if (dayunData && dayunData.list && Array.isArray(dayunData.list) && dayunData.list.length > 0) {
+        dayunList = dayunData.list;
+        startAge = dayunData.start_age || 8;
+    } 
+    // 检查是否是旧格式（有 dayuns 字段）
+    else if (dayunData && dayunData.dayuns && Array.isArray(dayunData.dayuns) && dayunData.dayuns.length > 0) {
+        const ages = dayunData.ages || [];
+        const dayuns = dayunData.dayuns || [];
+        dayunList = ages.map((age, i) => ({
+            age_start: age,
+            age_end: age + 10,
+            ganzhi: dayuns[i] || ''
+        }));
+        startAge = ages[0] || 8;
+    }
+    // 检查是否是直接数组
+    else if (Array.isArray(dayunData) && dayunData.length > 0) {
+        dayunList = dayunData;
+    }
+    
+    if (!dayunList || dayunList.length === 0) {
         dayunGrid.innerHTML = `
             <div style="padding: 15px; text-align: center; color: #999; background: #f9f5f0; border-radius: 8px;">
                 ⚠️ 大运排盘数据暂不可用
             </div>
         `;
+        dayunCard.style.display = 'block';
         return;
     }
     
+    // 只显示前8步大运
+    const displayList = dayunList.slice(0, 8);
+    
+    // 构建大运表格
     const table = document.createElement('table');
     table.style.cssText = 'width:100%; border-collapse: collapse; margin-top: 10px; border-radius: 8px; overflow: hidden;';
     
+    // 表头：大运 + 各步大运
     const trHeader = document.createElement('tr');
     const thLabel = document.createElement('th');
     thLabel.textContent = '大运';
     thLabel.style.cssText = 'padding: 8px 12px; background: var(--primary-color); color: white; text-align: center; font-weight: 600; min-width: 60px;';
     trHeader.appendChild(thLabel);
     
-    const ages = dayunData.ages || [];
-    ages.forEach((age, index) => {
+    displayList.forEach((dy, index) => {
         const th = document.createElement('th');
-        th.textContent = age + '岁';
+        let ageLabel = '';
+        if (dy.age_start !== undefined) {
+            ageLabel = `${dy.age_start}岁`;
+        } else {
+            ageLabel = `${startAge + index * 10}岁`;
+        }
+        th.textContent = ageLabel;
         th.style.cssText = `padding: 8px 12px; background: ${index % 2 === 0 ? 'var(--primary-color)' : '#a0522d'}; color: white; text-align: center; font-weight: 600;`;
         trHeader.appendChild(th);
     });
     table.appendChild(trHeader);
     
-    const trDayun = document.createElement('tr');
-    const tdLabel = document.createElement('td');
-    tdLabel.textContent = '干支';
-    tdLabel.style.cssText = 'padding: 8px 12px; background: #f5f1e8; text-align: center; font-weight: 600; color: var(--dark-color);';
-    trDayun.appendChild(tdLabel);
+    // 第二行：干支
+    const trGanzhi = document.createElement('tr');
+    const tdGanzhiLabel = document.createElement('td');
+    tdGanzhiLabel.textContent = '干支';
+    tdGanzhiLabel.style.cssText = 'padding: 8px 12px; background: #f5f1e8; text-align: center; font-weight: 600; color: var(--dark-color);';
+    trGanzhi.appendChild(tdGanzhiLabel);
     
-    const dayuns = dayunData.dayuns || [];
-    dayuns.forEach((dayun, index) => {
+    displayList.forEach((dy, index) => {
         const td = document.createElement('td');
-        td.textContent = dayun;
+        td.textContent = dy.ganzhi || '--';
         td.style.cssText = `padding: 8px 12px; text-align: center; font-weight: 500; color: var(--primary-color); ${index % 2 === 0 ? 'background: #faf8f5;' : 'background: #fff;'}`;
-        trDayun.appendChild(td);
+        trGanzhi.appendChild(td);
     });
-    table.appendChild(trDayun);
-    
-    if (dayunData.elements && dayunData.elements.length > 0) {
-        const trElement = document.createElement('tr');
-        const tdElementLabel = document.createElement('td');
-        tdElementLabel.textContent = '纳音';
-        tdElementLabel.style.cssText = 'padding: 8px 12px; background: #f5f1e8; text-align: center; font-weight: 600; color: var(--dark-color);';
-        trElement.appendChild(tdElementLabel);
-        
-        dayunData.elements.forEach((element, index) => {
-            const td = document.createElement('td');
-            td.textContent = element || '';
-            td.style.cssText = `padding: 8px 12px; text-align: center; font-size: 13px; color: #666; ${index % 2 === 0 ? 'background: #faf8f5;' : 'background: #fff;'}`;
-            trElement.appendChild(td);
-        });
-        table.appendChild(trElement);
-    }
+    table.appendChild(trGanzhi);
     
     dayunGrid.appendChild(table);
     dayunCard.style.display = 'block';

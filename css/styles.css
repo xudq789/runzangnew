@@ -1325,3 +1325,54 @@ input:focus, select:focus {
         padding: 4px 6px;
     }
 }
+
+/* ============ DeepSeek 格式化的报告样式 ============ */
+
+/* 结论部分 - 大字体突出 */
+.conclusion {
+    font-size: 19px;
+    font-weight: 600;
+    color: #2c3e50;
+    background: #fef9e7;
+    padding: 12px 18px;
+    border-radius: 8px;
+    border-left: 5px solid #c0392b;
+    margin-bottom: 12px;
+    line-height: 1.8;
+}
+
+.conclusion strong {
+    color: #c0392b;
+    font-size: 21px;
+}
+
+/* 分析部分 - 正常字体 */
+.analysis {
+    font-size: 15px;
+    color: #444;
+    line-height: 2;
+    padding: 0 4px;
+}
+
+.analysis cite {
+    color: #7f8c8d;
+    font-style: italic;
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .conclusion {
+        font-size: 17px;
+        padding: 10px 14px;
+    }
+    .conclusion strong {
+        font-size: 18px;
+    }
+    .analysis {
+        font-size: 14px;
+    }
+}

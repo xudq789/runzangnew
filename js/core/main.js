@@ -457,21 +457,17 @@ function sleep(ms) {
     return new Promise(function(resolve) { setTimeout(resolve, ms); });
 }
 
-// ============ 格式化排盘数据用于 Prompt ============
+// ============ 格式化排盘数据用于 Prompt（只传八字，不传假大运） ============
 function formatBaziForPrompt(baziRawData) {
     if (!baziRawData) return '';
     const bazi = baziRawData.bazi;
-    const dayun = baziRawData.dayun;
     
     let text = `【八字排盘】（由专业排盘系统精确计算）\n`;
     text += `年柱：${bazi.year.ganzhi}（${bazi.year.nayin}） 生肖：${bazi.year.zodiac}\n`;
     text += `月柱：${bazi.month.ganzhi}（${bazi.month.nayin}）\n`;
     text += `日柱：${bazi.day.ganzhi}（${bazi.day.nayin}）\n`;
     text += `时柱：${bazi.hour.ganzhi}（${bazi.hour.nayin}）\n`;
-    text += `\n【大运排盘】\n起运年龄：${dayun.start_age}岁\n`;
-    dayun.list.slice(0, 8).forEach((dy, i) => {
-        text += `第${i+1}步大运：${dy.age_start}-${dy.age_end}岁  ${dy.ganzhi}\n`;
-    });
+    // 不再传入大运数据，让 AI 自己计算
     return text;
 }
 
@@ -520,7 +516,7 @@ async function startAnalysis() {
             freeAnalysisText.innerHTML = '<div class="loading-text">正在生成分析结果...</div>';
         }
         
-        // ============ 【调用排盘服务】 ============
+        // ============ 【调用排盘服务 - lunar-python】 ============
         console.log('🔮 调用排盘服务...');
         try {
             const baziResponse = await fetch('https://119.29.160.189:36667/api/bazi/calculate', {
@@ -544,19 +540,16 @@ async function startAnalysis() {
                 throw new Error(baziResult.error || '排盘失败');
             }
             
-            // 保存排盘数据到 STATE
+            // 保存排盘数据到 STATE（只保存八字，不保存假大运）
             STATE.baziData = baziResult.data.bazi;
-            STATE.dayunData = baziResult.data.dayun;
             STATE.baziRawData = baziResult.data;
             
             console.log('✅ 排盘成功:', STATE.baziData);
             
-            // 立即显示排盘结果
+            // 立即显示排盘结果（八字）
             displayPredictorInfo();
             displayBaziPan();
-            if (STATE.dayunData) {
-                displayDayunPan(STATE.dayunData);
-            }
+            // 注意：这里不显示大运，等 DeepSeek 计算后再显示
             
         } catch (error) {
             console.error('❌ 排盘失败:', error);
@@ -574,10 +567,10 @@ async function startAnalysis() {
             throw new Error('未找到服务模块: ' + STATE.currentService);
         }
         
-        // 格式化排盘数据用于 Prompt
+        // 格式化八字数据用于 Prompt（只传八字）
         const baziText = formatBaziForPrompt(STATE.baziRawData);
         
-        // 生成 Prompt（传入排盘数据）
+        // 生成 Prompt（传入八字数据）
         const prompt = serviceModule.getPrompt(STATE.userData, STATE.partnerData, baziText);
         
         console.log('生成的分析提示词长度:', prompt.length);
@@ -613,23 +606,30 @@ async function startAnalysis() {
         updateProgress(currentStep, totalSteps, '生成排盘结果', progressPercent, '八字排盘生成完成');
         await sleep(300);
         
-        // 显示大运（如果还没显示）
-        if (STATE.dayunData) {
-            displayDayunPan(STATE.dayunData);
-        }
-        progressPercent = 80;
-        updateProgress(currentStep, totalSteps, '生成排盘结果', progressPercent, '大运排盘生成完成');
-        await sleep(300);
-        
         currentStep = 4;
         progressPercent = 88;
         updateProgress(currentStep, totalSteps, '整理分析报告', progressPercent, '正在整理分析报告...');
-        // 从 AI 返回结果中解析大运数据
+        
+        // ============ 从 DeepSeek 返回结果中解析大运数据 ============
         const dayunData = parseDayunData(analysisResult);
         if (dayunData && dayunData.dayuns && dayunData.dayuns.length > 0) {
             STATE.dayunData = dayunData;
+            // 强制刷新大运显示
             displayDayunPan(dayunData);
+            console.log('✅ 已从 DeepSeek 解析并显示真实大运数据:', dayunData);
+        } else {
+            console.warn('⚠️ 未能从 DeepSeek 解析到大运数据');
+            // 显示提示信息
+            const dayunGrid = document.getElementById('dayun-grid');
+            if (dayunGrid) {
+                dayunGrid.innerHTML = `
+                    <div style="padding: 15px; text-align: center; color: #999; background: #f9f5f0; border-radius: 8px;">
+                        ⚠️ 大运排盘数据正在生成中，请稍后查看完整报告
+                    </div>
+                `;
+            }
         }
+        
         processAndDisplayAnalysis(analysisResult);
         await sleep(300);
         
@@ -742,6 +742,7 @@ function newAnalysis() {
     STATE.fullAnalysisResult = '';
     STATE.baziData = null;
     STATE.partnerBaziData = null;
+    STATE.dayunData = null;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

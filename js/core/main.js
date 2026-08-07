@@ -519,7 +519,7 @@ async function startAnalysis() {
         // ============ 【调用排盘服务 - lunar-python】 ============
         console.log('🔮 调用排盘服务...');
         try {
-            const baziResponse = await fetch('https://119.29.160.189:36667/api/bazi/calculate', {
+            const baziResponse = await fetch('https://bazi.runzang.top/api/bazi/calculate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

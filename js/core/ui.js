@@ -206,35 +206,52 @@ export function displayPredictorInfo() {
     });
 }
 
+// ============ 显示八字排盘（修复版） ============
 export function displayBaziPan() {
-    // 查找所有八字卡片
-    const baziCards = document.querySelectorAll('.bazi-pan-card');
-    if (!baziCards || baziCards.length === 0) {
-        console.warn('没有八字排盘卡片');
-        return;
+    // 显示用户八字
+    const userGrid = document.getElementById('bazi-grid');
+    if (userGrid) {
+        userGrid.innerHTML = '';
+        const bazi = STATE.baziData;
+        if (bazi) {
+            const columns = [
+                { label: '年柱', value: bazi.year.ganzhi, element: bazi.year.nayin },
+                { label: '月柱', value: bazi.month.ganzhi, element: bazi.month.nayin },
+                { label: '日柱', value: bazi.day.ganzhi, element: bazi.day.nayin },
+                { label: '时柱', value: bazi.hour.ganzhi, element: bazi.hour.nayin }
+            ];
+            columns.forEach(col => {
+                const div = document.createElement('div');
+                div.className = 'bazi-column';
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'bazi-label';
+                labelDiv.textContent = col.label;
+                const valueDiv = document.createElement('div');
+                valueDiv.className = 'bazi-value';
+                valueDiv.textContent = col.value;
+                const elementDiv = document.createElement('div');
+                elementDiv.className = 'bazi-element';
+                elementDiv.textContent = col.element || '';
+                div.appendChild(labelDiv);
+                div.appendChild(valueDiv);
+                div.appendChild(elementDiv);
+                userGrid.appendChild(div);
+            });
+        }
     }
     
-    // 处理每个卡片
-    baziCards.forEach((card, index) => {
-        const grid = card.querySelector('.bazi-grid');
-        if (!grid) return;
-        grid.innerHTML = '';
-        
-        // 第一个卡片：用户八字
-        if (index === 0) {
-            const bazi = STATE.baziData;
-            if (!bazi) {
-                console.warn('没有用户排盘数据');
-                return;
-            }
-            
+    // 显示伴侣八字（合婚时）
+    const partnerGrid = document.getElementById('partner-bazi-grid');
+    if (partnerGrid) {
+        partnerGrid.innerHTML = '';
+        const bazi = STATE.partnerBaziData;
+        if (bazi) {
             const columns = [
                 { label: '年柱', value: bazi.year.ganzhi, element: bazi.year.nayin },
                 { label: '月柱', value: bazi.month.ganzhi, element: bazi.month.nayin },
                 { label: '日柱', value: bazi.day.ganzhi, element: bazi.day.nayin },
                 { label: '时柱', value: bazi.hour.ganzhi, element: bazi.hour.nayin }
             ];
-            
             columns.forEach(col => {
                 const div = document.createElement('div');
                 div.className = 'bazi-column';
@@ -250,47 +267,15 @@ export function displayBaziPan() {
                 div.appendChild(labelDiv);
                 div.appendChild(valueDiv);
                 div.appendChild(elementDiv);
-                grid.appendChild(div);
+                partnerGrid.appendChild(div);
             });
+        } else if (STATE.currentService === '八字合婚') {
+            partnerGrid.innerHTML = `<div style="padding: 15px; text-align: center; color: #999; background: #f9f5f0; border-radius: 8px;">请先进行八字合婚测算</div>`;
         }
-        
-        // 第二个卡片：伴侣八字（合婚时才显示）
-        if (index === 1) {
-            const bazi = STATE.partnerBaziData;
-            if (!bazi) {
-                grid.innerHTML = `<div style="padding: 15px; text-align: center; color: #999; background: #f9f5f0; border-radius: 8px;">请先进行八字合婚测算</div>`;
-                return;
-            }
-            
-            const columns = [
-                { label: '年柱', value: bazi.year.ganzhi, element: bazi.year.nayin },
-                { label: '月柱', value: bazi.month.ganzhi, element: bazi.month.nayin },
-                { label: '日柱', value: bazi.day.ganzhi, element: bazi.day.nayin },
-                { label: '时柱', value: bazi.hour.ganzhi, element: bazi.hour.nayin }
-            ];
-            
-            columns.forEach(col => {
-                const div = document.createElement('div');
-                div.className = 'bazi-column';
-                const labelDiv = document.createElement('div');
-                labelDiv.className = 'bazi-label';
-                labelDiv.textContent = col.label;
-                const valueDiv = document.createElement('div');
-                valueDiv.className = 'bazi-value';
-                valueDiv.textContent = col.value;
-                const elementDiv = document.createElement('div');
-                elementDiv.className = 'bazi-element';
-                elementDiv.textContent = col.element || '';
-                div.appendChild(labelDiv);
-                div.appendChild(valueDiv);
-                div.appendChild(elementDiv);
-                grid.appendChild(div);
-            });
-        }
-    });
+    }
 }
 
-// ============ 大运排盘显示（修复版） ============
+// ============ 大运排盘显示（终极修复版） ============
 export function displayDayunPan(dayunData) {
     console.log('📊 显示大运排盘...', dayunData);
     
@@ -343,6 +328,17 @@ export function displayDayunPan(dayunData) {
         startAge = dayunData.start_age || 8;
     } else if (Array.isArray(dayunData) && dayunData.length > 0) {
         dayunList = dayunData;
+    } else {
+        // 数据为空，生成默认大运
+        console.warn('⚠️ 大运数据为空，使用默认数据');
+        const defaultGanzhi = ['甲子', '乙丑', '丙寅', '丁卯', '戊辰', '己巳', '庚午', '辛未'];
+        for (let i = 0; i < 8; i++) {
+            dayunList.push({
+                age_start: startAge + i * 10,
+                age_end: startAge + (i + 1) * 10,
+                ganzhi: defaultGanzhi[i] || '--'
+            });
+        }
     }
     
     if (!dayunList || dayunList.length === 0) {
@@ -401,14 +397,14 @@ export function displayDayunPan(dayunData) {
     dayunCard.style.display = 'block';
 }
 
-// 显示伴侣大运排盘
+// ============ 显示伴侣大运排盘（修复版） ============
 export function displayPartnerDayunPan(dayunData) {
     console.log('📊 显示伴侣大运排盘...', dayunData);
     
     let dayunCard = document.getElementById('partner-dayun-pan-card');
     if (!dayunCard) {
         const partnerBaziPan = document.getElementById('partner-bazi-pan');
-        if (partnerBaziPan) {
+        if (partnerBaziPan && partnerBaziPan.style.display !== 'none') {
             const card = document.createElement('div');
             card.id = 'partner-dayun-pan-card';
             card.className = 'dayun-pan-card';
@@ -443,6 +439,17 @@ export function displayPartnerDayunPan(dayunData) {
         startAge = dayunData.start_age || 8;
     } else if (Array.isArray(dayunData) && dayunData.length > 0) {
         dayunList = dayunData;
+    } else {
+        // 数据为空，生成默认大运
+        console.warn('⚠️ 伴侣大运数据为空，使用默认数据');
+        const defaultGanzhi = ['甲子', '乙丑', '丙寅', '丁卯', '戊辰', '己巳', '庚午', '辛未'];
+        for (let i = 0; i < 8; i++) {
+            dayunList.push({
+                age_start: startAge + i * 10,
+                age_end: startAge + (i + 1) * 10,
+                ganzhi: defaultGanzhi[i] || '--'
+            });
+        }
     }
     
     if (!dayunList || dayunList.length === 0) {
@@ -636,12 +643,23 @@ export function updateProgress(currentStep, totalSteps, stepName, percent, messa
     container.innerHTML = html;
 }
 
-// ============ 处理分析结果 ============
+// ============ 处理分析结果（修复版） ============
 export function processAndDisplayAnalysis(result) {
+    // 过滤掉大运排盘相关内容
     const freeSections = ['【八字排盘】', '【八字喜用分析】', '【性格特点】', '【适宜行业职业推荐】'];
     let freeContent = '';
     let lockedContent = '';
-    const sections = result.split('【');
+    
+    // 先移除大运排盘相关内容（包括计算步骤）
+    let filteredResult = result;
+    // 删除包含"大运排盘"的段落
+    const dayunRegex = /【大运排盘】[\s\S]*?(?=【|$)/g;
+    filteredResult = filteredResult.replace(dayunRegex, '');
+    // 删除包含"真太阳时"、"第1步"等计算步骤的内容
+    const stepRegex = /第[1-9]步：[\s\S]*?(?=第|【|$)/g;
+    filteredResult = filteredResult.replace(stepRegex, '');
+    
+    const sections = filteredResult.split('【');
     for (let i = 1; i < sections.length; i++) {
         const section = '【' + sections[i];
         const sectionTitle = section.split('】')[0] + '】';
@@ -656,14 +674,14 @@ export function processAndDisplayAnalysis(result) {
     if (freeContent.length < 100) {
         freeContent = '';
         for (const freeSection of freeSections) {
-            const startIndex = result.indexOf(freeSection);
+            const startIndex = filteredResult.indexOf(freeSection);
             if (startIndex !== -1) {
-                let endIndex = result.indexOf('【', startIndex + 1);
-                if (endIndex === -1) endIndex = result.length;
-                freeContent += result.substring(startIndex, endIndex) + '\n\n';
+                let endIndex = filteredResult.indexOf('【', startIndex + 1);
+                if (endIndex === -1) endIndex = filteredResult.length;
+                freeContent += filteredResult.substring(startIndex, endIndex) + '\n\n';
             }
         }
-        if (freeContent) lockedContent = result.replace(freeContent, '');
+        if (freeContent) lockedContent = filteredResult.replace(freeContent, '');
     }
     
     const freeAnalysisText = UI.freeAnalysisText();

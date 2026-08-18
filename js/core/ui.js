@@ -206,7 +206,6 @@ export function displayPredictorInfo() {
     });
 }
 
-// ============ 显示八字排盘（修复版） ============
 export function displayBaziPan() {
     // 显示用户八字
     const userGrid = document.getElementById('bazi-grid');
@@ -275,7 +274,7 @@ export function displayBaziPan() {
     }
 }
 
-// ============ 大运排盘显示（终极修复版） ============
+// ============ 大运排盘显示（修复版） ============
 export function displayDayunPan(dayunData) {
     console.log('📊 显示大运排盘...', dayunData);
     
@@ -328,17 +327,6 @@ export function displayDayunPan(dayunData) {
         startAge = dayunData.start_age || 8;
     } else if (Array.isArray(dayunData) && dayunData.length > 0) {
         dayunList = dayunData;
-    } else {
-        // 数据为空，生成默认大运
-        console.warn('⚠️ 大运数据为空，使用默认数据');
-        const defaultGanzhi = ['甲子', '乙丑', '丙寅', '丁卯', '戊辰', '己巳', '庚午', '辛未'];
-        for (let i = 0; i < 8; i++) {
-            dayunList.push({
-                age_start: startAge + i * 10,
-                age_end: startAge + (i + 1) * 10,
-                ganzhi: defaultGanzhi[i] || '--'
-            });
-        }
     }
     
     if (!dayunList || dayunList.length === 0) {
@@ -397,7 +385,7 @@ export function displayDayunPan(dayunData) {
     dayunCard.style.display = 'block';
 }
 
-// ============ 显示伴侣大运排盘（修复版） ============
+// 显示伴侣大运排盘
 export function displayPartnerDayunPan(dayunData) {
     console.log('📊 显示伴侣大运排盘...', dayunData);
     
@@ -439,17 +427,6 @@ export function displayPartnerDayunPan(dayunData) {
         startAge = dayunData.start_age || 8;
     } else if (Array.isArray(dayunData) && dayunData.length > 0) {
         dayunList = dayunData;
-    } else {
-        // 数据为空，生成默认大运
-        console.warn('⚠️ 伴侣大运数据为空，使用默认数据');
-        const defaultGanzhi = ['甲子', '乙丑', '丙寅', '丁卯', '戊辰', '己巳', '庚午', '辛未'];
-        for (let i = 0; i < 8; i++) {
-            dayunList.push({
-                age_start: startAge + i * 10,
-                age_end: startAge + (i + 1) * 10,
-                ganzhi: defaultGanzhi[i] || '--'
-            });
-        }
     }
     
     if (!dayunList || dayunList.length === 0) {
@@ -506,36 +483,31 @@ export function displayPartnerDayunPan(dayunData) {
     dayunCard.style.display = 'block';
 }
 
-// ============ 解析大运数据 ============
+// ============ 解析大运数据（增强版） ============
 export function parseDayunData(analysisResult) {
     console.log('🔍 解析大运数据...');
     
     const result = { ages: [], dayuns: [], elements: [] };
     
-    const dayunMatch = analysisResult.match(/【大运排盘】([\s\S]*?)(?=【|$)/);
-    if (dayunMatch) {
-        const dayunText = dayunMatch[1];
-        
-        const ageMatch = dayunText.match(/岁[：:]\s*([\d\s]+)/);
-        if (ageMatch) {
-            result.ages = ageMatch[1].trim().split(/\s+/).map(Number).filter(a => !isNaN(a) && a > 0);
-        }
-        
-        const dayunMatch2 = dayunText.match(/大运[：:]\s*([^\n]+)/);
-        if (dayunMatch2) {
-            result.dayuns = dayunMatch2[1].trim().split(/\s+/).filter(d => d.length > 0);
-        }
-        
-        const elementMatch = dayunText.match(/纳音[：:]\s*([^\n]+)/);
-        if (elementMatch) {
-            result.elements = elementMatch[1].trim().split(/\s+/).filter(e => e.length > 0);
-        }
+    // 方法1：匹配标准格式 "岁：[8 18 28 38 48 58 68 78]"
+    const ageRegex = /岁[：:]\s*\[?([\d\s]+)\]?/;
+    const dayunRegex = /大运[：:]\s*\[?([^\n\]]+)\]?/;
+    
+    const ageMatch = analysisResult.match(ageRegex);
+    if (ageMatch) {
+        result.ages = ageMatch[1].trim().split(/\s+/).map(Number).filter(a => !isNaN(a) && a > 0);
     }
     
+    const dayunMatch = analysisResult.match(dayunRegex);
+    if (dayunMatch) {
+        result.dayuns = dayunMatch[1].trim().split(/\s+/).filter(d => d.length === 2);
+    }
+    
+    // 方法2：如果方法1没匹配到，用逐行解析
     if (result.ages.length === 0 || result.dayuns.length === 0) {
         const lines = analysisResult.split('\n');
         let foundDayunSection = false;
-        let tempAges = [], tempDayuns = [], tempElements = [];
+        let tempAges = [], tempDayuns = [];
         
         for (const line of lines) {
             const trimmed = line.trim();
@@ -550,29 +522,21 @@ export function parseDayunData(analysisResult) {
             if (ageNumbers && trimmed.includes('岁')) {
                 tempAges = ageNumbers.map(Number);
             }
-            
             const dayunMatches = trimmed.match(/[\u4e00-\u9fa5]{2}/g);
             if (dayunMatches && trimmed.includes('大运')) {
                 tempDayuns = dayunMatches;
-            }
-            
-            if (trimmed.includes('纳音')) {
-                const elementMatches = trimmed.match(/[\u4e00-\u9fa5]{2}/g);
-                if (elementMatches) tempElements = elementMatches;
             }
         }
         
         if (tempAges.length > 0 && tempDayuns.length > 0) {
             result.ages = tempAges;
             result.dayuns = tempDayuns;
-            if (tempElements.length > 0) result.elements = tempElements;
         }
     }
     
     const maxLen = Math.min(8, result.ages.length, result.dayuns.length);
     result.ages = result.ages.slice(0, maxLen);
     result.dayuns = result.dayuns.slice(0, maxLen);
-    result.elements = result.elements.slice(0, maxLen);
     
     console.log('✅ 大运数据:', result);
     return result;
@@ -643,23 +607,12 @@ export function updateProgress(currentStep, totalSteps, stepName, percent, messa
     container.innerHTML = html;
 }
 
-// ============ 处理分析结果（修复版） ============
+// ============ 处理分析结果 ============
 export function processAndDisplayAnalysis(result) {
-    // 过滤掉大运排盘相关内容
     const freeSections = ['【八字排盘】', '【八字喜用分析】', '【性格特点】', '【适宜行业职业推荐】'];
     let freeContent = '';
     let lockedContent = '';
-    
-    // 先移除大运排盘相关内容（包括计算步骤）
-    let filteredResult = result;
-    // 删除包含"大运排盘"的段落
-    const dayunRegex = /【大运排盘】[\s\S]*?(?=【|$)/g;
-    filteredResult = filteredResult.replace(dayunRegex, '');
-    // 删除包含"真太阳时"、"第1步"等计算步骤的内容
-    const stepRegex = /第[1-9]步：[\s\S]*?(?=第|【|$)/g;
-    filteredResult = filteredResult.replace(stepRegex, '');
-    
-    const sections = filteredResult.split('【');
+    const sections = result.split('【');
     for (let i = 1; i < sections.length; i++) {
         const section = '【' + sections[i];
         const sectionTitle = section.split('】')[0] + '】';
@@ -674,14 +627,14 @@ export function processAndDisplayAnalysis(result) {
     if (freeContent.length < 100) {
         freeContent = '';
         for (const freeSection of freeSections) {
-            const startIndex = filteredResult.indexOf(freeSection);
+            const startIndex = result.indexOf(freeSection);
             if (startIndex !== -1) {
-                let endIndex = filteredResult.indexOf('【', startIndex + 1);
-                if (endIndex === -1) endIndex = filteredResult.length;
-                freeContent += filteredResult.substring(startIndex, endIndex) + '\n\n';
+                let endIndex = result.indexOf('【', startIndex + 1);
+                if (endIndex === -1) endIndex = result.length;
+                freeContent += result.substring(startIndex, endIndex) + '\n\n';
             }
         }
-        if (freeContent) lockedContent = filteredResult.replace(freeContent, '');
+        if (freeContent) lockedContent = result.replace(freeContent, '');
     }
     
     const freeAnalysisText = UI.freeAnalysisText();

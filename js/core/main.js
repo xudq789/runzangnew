@@ -551,10 +551,9 @@ async function startAnalysis() {
                 throw new Error(baziResult.error || '排盘失败');
             }
             
-            // 保存用户排盘数据
+            // 保存用户排盘数据（注意：后端不再返回大运）
             STATE.baziData = baziResult.data.bazi;
             STATE.baziRawData = baziResult.data;
-            // Python不再返回大运，这里不再保存STATE.dayunData
             
             console.log('✅ 用户排盘成功:', STATE.baziData);
             
@@ -585,10 +584,9 @@ async function startAnalysis() {
                 }
             }
             
-            // 显示八字（大运暂不显示）
+            // 显示八字（不显示大运，等AI回来再显示）
             displayPredictorInfo();
             displayBaziPan();
-            // displayDayunPan 暂不调用，等AI返回后再调用
             
         } catch (error) {
             console.error('❌ 排盘失败:', error);
@@ -646,7 +644,6 @@ async function startAnalysis() {
             console.log('✅ 已从 DeepSeek 解析并显示真实大运数据:', dayunData);
         } else {
             console.warn('⚠️ 未能从 DeepSeek 解析到大运数据，大运卡片将显示提示');
-            // 仅显示提示，不显示错误大运
             const dayunGrid = document.getElementById('dayun-grid');
             if (dayunGrid) {
                 dayunGrid.innerHTML = `
@@ -657,6 +654,20 @@ async function startAnalysis() {
             }
             const dayunCard = document.getElementById('dayun-pan-card');
             if (dayunCard) dayunCard.style.display = 'block';
+        }
+        
+        // 如果是八字合婚，解析伴侣大运数据并显示
+        if (STATE.currentService === '八字合婚') {
+            // 伴侣大运在 AI 返回文本中通常以"伴侣大运排盘"或"【伴侣大运排盘】"开头
+            // 我们直接调用一次函数尝试从整体文本中解析（parseDayunData会自动寻找）
+            const partnerDayunData = parseDayunData(analysisResult);
+            if (partnerDayunData && partnerDayunData.dayuns && partnerDayunData.dayuns.length > 0) {
+                STATE.partnerDayunData = partnerDayunData;
+                displayPartnerDayunPan(partnerDayunData);
+                console.log('✅ 已从 DeepSeek 解析并显示伴侣大运数据:', partnerDayunData);
+            } else {
+                console.warn('⚠️ 未能从 DeepSeek 解析到伴侣大运数据');
+            }
         }
         // =======================================================================
         

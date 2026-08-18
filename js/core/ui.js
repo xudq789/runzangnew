@@ -297,7 +297,12 @@ export function displayDayunPan(dayunData) {
                 <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">大运排盘</h4>
                 <div id="dayun-grid" style="width: 100%; overflow-x: auto;"></div>
             `;
-            baziPan.parentNode.insertBefore(card, baziPan.nextSibling);
+            // 插入到 baziPan 之后，修复只能显示一步的问题
+            if (baziPan.nextSibling) {
+                baziPan.parentNode.insertBefore(card, baziPan.nextSibling);
+            } else {
+                baziPan.parentNode.appendChild(card);
+            }
             dayunCard = card;
         }
     }
@@ -407,7 +412,12 @@ export function displayPartnerDayunPan(dayunData) {
                 <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">伴侣大运排盘</h4>
                 <div id="partner-dayun-grid" style="width: 100%; overflow-x: auto;"></div>
             `;
-            partnerBaziPan.parentNode.insertBefore(card, partnerBaziPan.nextSibling);
+            // 插入到 partnerBaziPan 之后
+            if (partnerBaziPan.nextSibling) {
+                partnerBaziPan.parentNode.insertBefore(card, partnerBaziPan.nextSibling);
+            } else {
+                partnerBaziPan.parentNode.appendChild(card);
+            }
             dayunCard = card;
         }
     }
@@ -607,16 +617,25 @@ export function updateProgress(currentStep, totalSteps, stepName, percent, messa
     container.innerHTML = html;
 }
 
-// ============ 处理分析结果 ============
+// ============ 处理分析结果（修复合婚免费内容缺失） ============
 export function processAndDisplayAnalysis(result) {
-    const freeSections = ['【八字排盘】', '【八字喜用分析】', '【性格特点】', '【适宜行业职业推荐】'];
+    // 提取所有分析章节
+    const sections = result.split('【');
     let freeContent = '';
     let lockedContent = '';
-    const sections = result.split('【');
+    
+    // 判断是否是合婚服务，如果是，【用户八字排盘】和【伴侣八字排盘】应该放入免费内容
+    const isHehun = STATE.currentService === '八字合婚';
+    const freeSections = ['【八字排盘】', '【八字喜用分析】', '【性格特点】', '【适宜行业职业推荐】'];
+    // 合婚服务下，把这些也加入免费列表
+    if (isHehun) {
+        freeSections.push('【用户八字排盘】', '【伴侣八字排盘】', '【用户大运排盘】', '【伴侣大运排盘】');
+    }
+    
     for (let i = 1; i < sections.length; i++) {
         const section = '【' + sections[i];
         const sectionTitle = section.split('】')[0] + '】';
-        if (sectionTitle === '【八字排盘】') continue;
+        
         if (freeSections.includes(sectionTitle)) {
             freeContent += section + '\n\n';
         } else {
@@ -624,6 +643,7 @@ export function processAndDisplayAnalysis(result) {
         }
     }
     
+    // 如果免费内容太少，用备份逻辑
     if (freeContent.length < 100) {
         freeContent = '';
         for (const freeSection of freeSections) {
@@ -637,6 +657,7 @@ export function processAndDisplayAnalysis(result) {
         if (freeContent) lockedContent = result.replace(freeContent, '');
     }
     
+    // 渲染免费内容
     const freeAnalysisText = UI.freeAnalysisText();
     if (freeAnalysisText) {
         let formattedContent = '';
@@ -656,6 +677,7 @@ export function processAndDisplayAnalysis(result) {
         freeAnalysisText.innerHTML = formattedContent;
     }
     
+    // 渲染锁定内容
     const lockedAnalysisText = UI.lockedAnalysisText();
     if (lockedAnalysisText) {
         let formattedLockedContent = '';

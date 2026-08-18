@@ -557,7 +557,7 @@ async function startAnalysis() {
             STATE.dayunData = baziResult.data.dayun;
             
             console.log('✅ 用户排盘成功:', STATE.baziData);
-            console.log('✅ 大运数据:', STATE.dayunData);
+            console.log('✅ 用户大运数据:', STATE.dayunData);
             
             // 如果是八字合婚，还需要排伴侣的八字
             if (STATE.currentService === '八字合婚' && STATE.partnerData) {
@@ -582,12 +582,13 @@ async function startAnalysis() {
                     STATE.partnerBaziData = partnerBaziResult.data.bazi;
                     STATE.partnerDayunData = partnerBaziResult.data.dayun;
                     console.log('✅ 伴侣排盘成功:', STATE.partnerBaziData);
+                    console.log('✅ 伴侣大运数据:', STATE.partnerDayunData);
                 } else {
                     console.warn('⚠️ 伴侣排盘失败:', partnerBaziResult.error);
                 }
             }
             
-            // 立即显示排盘结果
+            // 【修复】在排盘完成后统一显示排盘结果，确保所有数据已就绪
             displayPredictorInfo();
             displayBaziPan();
             displayDayunPan(STATE.dayunData);
@@ -653,16 +654,6 @@ async function startAnalysis() {
         currentStep = 4;
         progressPercent = 88;
         updateProgress(currentStep, totalSteps, '整理分析报告', progressPercent, '正在整理分析报告...');
-        
-        // 从 DeepSeek 返回结果中解析大运数据（备用）
-        const dayunData = parseDayunData(analysisResult);
-        if (dayunData && dayunData.dayuns && dayunData.dayuns.length > 0) {
-            STATE.dayunData = dayunData;
-            displayDayunPan(dayunData);
-            console.log('✅ 已从 DeepSeek 解析并显示真实大运数据:', dayunData);
-        } else {
-            console.warn('⚠️ 未能从 DeepSeek 解析到大运数据，使用 lunar-python 数据');
-        }
         
         processAndDisplayAnalysis(analysisResult);
         await sleep(300);

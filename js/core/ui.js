@@ -341,7 +341,7 @@ export function displayDayunPan(dayunData) {
             ageLabel = `${startAge + index * 10}岁`;
         }
         th.textContent = ageLabel;
-        th.style.cssText = `padding: 8px 12px; background: ${index % 2 === 0 ? 'var(--primary-color)' : '#a0522d'}; color: white; text-align: center; font-weight: 600;`;
+        th.style.cssText = 'padding: 8px 10px; background: var(--primary-color); color: white; text-align: center; font-weight: 600; min-width: 50px; width: 10%;';
         trHeader.appendChild(th);
     });
     table.appendChild(trHeader);
@@ -356,7 +356,7 @@ export function displayDayunPan(dayunData) {
     displayList.forEach((dy, index) => {
         const td = document.createElement('td');
         td.textContent = dy.ganzhi || '--';
-        td.style.cssText = `padding: 8px 12px; text-align: center; font-weight: 500; color: var(--primary-color); ${index % 2 === 0 ? 'background: #faf8f5;' : 'background: #fff;'}`;
+        td.style.cssText = `padding: 8px 10px; text-align: center; font-weight: 500; color: var(--primary-color); ${index % 2 === 0 ? 'background: #faf8f5;' : 'background: #fff;'} min-width: 50px; width: 10%;`;
         trGanzhi.appendChild(td);
     });
     table.appendChild(trGanzhi);

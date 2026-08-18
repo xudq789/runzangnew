@@ -323,7 +323,7 @@ export function displayDayunPan(dayunData) {
     
     // 构建大运表格
     const table = document.createElement('table');
-    table.style.cssText = 'width:100%; border-collapse: collapse; margin-top: 10px; border-radius: 8px; overflow: hidden;';
+    table.style.cssText = 'width:100%; border-collapse: collapse; margin-top: 10px; border-radius: 8px; overflow: hidden; table-layout: fixed;';
     
     // 表头
     const trHeader = document.createElement('tr');

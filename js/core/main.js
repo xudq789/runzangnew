@@ -557,7 +557,7 @@ async function startAnalysis() {
             STATE.dayunData = baziResult.data.dayun;
             
             console.log('✅ 用户排盘成功:', STATE.baziData);
-            console.log('✅ 用户大运数据:', STATE.dayunData);
+            console.log('✅ 大运数据:', STATE.dayunData);
             
             // 如果是八字合婚，还需要排伴侣的八字
             if (STATE.currentService === '八字合婚' && STATE.partnerData) {
@@ -582,13 +582,12 @@ async function startAnalysis() {
                     STATE.partnerBaziData = partnerBaziResult.data.bazi;
                     STATE.partnerDayunData = partnerBaziResult.data.dayun;
                     console.log('✅ 伴侣排盘成功:', STATE.partnerBaziData);
-                    console.log('✅ 伴侣大运数据:', STATE.partnerDayunData);
                 } else {
                     console.warn('⚠️ 伴侣排盘失败:', partnerBaziResult.error);
                 }
             }
             
-            // 【修复】在排盘完成后统一显示排盘结果，确保所有数据已就绪
+            // 在排盘完成后统一显示排盘结果
             displayPredictorInfo();
             displayBaziPan();
             displayDayunPan(STATE.dayunData);
@@ -654,6 +653,9 @@ async function startAnalysis() {
         currentStep = 4;
         progressPercent = 88;
         updateProgress(currentStep, totalSteps, '整理分析报告', progressPercent, '正在整理分析报告...');
+        
+        // 【修改】大运数据已经由 lunar-python 排盘生成，无需再从 AI 中解析
+        // 保持 STATE.dayunData 为 lunar-python 返回的数据
         
         processAndDisplayAnalysis(analysisResult);
         await sleep(300);

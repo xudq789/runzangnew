@@ -554,10 +554,9 @@ async function startAnalysis() {
             // 保存用户排盘数据
             STATE.baziData = baziResult.data.bazi;
             STATE.baziRawData = baziResult.data;
-            STATE.dayunData = baziResult.data.dayun;
+            // Python不再返回大运，这里不再保存STATE.dayunData
             
             console.log('✅ 用户排盘成功:', STATE.baziData);
-            console.log('✅ 大运数据:', STATE.dayunData);
             
             // 如果是八字合婚，还需要排伴侣的八字
             if (STATE.currentService === '八字合婚' && STATE.partnerData) {
@@ -580,22 +579,16 @@ async function startAnalysis() {
                 const partnerBaziResult = await partnerBaziResponse.json();
                 if (partnerBaziResult.success) {
                     STATE.partnerBaziData = partnerBaziResult.data.bazi;
-                    STATE.partnerDayunData = partnerBaziResult.data.dayun;
                     console.log('✅ 伴侣排盘成功:', STATE.partnerBaziData);
                 } else {
                     console.warn('⚠️ 伴侣排盘失败:', partnerBaziResult.error);
                 }
             }
             
-            // 在排盘完成后统一显示排盘结果
+            // 显示八字（大运暂不显示）
             displayPredictorInfo();
             displayBaziPan();
-            displayDayunPan(STATE.dayunData);
-            
-            // 如果是八字合婚，显示伴侣大运
-            if (STATE.currentService === '八字合婚' && STATE.partnerDayunData) {
-                displayPartnerDayunPan(STATE.partnerDayunData);
-            }
+            // displayDayunPan 暂不调用，等AI返回后再调用
             
         } catch (error) {
             console.error('❌ 排盘失败:', error);
@@ -645,6 +638,28 @@ async function startAnalysis() {
         console.log('DeepSeek API调用成功，响应长度:', analysisResult.length);
         STATE.fullAnalysisResult = analysisResult;
         
+        // ============ 【关键修改】从 DeepSeek 返回结果中解析大运数据并显示 ============
+        const dayunData = parseDayunData(analysisResult);
+        if (dayunData && dayunData.dayuns && dayunData.dayuns.length > 0) {
+            STATE.dayunData = dayunData;
+            displayDayunPan(dayunData);
+            console.log('✅ 已从 DeepSeek 解析并显示真实大运数据:', dayunData);
+        } else {
+            console.warn('⚠️ 未能从 DeepSeek 解析到大运数据，大运卡片将显示提示');
+            // 仅显示提示，不显示错误大运
+            const dayunGrid = document.getElementById('dayun-grid');
+            if (dayunGrid) {
+                dayunGrid.innerHTML = `
+                    <div style="padding: 15px; text-align: center; color: #999; background: #f9f5f0; border-radius: 8px;">
+                        ⚠️ 大运排盘数据正在生成中，请稍后查看完整报告
+                    </div>
+                `;
+            }
+            const dayunCard = document.getElementById('dayun-pan-card');
+            if (dayunCard) dayunCard.style.display = 'block';
+        }
+        // =======================================================================
+        
         currentStep = 3;
         progressPercent = 70;
         updateProgress(currentStep, totalSteps, '生成排盘结果', progressPercent, '八字排盘生成完成');
@@ -653,9 +668,6 @@ async function startAnalysis() {
         currentStep = 4;
         progressPercent = 88;
         updateProgress(currentStep, totalSteps, '整理分析报告', progressPercent, '正在整理分析报告...');
-        
-        // 【修改】大运数据已经由 lunar-python 排盘生成，无需再从 AI 中解析
-        // 保持 STATE.dayunData 为 lunar-python 返回的数据
         
         processAndDisplayAnalysis(analysisResult);
         await sleep(300);

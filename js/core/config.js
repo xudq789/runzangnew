@@ -1,4 +1,4 @@
-// 服务配置数据
+// 服务配置数据 - 价格由后端统一管理，前端只负责展示
 export const SERVICES = {
     '测算验证': {
         heroImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/1-1.jpg',
@@ -10,7 +10,6 @@ export const SERVICES = {
             '过往关键流年验证', 
             '专业建议与指导'
         ],
-        // 新增：分析项目列表（用于进度显示）
         analysisSteps: [
             '八字排盘',
             '大运排盘',
@@ -109,17 +108,22 @@ export const STATE = {
     currentService: '测算验证',
     fullAnalysisResult: '',
     baziData: null,
+    baziRawData: null,  // 包含排盘完整数据
     partnerBaziData: null,
+    dayunData: null,    // 用户大运数据
+    partnerDayunData: null,  // 伴侣大运数据
     currentOrderId: null,
     currentOutTradeNo: null,
     userData: null,
     partnerData: null,
     apiStatus: null,
     isPaymentUnlocked: false,
-    isDownloadLocked: true
+    isDownloadLocked: true,
+    currentStep: 0,
+    totalSteps: 0
 };
 
-// API配置 - 指向你的支付后端
+// API配置
 export const API_CONFIG = {
     BACKEND_URL: 'https://api.runzang.top',
     TIMEOUT: 120000

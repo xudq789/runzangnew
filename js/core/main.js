@@ -644,37 +644,81 @@ async function startAnalysis() {
         
         // ============ 【关键修改】从 DeepSeek 返回结果中解析大运数据并显示 ============
         const dayunData = parseDayunData(analysisResult);
-        if (dayunData && dayunData.dayuns && dayunData.dayuns.length > 0) {
-            STATE.dayunData = dayunData;
-            displayDayunPan(dayunData);
-            console.log('✅ 已从 DeepSeek 解析并显示真实大运数据:', dayunData);
-        } else {
-            console.warn('⚠️ 未能从 DeepSeek 解析到大运数据，大运卡片将显示提示');
-            const dayunGrid = document.getElementById('dayun-grid');
-            if (dayunGrid) {
-                dayunGrid.innerHTML = `
+if (dayunData && dayunData.list && dayunData.list.length > 0) {
+    STATE.dayunData = dayunData;
+    displayDayunPan(dayunData);
+    console.log('✅ 已从 DeepSeek 解析并显示真实大运数据:', dayunData);
+} else {
+    console.warn('⚠️ 未能从 DeepSeek 解析到大运数据');
+    // 显示提示卡片
+    const dayunCard = document.getElementById('dayun-pan-card');
+    if (!dayunCard) {
+        const baziPan = document.getElementById('bazi-pan');
+        if (baziPan) {
+            const card = document.createElement('div');
+            card.id = 'dayun-pan-card';
+            card.className = 'dayun-pan-card';
+            card.style.display = 'block';
+            card.style.marginTop = '20px';
+            card.style.padding = '15px';
+            card.style.background = '#fff';
+            card.style.borderRadius = '10px';
+            card.style.boxShadow = '0 5px 15px rgba(0,0,0,0.05)';
+            card.style.border = '1px solid #ddd';
+            card.innerHTML = `
+                <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">大运排盘</h4>
+                <div style="padding: 15px; text-align: center; color: #999; background: #f9f5f0; border-radius: 8px;">
+                    ⚠️ 大运排盘数据正在生成中，请稍后查看完整报告
+                </div>
+            `;
+            if (baziPan.nextSibling) {
+                baziPan.parentNode.insertBefore(card, baziPan.nextSibling);
+            } else {
+                baziPan.parentNode.appendChild(card);
+            }
+        }
+    }
+}
+
+// 如果是八字合婚，解析伴侣大运数据并显示
+if (STATE.currentService === '八字合婚') {
+    const partnerDayunData = parseDayunData(analysisResult);
+    if (partnerDayunData && partnerDayunData.list && partnerDayunData.list.length > 0) {
+        STATE.partnerDayunData = partnerDayunData;
+        displayPartnerDayunPan(partnerDayunData);
+        console.log('✅ 已从 DeepSeek 解析并显示伴侣大运数据:', partnerDayunData);
+    } else {
+        console.warn('⚠️ 未能从 DeepSeek 解析到伴侣大运数据');
+        // 显示伴侣大运提示卡片
+        const partnerCard = document.getElementById('partner-dayun-pan-card');
+        if (!partnerCard) {
+            const partnerBaziPan = document.getElementById('partner-bazi-pan');
+            if (partnerBaziPan && partnerBaziPan.style.display !== 'none') {
+                const card = document.createElement('div');
+                card.id = 'partner-dayun-pan-card';
+                card.className = 'dayun-pan-card';
+                card.style.display = 'block';
+                card.style.marginTop = '20px';
+                card.style.padding = '15px';
+                card.style.background = '#fff';
+                card.style.borderRadius = '10px';
+                card.style.boxShadow = '0 5px 15px rgba(0,0,0,0.05)';
+                card.style.border = '1px solid #ddd';
+                card.innerHTML = `
+                    <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">伴侣大运排盘</h4>
                     <div style="padding: 15px; text-align: center; color: #999; background: #f9f5f0; border-radius: 8px;">
-                        ⚠️ 大运排盘数据正在生成中，请稍后查看完整报告
+                        ⚠️ 伴侣大运排盘数据正在生成中，请稍后查看完整报告
                     </div>
                 `;
-            }
-            const dayunCard = document.getElementById('dayun-pan-card');
-            if (dayunCard) dayunCard.style.display = 'block';
-        }
-        
-        // 如果是八字合婚，解析伴侣大运数据并显示
-        if (STATE.currentService === '八字合婚') {
-            // 伴侣大运在 AI 返回文本中通常以"伴侣大运排盘"或"【伴侣大运排盘】"开头
-            // 我们直接调用一次函数尝试从整体文本中解析（parseDayunData会自动寻找）
-            const partnerDayunData = parseDayunData(analysisResult);
-            if (partnerDayunData && partnerDayunData.dayuns && partnerDayunData.dayuns.length > 0) {
-                STATE.partnerDayunData = partnerDayunData;
-                displayPartnerDayunPan(partnerDayunData);
-                console.log('✅ 已从 DeepSeek 解析并显示伴侣大运数据:', partnerDayunData);
-            } else {
-                console.warn('⚠️ 未能从 DeepSeek 解析到伴侣大运数据');
+                if (partnerBaziPan.nextSibling) {
+                    partnerBaziPan.parentNode.insertBefore(card, partnerBaziPan.nextSibling);
+                } else {
+                    partnerBaziPan.parentNode.appendChild(card);
+                }
             }
         }
+    }
+}
         // =======================================================================
         
         currentStep = 3;

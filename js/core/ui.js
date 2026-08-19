@@ -278,73 +278,76 @@ export function displayBaziPan() {
 export function displayDayunPan(dayunData) {
     console.log('📊 显示大运排盘...', dayunData);
     
-    // 查找或创建大运卡片容器
-    let dayunCard = document.getElementById('dayun-pan-card');
-    if (!dayunCard) {
-        const baziPan = document.getElementById('bazi-pan');
-        if (baziPan) {
-            const card = document.createElement('div');
-            card.id = 'dayun-pan-card';
-            card.className = 'dayun-pan-card';
-            card.style.display = 'block';
-            card.style.marginTop = '20px';
-            card.style.padding = '15px';
-            card.style.background = '#fff';
-            card.style.borderRadius = '10px';
-            card.style.boxShadow = '0 5px 15px rgba(0,0,0,0.05)';
-            card.style.border = '1px solid #ddd';
-            card.innerHTML = `
-                <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">大运排盘</h4>
-                <div id="dayun-grid" style="width: 100%; overflow-x: auto;"></div>
-            `;
-            // 插入到 baziPan 之后，修复只能显示一步的问题
-            if (baziPan.nextSibling) {
-                baziPan.parentNode.insertBefore(card, baziPan.nextSibling);
-            } else {
-                baziPan.parentNode.appendChild(card);
-            }
-            dayunCard = card;
-        }
+    // 1. 先删除旧的大运卡片（如果有）
+    const oldCard = document.getElementById('dayun-pan-card');
+    if (oldCard) {
+        oldCard.parentNode.removeChild(oldCard);
     }
     
-    if (!dayunCard) return;
+    // 2. 查找八字排盘卡片作为插入位置
+    const baziPan = document.getElementById('bazi-pan');
+    if (!baziPan) {
+        console.warn('⚠️ 找不到八字排盘卡片，无法插入大运卡片');
+        return;
+    }
     
-    const dayunGrid = document.getElementById('dayun-grid');
-    if (!dayunGrid) return;
+    // 3. 创建新的大运卡片
+    const dayunCard = document.createElement('div');
+    dayunCard.id = 'dayun-pan-card';
+    dayunCard.className = 'dayun-pan-card';
+    dayunCard.style.display = 'block';
+    dayunCard.style.marginTop = '20px';
+    dayunCard.style.padding = '15px';
+    dayunCard.style.background = '#fff';
+    dayunCard.style.borderRadius = '10px';
+    dayunCard.style.boxShadow = '0 5px 15px rgba(0,0,0,0.05)';
+    dayunCard.style.border = '1px solid #ddd';
     
-    dayunGrid.innerHTML = '';
+    // 4. 插入到八字排盘卡片之后
+    if (baziPan.nextSibling) {
+        baziPan.parentNode.insertBefore(dayunCard, baziPan.nextSibling);
+    } else {
+        baziPan.parentNode.appendChild(dayunCard);
+    }
+    
+    // 5. 构建大运表格
+    const dayunGrid = document.createElement('div');
+    dayunGrid.id = 'dayun-grid';
+    dayunGrid.style.width = '100%';
+    dayunGrid.style.overflowX = 'auto';
     
     let dayunList = [];
     let startAge = 8;
     
-    // 数据解析逻辑
-    if (dayunData && dayunData.dayuns && Array.isArray(dayunData.dayuns) && dayunData.dayuns.length > 0) {
-        const ages = dayunData.ages || [];
-        const dayuns = dayunData.dayuns || [];
-        dayunList = ages.map((age, i) => ({
-            age_start: age,
-            age_end: age + 10,
-            ganzhi: dayuns[i] || ''
-        }));
-        startAge = ages[0] || 8;
-    } else if (dayunData && dayunData.list && Array.isArray(dayunData.list) && dayunData.list.length > 0) {
+    // 6. 数据解析 - 使用标准格式
+    if (dayunData && dayunData.list && Array.isArray(dayunData.list)) {
         dayunList = dayunData.list;
         startAge = dayunData.start_age || 8;
     } else if (Array.isArray(dayunData) && dayunData.length > 0) {
         dayunList = dayunData;
-    }
-    
-    if (!dayunList || dayunList.length === 0) {
-        dayunGrid.innerHTML = `<div style="padding: 15px; text-align: center; color: #999;">⚠️ 大运排盘数据暂不可用</div>`;
-        dayunCard.style.display = 'block';
+    } else {
+        dayunGrid.innerHTML = `<div style="padding: 15px; text-align: center; color: #999;">⚠️ 大运排盘数据暂不可用，请稍后查看完整报告</div>`;
+        dayunCard.innerHTML = `
+            <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">大运排盘</h4>
+        `;
+        dayunCard.appendChild(dayunGrid);
         return;
     }
     
-    // 取前8步大运
+    // 7. 截取前8步
     const displayList = dayunList.slice(0, 8);
-    const numColumns = displayList.length;
     
-    // 构建一个标准、干净的表格
+    if (displayList.length === 0) {
+        dayunGrid.innerHTML = `<div style="padding: 15px; text-align: center; color: #999;">⚠️ 大运排盘数据暂不可用</div>`;
+        dayunCard.innerHTML = `
+            <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">大运排盘</h4>
+        `;
+        dayunCard.appendChild(dayunGrid);
+        return;
+    }
+    
+    // 8. 构建表格HTML
+    const numColumns = displayList.length;
     let tableHtml = `
         <table style="width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-size: 13px;">
             <thead>
@@ -387,7 +390,10 @@ export function displayDayunPan(dayunData) {
     `;
     
     dayunGrid.innerHTML = tableHtml;
-    dayunCard.style.display = 'block';
+    dayunCard.innerHTML = `
+        <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">大运排盘</h4>
+    `;
+    dayunCard.appendChild(dayunGrid);
 }
 
 // 显示伴侣大运排盘

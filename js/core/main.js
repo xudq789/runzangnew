@@ -800,6 +800,13 @@ function newAnalysis() {
     STATE.partnerBaziData = null;
     STATE.dayunData = null;
     STATE.partnerDayunData = null;
+    
+    // 清理大运卡片
+    const dayunCards = document.querySelectorAll('.dayun-pan-card');
+    dayunCards.forEach(card => {
+        if (card.parentNode) card.parentNode.removeChild(card);
+    });
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

@@ -495,11 +495,11 @@ export function displayPartnerDayunPan(dayunData) {
 
 // ============ 解析大运数据（增强版） ============
 export function parseDayunData(analysisResult) {
-    console.log('🔍 解析大运数据...');
+    console.log('🔍 从AI分析结果中解析大运数据...');
     
     const result = { ages: [], dayuns: [], elements: [] };
     
-    // 方法1：匹配标准格式 "岁：[8 18 28 38 48 58 68 78]"
+    // ----- 方法1：匹配标准格式 "岁：[8 18 28 38 48 58 68 78]" -----
     const ageRegex = /岁[：:]\s*\[?([\d\s]+)\]?/;
     const dayunRegex = /大运[：:]\s*\[?([^\n\]]+)\]?/;
     
@@ -513,42 +513,52 @@ export function parseDayunData(analysisResult) {
         result.dayuns = dayunMatch[1].trim().split(/\s+/).filter(d => d.length === 2);
     }
     
-    // 方法2：如果方法1没匹配到，用逐行解析
+    // ----- 方法2：如果方法1没匹配到，用逐行遍历 -----
     if (result.ages.length === 0 || result.dayuns.length === 0) {
         const lines = analysisResult.split('\n');
         let foundDayunSection = false;
         let tempAges = [], tempDayuns = [];
+        let currentAge = null;
         
         for (const line of lines) {
             const trimmed = line.trim();
-            if (trimmed.includes('【大运排盘】')) {
+            
+            // 检测大运区域的开始
+            if (trimmed.includes('【大运排盘】') || trimmed.includes('大运排盘：')) {
                 foundDayunSection = true;
                 continue;
             }
+            // 遇到其他标题就停止解析
             if (foundDayunSection && trimmed.match(/^【/)) break;
             if (!foundDayunSection) continue;
             
+            // 匹配形如 "岁：8 18 28 38" 或 "起运：8岁"
             const ageNumbers = trimmed.match(/\d+/g);
             if (ageNumbers && trimmed.includes('岁')) {
                 tempAges = ageNumbers.map(Number);
             }
+            
+            // 匹配大运干支，如 "甲子 乙丑 丙寅"
             const dayunMatches = trimmed.match(/[\u4e00-\u9fa5]{2}/g);
-            if (dayunMatches && trimmed.includes('大运')) {
+            if (dayunMatches && (trimmed.includes('大运') || trimmed.includes('干支'))) {
                 tempDayuns = dayunMatches;
             }
         }
         
+        // 如果找到了有效数据，覆盖结果
         if (tempAges.length > 0 && tempDayuns.length > 0) {
             result.ages = tempAges;
             result.dayuns = tempDayuns;
         }
     }
     
+    // 截取前8步（取短）
     const maxLen = Math.min(8, result.ages.length, result.dayuns.length);
     result.ages = result.ages.slice(0, maxLen);
     result.dayuns = result.dayuns.slice(0, maxLen);
     
-    console.log('✅ 大运数据:', result);
+    // 如果还是没有数据，返回空，前端会显示“暂无大运数据”
+    console.log('✅ 解析后的大运数据:', result);
     return result;
 }
 

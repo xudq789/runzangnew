@@ -274,24 +274,23 @@ export function displayBaziPan() {
     }
 }
 
-// ============ 大运排盘显示（修复版） ============
+// ============ 大运排盘显示（新方案） ============
 export function displayDayunPan(dayunData) {
-    console.log('📊 显示大运排盘...', dayunData);
+    console.log('📊 显示用户大运排盘...', dayunData);
     
-    // 1. 先删除旧的大运卡片（如果有）
+    // 1. 先删除旧卡片
     const oldCard = document.getElementById('dayun-pan-card');
     if (oldCard) {
         oldCard.parentNode.removeChild(oldCard);
     }
     
-    // 2. 查找八字排盘卡片作为插入位置
     const baziPan = document.getElementById('bazi-pan');
     if (!baziPan) {
         console.warn('⚠️ 找不到八字排盘卡片，无法插入大运卡片');
         return;
     }
     
-    // 3. 创建新的大运卡片
+    // 2. 创建新卡片
     const dayunCard = document.createElement('div');
     dayunCard.id = 'dayun-pan-card';
     dayunCard.className = 'dayun-pan-card';
@@ -303,65 +302,42 @@ export function displayDayunPan(dayunData) {
     dayunCard.style.boxShadow = '0 5px 15px rgba(0,0,0,0.05)';
     dayunCard.style.border = '1px solid #ddd';
     
-    // 4. 插入到八字排盘卡片之后
     if (baziPan.nextSibling) {
         baziPan.parentNode.insertBefore(dayunCard, baziPan.nextSibling);
     } else {
         baziPan.parentNode.appendChild(dayunCard);
     }
     
-    // 5. 构建大运表格
     const dayunGrid = document.createElement('div');
     dayunGrid.id = 'dayun-grid';
     dayunGrid.style.width = '100%';
     dayunGrid.style.overflowX = 'auto';
     
-    let dayunList = [];
-    let startAge = 8;
-    
-    // 6. 数据解析 - 使用标准格式
-    if (dayunData && dayunData.list && Array.isArray(dayunData.list)) {
-        dayunList = dayunData.list;
-        startAge = dayunData.start_age || 8;
-    } else if (Array.isArray(dayunData) && dayunData.length > 0) {
-        dayunList = dayunData;
-    } else {
-        dayunGrid.innerHTML = `<div style="padding: 15px; text-align: center; color: #999;">⚠️ 大运排盘数据暂不可用，请稍后查看完整报告</div>`;
-        dayunCard.innerHTML = `
-            <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">大运排盘</h4>
-        `;
+    // 3. 检查数据
+    if (!dayunData || !dayunData.list || dayunData.list.length === 0) {
+        dayunGrid.innerHTML = `<div style="padding: 15px; text-align: center; color: #999; background: #f9f5f0; border-radius: 8px;">⚠️ 大运排盘数据正在生成中，请稍后查看完整报告</div>`;
+        dayunCard.innerHTML = `<h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">大运排盘</h4>`;
         dayunCard.appendChild(dayunGrid);
         return;
     }
     
-    // 7. 截取前8步
-    const displayList = dayunList.slice(0, 8);
-    
-    if (displayList.length === 0) {
-        dayunGrid.innerHTML = `<div style="padding: 15px; text-align: center; color: #999;">⚠️ 大运排盘数据暂不可用</div>`;
-        dayunCard.innerHTML = `
-            <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">大运排盘</h4>
-        `;
-        dayunCard.appendChild(dayunGrid);
-        return;
-    }
-    
-    // 8. 构建表格HTML
+    // 4. 取前8步
+    const displayList = dayunData.list.slice(0, 8);
     const numColumns = displayList.length;
+    
+    // 5. 构建表格 - 现代风格
     let tableHtml = `
-        <table style="width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-size: 13px;">
+        <div style="font-size: 13px; color: #666; margin-bottom: 10px;">
+            起运年龄：<strong>${dayunData.start_age || 8}</strong> 岁
+        </div>
+        <table style="width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
             <thead>
                 <tr>
                     <th style="padding: 8px 10px; background: var(--primary-color); color: white; text-align: center; font-weight: 600; width: 10%;">大运</th>
     `;
     
     displayList.forEach((dy, index) => {
-        let ageLabel = '';
-        if (dy.age_start !== undefined && dy.age_start !== null) {
-            ageLabel = `${dy.age_start}岁`;
-        } else {
-            ageLabel = `${startAge + index * 10}岁`;
-        }
+        const ageLabel = `${dy.age_start || (dayunData.start_age + index * 10)}岁`;
         const bgColor = index % 2 === 0 ? 'var(--primary-color)' : '#a0522d';
         tableHtml += `
             <th style="padding: 8px 10px; background: ${bgColor}; color: white; text-align: center; font-weight: 600; width: ${Math.min(90 / numColumns, 15)}%;">${ageLabel}</th>
@@ -387,33 +363,33 @@ export function displayDayunPan(dayunData) {
                 </tr>
             </tbody>
         </table>
+        <div style="margin-top: 8px; font-size: 12px; color: #999; text-align: right;">
+            共 ${displayList.length} 步大运
+        </div>
     `;
     
     dayunGrid.innerHTML = tableHtml;
-    dayunCard.innerHTML = `
-        <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">大运排盘</h4>
-    `;
+    dayunCard.innerHTML = `<h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">大运排盘</h4>`;
     dayunCard.appendChild(dayunGrid);
 }
 
-// 显示伴侣大运排盘
+// 显示伴侣大运排盘（与上面结构一致）
 export function displayPartnerDayunPan(dayunData) {
     console.log('📊 显示伴侣大运排盘...', dayunData);
     
-    // 1. 先删除旧的大运卡片
+    // 1. 先删除旧卡片
     const oldCard = document.getElementById('partner-dayun-pan-card');
     if (oldCard) {
         oldCard.parentNode.removeChild(oldCard);
     }
     
-    // 2. 查找伴侣八字排盘卡片
     const partnerBaziPan = document.getElementById('partner-bazi-pan');
     if (!partnerBaziPan || partnerBaziPan.style.display === 'none') {
         console.warn('⚠️ 伴侣八字排盘未显示，不展示大运');
         return;
     }
     
-    // 3. 创建新卡片
+    // 2. 创建新卡片
     const dayunCard = document.createElement('div');
     dayunCard.id = 'partner-dayun-pan-card';
     dayunCard.className = 'dayun-pan-card';
@@ -425,7 +401,6 @@ export function displayPartnerDayunPan(dayunData) {
     dayunCard.style.boxShadow = '0 5px 15px rgba(0,0,0,0.05)';
     dayunCard.style.border = '1px solid #ddd';
     
-    // 4. 插入
     if (partnerBaziPan.nextSibling) {
         partnerBaziPan.parentNode.insertBefore(dayunCard, partnerBaziPan.nextSibling);
     } else {
@@ -437,49 +412,31 @@ export function displayPartnerDayunPan(dayunData) {
     dayunGrid.style.width = '100%';
     dayunGrid.style.overflowX = 'auto';
     
-    let dayunList = [];
-    let startAge = 8;
-    
-    if (dayunData && dayunData.list && Array.isArray(dayunData.list)) {
-        dayunList = dayunData.list;
-        startAge = dayunData.start_age || 8;
-    } else if (Array.isArray(dayunData) && dayunData.length > 0) {
-        dayunList = dayunData;
-    } else {
-        dayunGrid.innerHTML = `<div style="padding: 15px; text-align: center; color: #999;">⚠️ 伴侣大运排盘数据暂不可用</div>`;
-        dayunCard.innerHTML = `
-            <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">伴侣大运排盘</h4>
-        `;
+    // 3. 检查数据
+    if (!dayunData || !dayunData.list || dayunData.list.length === 0) {
+        dayunGrid.innerHTML = `<div style="padding: 15px; text-align: center; color: #999; background: #f9f5f0; border-radius: 8px;">⚠️ 伴侣大运排盘数据正在生成中，请稍后查看完整报告</div>`;
+        dayunCard.innerHTML = `<h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">伴侣大运排盘</h4>`;
         dayunCard.appendChild(dayunGrid);
         return;
     }
     
-    const displayList = dayunList.slice(0, 8);
-    
-    if (displayList.length === 0) {
-        dayunGrid.innerHTML = `<div style="padding: 15px; text-align: center; color: #999;">⚠️ 伴侣大运排盘数据暂不可用</div>`;
-        dayunCard.innerHTML = `
-            <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">伴侣大运排盘</h4>
-        `;
-        dayunCard.appendChild(dayunGrid);
-        return;
-    }
-    
+    // 4. 取前8步
+    const displayList = dayunData.list.slice(0, 8);
     const numColumns = displayList.length;
+    
+    // 5. 构建表格
     let tableHtml = `
-        <table style="width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-size: 13px;">
+        <div style="font-size: 13px; color: #666; margin-bottom: 10px;">
+            起运年龄：<strong>${dayunData.start_age || 8}</strong> 岁
+        </div>
+        <table style="width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
             <thead>
                 <tr>
                     <th style="padding: 8px 10px; background: var(--primary-color); color: white; text-align: center; font-weight: 600; width: 10%;">大运</th>
     `;
     
     displayList.forEach((dy, index) => {
-        let ageLabel = '';
-        if (dy.age_start !== undefined && dy.age_start !== null) {
-            ageLabel = `${dy.age_start}岁`;
-        } else {
-            ageLabel = `${startAge + index * 10}岁`;
-        }
+        const ageLabel = `${dy.age_start || (dayunData.start_age + index * 10)}岁`;
         const bgColor = index % 2 === 0 ? 'var(--primary-color)' : '#a0522d';
         tableHtml += `
             <th style="padding: 8px 10px; background: ${bgColor}; color: white; text-align: center; font-weight: 600; width: ${Math.min(90 / numColumns, 15)}%;">${ageLabel}</th>
@@ -505,96 +462,14 @@ export function displayPartnerDayunPan(dayunData) {
                 </tr>
             </tbody>
         </table>
+        <div style="margin-top: 8px; font-size: 12px; color: #999; text-align: right;">
+            共 ${displayList.length} 步大运
+        </div>
     `;
     
     dayunGrid.innerHTML = tableHtml;
-    dayunCard.innerHTML = `
-        <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">伴侣大运排盘</h4>
-    `;
+    dayunCard.innerHTML = `<h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">伴侣大运排盘</h4>`;
     dayunCard.appendChild(dayunGrid);
-}
-
-// ============ 解析大运数据（增强版） ============
-export function parseDayunData(analysisResult) {
-    console.log('🔍 从AI分析结果中解析大运数据...');
-    
-    const result = { ages: [], dayuns: [], elements: [] };
-    
-    // ----- 方法1：匹配标准格式 "岁：[8 18 28 38]" 和 "大运：[甲子 乙丑 丙寅]" -----
-    const ageRegex = /岁[：:]\s*\[?([\d\s]+)\]?/;
-    const dayunRegex = /大运[：:]\s*\[?([^\n\]]+)\]?/;
-    
-    const ageMatch = analysisResult.match(ageRegex);
-    if (ageMatch) {
-        result.ages = ageMatch[1].trim().split(/\s+/).map(Number).filter(a => !isNaN(a) && a > 0);
-    }
-    
-    const dayunMatch = analysisResult.match(dayunRegex);
-    if (dayunMatch) {
-        result.dayuns = dayunMatch[1].trim().split(/\s+/).filter(d => d.length === 2);
-    }
-    
-    // ----- 方法2：匹配 "第1步大运：8-17岁 甲子" 格式 -----
-    if (result.ages.length === 0 || result.dayuns.length === 0) {
-        const lines = analysisResult.split('\n');
-        let stepData = [];
-        let startAge = 8; // 默认值
-        
-        for (const line of lines) {
-            const trimmed = line.trim();
-            
-            // 匹配 "第1步大运：8-17岁 甲子"
-            const stepMatch = trimmed.match(/第(\d+)步大运[：:]\s*(\d+)-(\d+)岁\s*([\u4e00-\u9fa5]{2})/);
-            if (stepMatch) {
-                stepData.push({
-                    age_start: parseInt(stepMatch[2]),
-                    age_end: parseInt(stepMatch[3]),
-                    ganzhi: stepMatch[4]
-                });
-                continue;
-            }
-            
-            // 匹配 "起运：8岁" 或 "起运年龄：8岁"
-            const startMatch = trimmed.match(/起运[年龄]*[：:]\s*(\d+)岁/);
-            if (startMatch) {
-                startAge = parseInt(startMatch[1]);
-                continue;
-            }
-        }
-        
-        if (stepData.length > 0) {
-            // 从 stepData 中提取 ages 和 dayuns
-            result.ages = stepData.map(d => d.age_start);
-            result.dayuns = stepData.map(d => d.ganzhi);
-            // 同时保存完整列表供渲染使用
-            result.list = stepData;
-            result.start_age = startAge;
-            console.log('✅ 从步骤格式解析到大运:', result);
-            return result;
-        }
-    }
-    
-    // ----- 方法3：匹配 "大运排盘：甲子 乙丑 丙寅 ..."（无岁数） -----
-    if (result.dayuns.length > 0 && result.ages.length === 0) {
-        // 如果没有岁数，生成默认岁数（从8岁开始）
-        result.ages = result.dayuns.map((_, i) => 8 + i * 10);
-    }
-    
-    // 截取前8步
-    const maxLen = Math.min(8, result.ages.length, result.dayuns.length);
-    result.ages = result.ages.slice(0, maxLen);
-    result.dayuns = result.dayuns.slice(0, maxLen);
-    
-    // 生成完整列表供渲染
-    result.list = result.ages.map((age, i) => ({
-        age_start: age,
-        age_end: age + 10,
-        ganzhi: result.dayuns[i] || '--'
-    }));
-    result.start_age = result.ages[0] || 8;
-    
-    console.log('✅ 解析后的大运数据:', result);
-    return result;
 }
 
 // ============ 进度更新 ============
@@ -662,7 +537,7 @@ export function updateProgress(currentStep, totalSteps, stepName, percent, messa
     container.innerHTML = html;
 }
 
-// ============ 处理分析结果（修复合婚免费内容缺失） ============
+// ============ 处理分析结果 ============
 export function processAndDisplayAnalysis(result) {
     // 提取所有分析章节
     const sections = result.split('【');

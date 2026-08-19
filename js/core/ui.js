@@ -499,7 +499,7 @@ export function parseDayunData(analysisResult) {
     
     const result = { ages: [], dayuns: [], elements: [] };
     
-    // ----- 方法1：匹配标准格式 "岁：[8 18 28 38 48 58 68 78]" -----
+    // ----- 方法1：匹配标准格式 "岁：[8 18 28 38]" 和 "大运：[甲子 乙丑 丙寅]" -----
     const ageRegex = /岁[：:]\s*\[?([\d\s]+)\]?/;
     const dayunRegex = /大运[：:]\s*\[?([^\n\]]+)\]?/;
     
@@ -513,51 +513,65 @@ export function parseDayunData(analysisResult) {
         result.dayuns = dayunMatch[1].trim().split(/\s+/).filter(d => d.length === 2);
     }
     
-    // ----- 方法2：如果方法1没匹配到，用逐行遍历 -----
+    // ----- 方法2：匹配 "第1步大运：8-17岁 甲子" 格式 -----
     if (result.ages.length === 0 || result.dayuns.length === 0) {
         const lines = analysisResult.split('\n');
-        let foundDayunSection = false;
-        let tempAges = [], tempDayuns = [];
-        let currentAge = null;
+        let stepData = [];
+        let startAge = 8; // 默认值
         
         for (const line of lines) {
             const trimmed = line.trim();
             
-            // 检测大运区域的开始
-            if (trimmed.includes('【大运排盘】') || trimmed.includes('大运排盘：')) {
-                foundDayunSection = true;
+            // 匹配 "第1步大运：8-17岁 甲子"
+            const stepMatch = trimmed.match(/第(\d+)步大运[：:]\s*(\d+)-(\d+)岁\s*([\u4e00-\u9fa5]{2})/);
+            if (stepMatch) {
+                stepData.push({
+                    age_start: parseInt(stepMatch[2]),
+                    age_end: parseInt(stepMatch[3]),
+                    ganzhi: stepMatch[4]
+                });
                 continue;
             }
-            // 遇到其他标题就停止解析
-            if (foundDayunSection && trimmed.match(/^【/)) break;
-            if (!foundDayunSection) continue;
             
-            // 匹配形如 "岁：8 18 28 38" 或 "起运：8岁"
-            const ageNumbers = trimmed.match(/\d+/g);
-            if (ageNumbers && trimmed.includes('岁')) {
-                tempAges = ageNumbers.map(Number);
-            }
-            
-            // 匹配大运干支，如 "甲子 乙丑 丙寅"
-            const dayunMatches = trimmed.match(/[\u4e00-\u9fa5]{2}/g);
-            if (dayunMatches && (trimmed.includes('大运') || trimmed.includes('干支'))) {
-                tempDayuns = dayunMatches;
+            // 匹配 "起运：8岁" 或 "起运年龄：8岁"
+            const startMatch = trimmed.match(/起运[年龄]*[：:]\s*(\d+)岁/);
+            if (startMatch) {
+                startAge = parseInt(startMatch[1]);
+                continue;
             }
         }
         
-        // 如果找到了有效数据，覆盖结果
-        if (tempAges.length > 0 && tempDayuns.length > 0) {
-            result.ages = tempAges;
-            result.dayuns = tempDayuns;
+        if (stepData.length > 0) {
+            // 从 stepData 中提取 ages 和 dayuns
+            result.ages = stepData.map(d => d.age_start);
+            result.dayuns = stepData.map(d => d.ganzhi);
+            // 同时保存完整列表供渲染使用
+            result.list = stepData;
+            result.start_age = startAge;
+            console.log('✅ 从步骤格式解析到大运:', result);
+            return result;
         }
     }
     
-    // 截取前8步（取短）
+    // ----- 方法3：匹配 "大运排盘：甲子 乙丑 丙寅 ..."（无岁数） -----
+    if (result.dayuns.length > 0 && result.ages.length === 0) {
+        // 如果没有岁数，生成默认岁数（从8岁开始）
+        result.ages = result.dayuns.map((_, i) => 8 + i * 10);
+    }
+    
+    // 截取前8步
     const maxLen = Math.min(8, result.ages.length, result.dayuns.length);
     result.ages = result.ages.slice(0, maxLen);
     result.dayuns = result.dayuns.slice(0, maxLen);
     
-    // 如果还是没有数据，返回空，前端会显示“暂无大运数据”
+    // 生成完整列表供渲染
+    result.list = result.ages.map((age, i) => ({
+        age_start: age,
+        age_end: age + 10,
+        ganzhi: result.dayuns[i] || '--'
+    }));
+    result.start_age = result.ages[0] || 8;
+    
     console.log('✅ 解析后的大运数据:', result);
     return result;
 }

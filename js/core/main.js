@@ -441,15 +441,21 @@ function switchService(serviceName) {
         var baziGrid = UI.baziGrid();
         if (baziGrid) baziGrid.innerHTML = '';
         
-        // 清理所有大运卡片
+         // 清理所有大运卡片（包括用户大运和伴侣大运）
         const dayunCards = document.querySelectorAll('.dayun-pan-card');
         dayunCards.forEach(card => {
             if (card.parentNode) card.parentNode.removeChild(card);
         });
+        
+        // 清理大运表格内容
         const dayunGrid = document.getElementById('dayun-grid');
         if (dayunGrid) dayunGrid.innerHTML = '';
         const partnerDayunGrid = document.getElementById('partner-dayun-grid');
         if (partnerDayunGrid) partnerDayunGrid.innerHTML = '';
+        
+        // 重置状态
+        STATE.dayunData = null;
+        STATE.partnerDayunData = null;
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     console.log('服务切换完成，解锁状态:', STATE.isPaymentUnlocked);

@@ -208,11 +208,43 @@ const PaymentManager = {
                 }
             }
             
-            const parsedBaziData = parseBaziData(savedResult);
-            STATE.baziData = parsedBaziData.userBazi;
+            // 尝试从 localStorage 恢复排盘数据
+            const savedBazi = localStorage.getItem('last_bazi_data');
+            if (savedBazi) {
+                try {
+                    const baziData = JSON.parse(savedBazi);
+                    STATE.baziData = baziData.bazi;
+                    STATE.dayunData = baziData.dayun;
+                    STATE.baziRawData = baziData;
+                } catch (e) {
+                    console.error('解析排盘数据失败:', e);
+                }
+            }
+            
+            // 恢复伴侣排盘数据
+            const savedPartnerBazi = localStorage.getItem('last_partner_bazi_data');
+            if (savedPartnerBazi) {
+                try {
+                    const partnerData = JSON.parse(savedPartnerBazi);
+                    STATE.partnerBaziData = partnerData.bazi;
+                    STATE.partnerDayunData = partnerData.dayun;
+                } catch (e) {
+                    console.error('解析伴侣排盘数据失败:', e);
+                }
+            }
+            
             updateServiceDisplay(savedService);
             displayPredictorInfo();
             displayBaziPan();
+            
+            // 显示大运
+            if (STATE.dayunData && STATE.dayunData.list && STATE.dayunData.list.length > 0) {
+                displayDayunPan(STATE.dayunData);
+            }
+            if (STATE.partnerDayunData && STATE.partnerDayunData.list && STATE.partnerDayunData.list.length > 0) {
+                displayPartnerDayunPan(STATE.partnerDayunData);
+            }
+            
             processAndDisplayAnalysis(savedResult);
             showAnalysisResult();
             
@@ -266,6 +298,16 @@ const PaymentManager = {
             localStorage.setItem('last_analysis_result', STATE.fullAnalysisResult);
             localStorage.setItem('last_analysis_service', STATE.currentService);
             localStorage.setItem('last_user_data', JSON.stringify(STATE.userData));
+            // 保存排盘数据
+            if (STATE.baziRawData) {
+                localStorage.setItem('last_bazi_data', JSON.stringify(STATE.baziRawData));
+            }
+            if (STATE.partnerBaziData) {
+                localStorage.setItem('last_partner_bazi_data', JSON.stringify({
+                    bazi: STATE.partnerBaziData,
+                    dayun: STATE.partnerDayunData
+                }));
+            }
             console.log('✅ 分析数据已保存到 localStorage');
             return true;
         } catch (error) {
@@ -283,7 +325,6 @@ import {
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,
     displayDayunPan, displayPartnerDayunPan,
     updateProgress,
-    parseDayunData,
     processAndDisplayAnalysis, showPaymentModal, closePaymentModal,
     updateUnlockInterface, showFullAnalysisContent, lockDownloadButton,
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
@@ -419,12 +460,22 @@ function switchService(serviceName) {
         STATE.isDownloadLocked = true;
         STATE.fullAnalysisResult = '';
         STATE.baziData = null;
+        STATE.baziRawData = null;
         STATE.partnerBaziData = null;
         STATE.currentOrderId = null;
         STATE.userData = null;
         STATE.partnerData = null;
         STATE.dayunData = null;
         STATE.partnerDayunData = null;
+        STATE.currentStep = 0;
+        STATE.totalSteps = 0;
+        
+        // 清理大运卡片
+        const dayunCards = document.querySelectorAll('.dayun-pan-card');
+        dayunCards.forEach(card => {
+            if (card.parentNode) card.parentNode.removeChild(card);
+        });
+        
         console.log('✅ 所有状态已重置');
     }
     STATE.currentService = serviceName;
@@ -440,22 +491,8 @@ function switchService(serviceName) {
         if (predictorInfoGrid) predictorInfoGrid.innerHTML = '';
         var baziGrid = UI.baziGrid();
         if (baziGrid) baziGrid.innerHTML = '';
-        
-         // 清理所有大运卡片（包括用户大运和伴侣大运）
-        const dayunCards = document.querySelectorAll('.dayun-pan-card');
-        dayunCards.forEach(card => {
-            if (card.parentNode) card.parentNode.removeChild(card);
-        });
-        
-        // 清理大运表格内容
-        const dayunGrid = document.getElementById('dayun-grid');
-        if (dayunGrid) dayunGrid.innerHTML = '';
-        const partnerDayunGrid = document.getElementById('partner-dayun-grid');
-        if (partnerDayunGrid) partnerDayunGrid.innerHTML = '';
-        
-        // 重置状态
-        STATE.dayunData = null;
-        STATE.partnerDayunData = null;
+        var partnerBaziGrid = document.getElementById('partner-bazi-grid');
+        if (partnerBaziGrid) partnerBaziGrid.innerHTML = '';
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     console.log('服务切换完成，解锁状态:', STATE.isPaymentUnlocked);
@@ -485,6 +522,16 @@ function formatBaziForPrompt(baziRawData) {
     text += `月柱：${bazi.month.ganzhi}（${bazi.month.nayin}）\n`;
     text += `日柱：${bazi.day.ganzhi}（${bazi.day.nayin}）\n`;
     text += `时柱：${bazi.hour.ganzhi}（${bazi.hour.nayin}）\n`;
+    
+    // 添加大运数据
+    if (baziRawData.dayun && baziRawData.dayun.list && baziRawData.dayun.list.length > 0) {
+        text += `\n【大运排盘】\n`;
+        text += `起运年龄：${baziRawData.dayun.start_age || 8}岁\n`;
+        baziRawData.dayun.list.slice(0, 8).forEach((dy, idx) => {
+            text += `第${idx+1}步大运：${dy.age_start}-${dy.age_end}岁  ${dy.ganzhi}\n`;
+        });
+    }
+    
     return text;
 }
 
@@ -509,7 +556,10 @@ async function startAnalysis() {
     
     STATE.fullAnalysisResult = '';
     STATE.baziData = null;
+    STATE.baziRawData = null;
     STATE.partnerBaziData = null;
+    STATE.dayunData = null;
+    STATE.partnerDayunData = null;
     STATE.isPaymentUnlocked = false;
     STATE.isDownloadLocked = true;
     lockDownloadButton();
@@ -557,11 +607,13 @@ async function startAnalysis() {
                 throw new Error(baziResult.error || '排盘失败');
             }
             
-            // 保存用户排盘数据（注意：后端不再返回大运）
+            // 保存用户排盘数据（包含八字和大运）
             STATE.baziData = baziResult.data.bazi;
             STATE.baziRawData = baziResult.data;
+            STATE.dayunData = baziResult.data.dayun;
             
             console.log('✅ 用户排盘成功:', STATE.baziData);
+            console.log('✅ 用户大运数据:', STATE.dayunData);
             
             // 如果是八字合婚，还需要排伴侣的八字
             if (STATE.currentService === '八字合婚' && STATE.partnerData) {
@@ -584,15 +636,35 @@ async function startAnalysis() {
                 const partnerBaziResult = await partnerBaziResponse.json();
                 if (partnerBaziResult.success) {
                     STATE.partnerBaziData = partnerBaziResult.data.bazi;
+                    STATE.partnerDayunData = partnerBaziResult.data.dayun;
                     console.log('✅ 伴侣排盘成功:', STATE.partnerBaziData);
+                    console.log('✅ 伴侣大运数据:', STATE.partnerDayunData);
                 } else {
                     console.warn('⚠️ 伴侣排盘失败:', partnerBaziResult.error);
                 }
             }
             
-            // 显示八字（不显示大运，等AI回来再显示）
+            // 显示八字
             displayPredictorInfo();
             displayBaziPan();
+            
+            // 显示用户大运
+            if (STATE.dayunData && STATE.dayunData.list && STATE.dayunData.list.length > 0) {
+                displayDayunPan(STATE.dayunData);
+                console.log('✅ 用户大运卡片已显示');
+            } else {
+                console.warn('⚠️ 用户大运数据为空');
+            }
+            
+            // 如果是合婚，显示伴侣大运
+            if (STATE.currentService === '八字合婚') {
+                if (STATE.partnerDayunData && STATE.partnerDayunData.list && STATE.partnerDayunData.list.length > 0) {
+                    displayPartnerDayunPan(STATE.partnerDayunData);
+                    console.log('✅ 伴侣大运卡片已显示');
+                } else {
+                    console.warn('⚠️ 伴侣大运数据为空');
+                }
+            }
             
         } catch (error) {
             console.error('❌ 排盘失败:', error);
@@ -641,85 +713,6 @@ async function startAnalysis() {
         
         console.log('DeepSeek API调用成功，响应长度:', analysisResult.length);
         STATE.fullAnalysisResult = analysisResult;
-        
-        // ============ 【关键修改】从 DeepSeek 返回结果中解析大运数据并显示 ============
-        const dayunData = parseDayunData(analysisResult);
-        if (dayunData && dayunData.list && dayunData.list.length > 0) {
-            STATE.dayunData = dayunData;
-            displayDayunPan(dayunData);
-            console.log('✅ 已从 DeepSeek 解析并显示真实大运数据:', dayunData);
-        } else {
-            console.warn('⚠️ 未能从 DeepSeek 解析到大运数据');
-            // 显示提示卡片
-            const dayunCard = document.getElementById('dayun-pan-card');
-            if (!dayunCard) {
-                const baziPan = document.getElementById('bazi-pan');
-                if (baziPan) {
-                    const card = document.createElement('div');
-                    card.id = 'dayun-pan-card';
-                    card.className = 'dayun-pan-card';
-                    card.style.display = 'block';
-                    card.style.marginTop = '20px';
-                    card.style.padding = '15px';
-                    card.style.background = '#fff';
-                    card.style.borderRadius = '10px';
-                    card.style.boxShadow = '0 5px 15px rgba(0,0,0,0.05)';
-                    card.style.border = '1px solid #ddd';
-                    card.innerHTML = `
-                        <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">大运排盘</h4>
-                        <div style="padding: 15px; text-align: center; color: #999; background: #f9f5f0; border-radius: 8px;">
-                            ⚠️ 大运排盘数据正在生成中，请稍后查看完整报告
-                        </div>
-                    `;
-                    if (baziPan.nextSibling) {
-                        baziPan.parentNode.insertBefore(card, baziPan.nextSibling);
-                    } else {
-                        baziPan.parentNode.appendChild(card);
-                    }
-                }
-            }
-        }
-
-        // 如果是八字合婚，解析伴侣大运数据并显示
-        if (STATE.currentService === '八字合婚') {
-            const partnerDayunData = parseDayunData(analysisResult);
-            if (partnerDayunData && partnerDayunData.list && partnerDayunData.list.length > 0) {
-                STATE.partnerDayunData = partnerDayunData;
-                displayPartnerDayunPan(partnerDayunData);
-                console.log('✅ 已从 DeepSeek 解析并显示伴侣大运数据:', partnerDayunData);
-            } else {
-                console.warn('⚠️ 未能从 DeepSeek 解析到伴侣大运数据');
-                // 显示伴侣大运提示卡片
-                const partnerCard = document.getElementById('partner-dayun-pan-card');
-                if (!partnerCard) {
-                    const partnerBaziPan = document.getElementById('partner-bazi-pan');
-                    if (partnerBaziPan && partnerBaziPan.style.display !== 'none') {
-                        const card = document.createElement('div');
-                        card.id = 'partner-dayun-pan-card';
-                        card.className = 'dayun-pan-card';
-                        card.style.display = 'block';
-                        card.style.marginTop = '20px';
-                        card.style.padding = '15px';
-                        card.style.background = '#fff';
-                        card.style.borderRadius = '10px';
-                        card.style.boxShadow = '0 5px 15px rgba(0,0,0,0.05)';
-                        card.style.border = '1px solid #ddd';
-                        card.innerHTML = `
-                            <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">伴侣大运排盘</h4>
-                            <div style="padding: 15px; text-align: center; color: #999; background: #f9f5f0; border-radius: 8px;">
-                                ⚠️ 伴侣大运排盘数据正在生成中，请稍后查看完整报告
-                            </div>
-                        `;
-                        if (partnerBaziPan.nextSibling) {
-                            partnerBaziPan.parentNode.insertBefore(card, partnerBaziPan.nextSibling);
-                        } else {
-                            partnerBaziPan.parentNode.appendChild(card);
-                        }
-                    }
-                }
-            }
-        }
-        // =======================================================================
         
         currentStep = 3;
         progressPercent = 70;
@@ -815,7 +808,15 @@ function downloadReport() {
         baziInfo = '八字排盘：\n年柱：' + STATE.baziData.year.ganzhi + ' (' + STATE.baziData.year.nayin + ')\n月柱：' + STATE.baziData.month.ganzhi + ' (' + STATE.baziData.month.nayin + ')\n日柱：' + STATE.baziData.day.ganzhi + ' (' + STATE.baziData.day.nayin + ')\n时柱：' + STATE.baziData.hour.ganzhi + ' (' + STATE.baziData.hour.nayin + ')';
     }
     
-    var reportContent = '命理分析报告 - ' + STATE.currentService + '\n\n' + predictorInfo + '\n\n' + baziInfo + '\n\n' + STATE.fullAnalysisResult + '\n\n--- 命理分析服务平台 ---\n分析时间：' + new Date().toLocaleString('zh-CN') + '\n使用技术：DeepSeek AI命理分析系统';
+    var dayunInfo = '';
+    if (STATE.dayunData && STATE.dayunData.list && STATE.dayunData.list.length > 0) {
+        dayunInfo = '\n\n大运排盘：\n起运年龄：' + (STATE.dayunData.start_age || 8) + '岁\n';
+        STATE.dayunData.list.slice(0, 8).forEach(function(dy, idx) {
+            dayunInfo += '第' + (idx+1) + '步大运：' + dy.age_start + '-' + dy.age_end + '岁  ' + dy.ganzhi + '\n';
+        });
+    }
+    
+    var reportContent = '命理分析报告 - ' + STATE.currentService + '\n\n' + predictorInfo + '\n\n' + baziInfo + dayunInfo + '\n\n' + STATE.fullAnalysisResult + '\n\n--- 命理分析服务平台 ---\n分析时间：' + new Date().toLocaleString('zh-CN') + '\n使用技术：DeepSeek AI命理分析系统';
     
     var blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
     var url = URL.createObjectURL(blob);
@@ -841,9 +842,12 @@ function newAnalysis() {
     STATE.currentOrderId = null;
     STATE.fullAnalysisResult = '';
     STATE.baziData = null;
+    STATE.baziRawData = null;
     STATE.partnerBaziData = null;
     STATE.dayunData = null;
     STATE.partnerDayunData = null;
+    STATE.currentStep = 0;
+    STATE.totalSteps = 0;
     
     // 清理大运卡片
     const dayunCards = document.querySelectorAll('.dayun-pan-card');

@@ -59,7 +59,7 @@ export async function checkAPIStatus() {
 
     try {
         // 检查后端服务
-        const response = await fetch(`${API_CONFIG.BACKEND_URL}/health`, {
+        const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/bazi/health`, {
             signal: AbortSignal.timeout(5000)
         });
 

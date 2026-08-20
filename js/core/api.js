@@ -50,7 +50,7 @@ export async function callDeepSeekAPI(prompt, serviceType) {
     }
 }
 
-// 检查API状态（DeepSeek和后端）
+// ★★★ 修复：检查后端服务状态（使用正确的路径） ★★★
 export async function checkAPIStatus() {
     console.log('🔍 检查后端服务状态...');
     const statusElement = DOM.id('api-status');
@@ -58,34 +58,23 @@ export async function checkAPIStatus() {
     if (!statusElement) return 'unknown';
 
     try {
-        // 检查后端服务
+        // 直接检查后端健康状态，不依赖 DeepSeek 状态接口
         const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/bazi/health`, {
             signal: AbortSignal.timeout(5000)
         });
 
         if (response.ok) {
-            // 检查DeepSeek状态
-            const deepseekResponse = await fetch(`${API_CONFIG.BACKEND_URL}/api/deepseek/status`, {
-                signal: AbortSignal.timeout(5000)
-            });
-
-            if (deepseekResponse.ok) {
-                const data = await deepseekResponse.json();
-                if (data.success && data.data.status === 'online') {
-                    statusElement.textContent = '✅ 服务连接正常';
-                    statusElement.className = 'api-status online';
-                    return 'online';
-                }
+            const data = await response.json();
+            if (data.success || data.status === 'online') {
+                statusElement.textContent = '✅ 服务连接正常';
+                statusElement.className = 'api-status online';
+                return 'online';
             }
-
-            statusElement.textContent = '⚠️ DeepSeek服务异常';
-            statusElement.className = 'api-status offline';
-            return 'degraded';
         }
 
-        statusElement.textContent = '❌ 后端服务不可用';
+        statusElement.textContent = '⚠️ 后端服务异常';
         statusElement.className = 'api-status offline';
-        return 'offline';
+        return 'degraded';
 
     } catch (error) {
         console.error('状态检查失败:', error);
@@ -95,7 +84,7 @@ export async function checkAPIStatus() {
     }
 }
 
-// 解析八字数据（保持不变）
+// 解析八字数据
 export function parseBaziData(analysisResult) {
     console.log('解析八字数据...');
 
@@ -122,7 +111,7 @@ export function parseBaziData(analysisResult) {
     return result;
 }
 
-// 解析单个八字（辅助函数）
+// 解析单个八字
 function parseSingleBazi(baziText) {
     const baziData = {
         yearColumn: '',
@@ -169,12 +158,12 @@ function parseSingleBazi(baziText) {
     return baziData;
 }
 
-// 新增：综合分析接口 (调用 /api/analyze)
+// 新增：综合分析接口
 export async function analyzeBazi(userData, serviceType, needPolish = true) {
     console.log('🔮 调用综合命理分析引擎...');
     console.log('用户数据:', userData);
     console.log('服务类型:', serviceType);
-    
+
     try {
         const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/analyze`, {
             method: 'POST',
@@ -189,15 +178,15 @@ export async function analyzeBazi(userData, serviceType, needPolish = true) {
             }),
             signal: AbortSignal.timeout(120000)
         });
-        
+
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || `请求失败 (${response.status})`);
         }
-        
+
         const result = await response.json();
         console.log('✅ 综合分析响应成功');
-        
+
         if (result.success) {
             return result.data;
         } else {

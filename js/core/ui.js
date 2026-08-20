@@ -617,84 +617,14 @@ export function updateProgress(currentStep, totalSteps, stepName, percent, messa
     container.innerHTML = html;
 }
 
-// ============ 处理分析结果（修复合婚免费内容缺失） ============
+// ============ 处理分析结果（简化版） ============
 export function processAndDisplayAnalysis(result) {
-    // 提取所有分析章节
-    const sections = result.split('【');
-    let freeContent = '';
-    let lockedContent = '';
-    
-    // 判断是否是合婚服务，如果是，【用户八字排盘】和【伴侣八字排盘】应该放入免费内容
-    const isHehun = STATE.currentService === '八字合婚';
-    const freeSections = ['【八字排盘】', '【八字喜用分析】', '【性格特点】', '【适宜行业职业推荐】'];
-    // 合婚服务下，把这些也加入免费列表
-    if (isHehun) {
-        freeSections.push('【用户八字排盘】', '【伴侣八字排盘】', '【用户大运排盘】', '【伴侣大运排盘】');
-    }
-    
-    for (let i = 1; i < sections.length; i++) {
-        const section = '【' + sections[i];
-        const sectionTitle = section.split('】')[0] + '】';
-        
-        if (freeSections.includes(sectionTitle)) {
-            freeContent += section + '\n\n';
-        } else {
-            lockedContent += section + '\n\n';
-        }
-    }
-    
-    // 如果免费内容太少，用备份逻辑
-    if (freeContent.length < 100) {
-        freeContent = '';
-        for (const freeSection of freeSections) {
-            const startIndex = result.indexOf(freeSection);
-            if (startIndex !== -1) {
-                let endIndex = result.indexOf('【', startIndex + 1);
-                if (endIndex === -1) endIndex = result.length;
-                freeContent += result.substring(startIndex, endIndex) + '\n\n';
-            }
-        }
-        if (freeContent) lockedContent = result.replace(freeContent, '');
-    }
-    
-    // 渲染免费内容
+    // 此函数已废弃，内容现在由 main.js 直接显示
+    // 保留此函数仅用于兼容旧代码
+    console.log('⚠️ processAndDisplayAnalysis 已废弃');
     const freeAnalysisText = UI.freeAnalysisText();
-    if (freeAnalysisText) {
-        let formattedContent = '';
-        const freeSectionsArray = freeContent.split('\n\n');
-        freeSectionsArray.forEach(section => {
-            if (section.trim()) {
-                const titleMatch = section.match(/【([^】]+)】/);
-                if (titleMatch) {
-                    const title = titleMatch[1];
-                    const content = section.replace(titleMatch[0], '').trim();
-                    formattedContent += `<div class="analysis-section"><h5>${title}</h5><div class="analysis-content">${content.replace(/\n/g, '<br>')}</div></div>`;
-                } else {
-                    formattedContent += `<div class="analysis-content">${section.replace(/\n/g, '<br>')}</div>`;
-                }
-            }
-        });
-        freeAnalysisText.innerHTML = formattedContent;
-    }
-    
-    // 渲染锁定内容
-    const lockedAnalysisText = UI.lockedAnalysisText();
-    if (lockedAnalysisText) {
-        let formattedLockedContent = '';
-        const lockedSectionsArray = lockedContent.split('\n\n');
-        lockedSectionsArray.forEach(section => {
-            if (section.trim()) {
-                const titleMatch = section.match(/【([^】]+)】/);
-                if (titleMatch) {
-                    const title = titleMatch[1];
-                    const content = section.replace(titleMatch[0], '').trim();
-                    formattedLockedContent += `<div class="analysis-section"><h5>${title}</h5><div class="analysis-content">${content.replace(/\n/g, '<br>')}</div></div>`;
-                } else {
-                    formattedLockedContent += `<div class="analysis-content">${section.replace(/\n/g, '<br>')}</div>`;
-                }
-            }
-        });
-        lockedAnalysisText.innerHTML = formattedLockedContent;
+    if (freeAnalysisText && freeAnalysisText.innerHTML === '' || freeAnalysisText && freeAnalysisText.innerHTML === '<div class="loading-text">正在生成分析结果...</div>') {
+        freeAnalysisText.innerHTML = '<div class="analysis-content" style="color: #999; text-align: center; padding: 20px;">分析完成，请查看上方报告内容</div>';
     }
 }
 

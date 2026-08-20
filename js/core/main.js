@@ -275,9 +275,10 @@ const PaymentManager = {
     }
 };
 
-// ============ 【原有主应用代码】 ============
-import { SERVICES, STATE, API_CONFIG } from '../config.js';
-import { checkAPIStatus, parseBaziData, analyzeBazi } from '../api.js';
+// ============ 【导入所有依赖】 ============
+// 从同一目录 (js/core/) 导入
+import { SERVICES, STATE, API_CONFIG } from './config.js';
+import { checkAPIStatus, parseBaziData, analyzeBazi } from './api.js';
 import {
     UI, initFormOptions, setDefaultValues, updateServiceDisplay,
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,
@@ -289,16 +290,16 @@ import {
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData
-} from '../ui.js';
+} from './ui.js';
 
-// 注意：不再导入模块（cesuan, yuncheng, xiangpi, hehun），因为新架构已绕过它们
-// 但为了兼容性，保留导入但不使用
+// 模块文件在上级目录的 modules/ 下
+// 注意：新架构已绕过这些模块，但保留导入以防万一
 // import { CesuanModule } from '../modules/cesuan.js';
 // import { YunchengModule } from '../modules/yuncheng.js';
 // import { XiangpiModule } from '../modules/xiangpi.js';
 // import { HehunModule } from '../modules/hehun.js';
 
-// 支付成功处理函数
+// ============ 支付成功处理函数 ============
 function handlePaymentSuccess() {
     STATE.isPaymentUnlocked = true;
     STATE.isDownloadLocked = false;
@@ -309,7 +310,7 @@ function handlePaymentSuccess() {
     PaymentManager.showSuccessMessage();
 }
 
-// 确认支付
+// ============ 确认支付 ============
 function confirmPayment() {
     if (!STATE.currentOrderId) {
         alert('请先点击"前往支付宝支付"按钮完成支付');
@@ -436,7 +437,6 @@ function switchService(serviceName) {
         var baziGrid = UI.baziGrid();
         if (baziGrid) baziGrid.innerHTML = '';
         
-        // 清理所有大运卡片
         const dayunCards = document.querySelectorAll('.dayun-pan-card');
         dayunCards.forEach(card => {
             if (card.parentNode) card.parentNode.removeChild(card);
@@ -464,7 +464,7 @@ function sleep(ms) {
     return new Promise(function(resolve) { setTimeout(resolve, ms); });
 }
 
-// ============ 格式化排盘数据用于 Prompt（保留备用） ============
+// ============ 格式化排盘数据（保留备用） ============
 function formatBaziForPrompt(baziRawData) {
     if (!baziRawData) return '';
     const bazi = baziRawData.bazi;
@@ -477,7 +477,7 @@ function formatBaziForPrompt(baziRawData) {
     return text;
 }
 
-// ============ ★ 核心分析函数（已更新） ============
+// ============ ★ 核心分析函数 ============
 async function startAnalysis() {
     console.log('开始命理分析...');
     
@@ -524,21 +524,16 @@ async function startAnalysis() {
             freeAnalysisText.innerHTML = '<div class="loading-text">正在生成分析结果...</div>';
         }
         
-        // ============ ★ 使用新的综合分析接口 ============
         console.log('🔮 调用综合命理分析引擎...');
         
-        // 第一步：排盘（通过后端 /api/analyze 内部完成，无需单独调用）
-        // 第二步：分析 + 润色
         const result = await analyzeBazi(STATE.userData, STATE.currentService, true);
         
         console.log('✅ 综合分析完成');
         console.log('返回数据:', result);
         
-        // 保存结果
         STATE.fullAnalysisResult = result.polished_report;
         STATE.baziData = result.bazi_pan;
         
-        // 保存大运数据
         if (result.dayun_pan && result.dayun_pan.length > 0) {
             STATE.dayunData = {
                 ages: result.dayun_pan.map(d => d.age_start),
@@ -547,20 +542,15 @@ async function startAnalysis() {
             console.log('✅ 大运数据已保存:', STATE.dayunData);
         }
         
-        // ===== 显示八字排盘 =====
         displayPredictorInfo();
         displayBaziPan();
         
-        // ===== 显示大运排盘（从后端返回的数据） =====
         if (result.dayun_pan && result.dayun_pan.length > 0) {
-            // 构建大运显示数据
             const dayunDisplayData = {
                 ages: result.dayun_pan.map(d => d.age_start),
                 dayuns: result.dayun_pan.map(d => d.ganzhi)
             };
-            // 如果有大运详情，合并显示
             if (result.dayun_detail && result.dayun_detail.xi_ji) {
-                // 将沈氏喜忌附加到大运显示中
                 const xiJiMap = {};
                 result.dayun_detail.xi_ji.forEach(item => {
                     xiJiMap[item.age] = { xi: item.xi, ji: item.ji };
@@ -571,7 +561,6 @@ async function startAnalysis() {
             console.log('✅ 大运排盘已显示');
         }
         
-        // ===== 显示三段综述（在免费区域） =====
         const summaries = result.summaries;
         if (summaries) {
             const freeText = document.getElementById('free-analysis-text');
@@ -593,7 +582,6 @@ async function startAnalysis() {
             }
         }
         
-        // ===== 显示润色后的完整报告（在锁定区域） =====
         const lockedText = document.getElementById('locked-analysis-text');
         if (lockedText) {
             const polishedContent = result.polished_report || '暂无完整报告';
@@ -606,7 +594,6 @@ async function startAnalysis() {
             lockedText.style.display = 'block';
         }
         
-        // ===== 如果支付已解锁，直接显示完整内容 =====
         if (STATE.isPaymentUnlocked) {
             updateUnlockInterface();
             showFullAnalysisContent();
@@ -622,7 +609,6 @@ async function startAnalysis() {
         progressPercent = 88;
         updateProgress(currentStep, totalSteps, '整理分析报告', progressPercent, '正在整理分析报告...');
         
-        // 处理分析结果显示
         processAndDisplayAnalysis(result.polished_report || '');
         await sleep(300);
         

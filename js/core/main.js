@@ -276,8 +276,8 @@ const PaymentManager = {
 };
 
 // ============ 【原有主应用代码】 ============
-import { SERVICES, STATE, API_CONFIG } from './config.js';
-import { checkAPIStatus, parseBaziData, callDeepSeekAPI } from './api.js';
+import { SERVICES, STATE, API_CONFIG } from '../config.js';
+import { checkAPIStatus, parseBaziData, analyzeBazi } from '../api.js';
 import {
     UI, initFormOptions, setDefaultValues, updateServiceDisplay,
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,
@@ -289,19 +289,14 @@ import {
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData
-} from './ui.js';
+} from '../ui.js';
 
-import { CesuanModule } from '../modules/cesuan.js';
-import { YunchengModule } from '../modules/yuncheng.js';
-import { XiangpiModule } from '../modules/xiangpi.js';
-import { HehunModule } from '../modules/hehun.js';
-
-var SERVICE_MODULES = {
-    '测算验证': CesuanModule,
-    '流年运程': YunchengModule,
-    '人生详批': XiangpiModule,
-    '八字合婚': HehunModule
-};
+// 注意：不再导入模块（cesuan, yuncheng, xiangpi, hehun），因为新架构已绕过它们
+// 但为了兼容性，保留导入但不使用
+// import { CesuanModule } from '../modules/cesuan.js';
+// import { YunchengModule } from '../modules/yuncheng.js';
+// import { XiangpiModule } from '../modules/xiangpi.js';
+// import { HehunModule } from '../modules/hehun.js';
 
 // 支付成功处理函数
 function handlePaymentSuccess() {
@@ -469,7 +464,7 @@ function sleep(ms) {
     return new Promise(function(resolve) { setTimeout(resolve, ms); });
 }
 
-// ============ 格式化排盘数据用于 Prompt ============
+// ============ 格式化排盘数据用于 Prompt（保留备用） ============
 function formatBaziForPrompt(baziRawData) {
     if (!baziRawData) return '';
     const bazi = baziRawData.bazi;
@@ -482,7 +477,7 @@ function formatBaziForPrompt(baziRawData) {
     return text;
 }
 
-// ============ 核心分析函数 ============
+// ============ ★ 核心分析函数（已更新） ============
 async function startAnalysis() {
     console.log('开始命理分析...');
     
@@ -506,6 +501,8 @@ async function startAnalysis() {
     STATE.partnerBaziData = null;
     STATE.isPaymentUnlocked = false;
     STATE.isDownloadLocked = true;
+    STATE.dayunData = null;
+    STATE.partnerDayunData = null;
     lockDownloadButton();
     animateButtonStretch();
     showLoadingModal();
@@ -527,149 +524,94 @@ async function startAnalysis() {
             freeAnalysisText.innerHTML = '<div class="loading-text">正在生成分析结果...</div>';
         }
         
-        // ============ 【调用排盘服务 - lunar-python】 ============
-        console.log('🔮 调用排盘服务...');
-        try {
-            const baziResponse = await fetch(`${API_CONFIG.BACKEND_URL}/api/bazi/calculate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: STATE.userData.name,
-                    gender: STATE.userData.gender,
-                    birthYear: STATE.userData.birthYear,
-                    birthMonth: STATE.userData.birthMonth,
-                    birthDay: STATE.userData.birthDay,
-                    birthHour: STATE.userData.birthHour,
-                    birthMinute: STATE.userData.birthMinute,
-                    birthCity: STATE.userData.birthCity
-                })
-            });
-            
-            const baziResult = await baziResponse.json();
-            
-            if (!baziResult.success) {
-                throw new Error(baziResult.error || '排盘失败');
-            }
-            
-            // 保存用户排盘数据（注意：后端不再返回大运）
-            STATE.baziData = baziResult.data.bazi;
-            STATE.baziRawData = baziResult.data;
-            
-            console.log('✅ 用户排盘成功:', STATE.baziData);
-            
-            // 如果是八字合婚，还需要排伴侣的八字
-            if (STATE.currentService === '八字合婚' && STATE.partnerData) {
-                console.log('🔮 调用伴侣排盘服务...');
-                const partnerBaziResponse = await fetch(`${API_CONFIG.BACKEND_URL}/api/bazi/calculate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: STATE.partnerData.partnerName,
-                        gender: STATE.partnerData.partnerGender,
-                        birthYear: STATE.partnerData.partnerBirthYear,
-                        birthMonth: STATE.partnerData.partnerBirthMonth,
-                        birthDay: STATE.partnerData.partnerBirthDay,
-                        birthHour: STATE.partnerData.partnerBirthHour,
-                        birthMinute: STATE.partnerData.partnerBirthMinute,
-                        birthCity: STATE.partnerData.partnerBirthCity
-                    })
+        // ============ ★ 使用新的综合分析接口 ============
+        console.log('🔮 调用综合命理分析引擎...');
+        
+        // 第一步：排盘（通过后端 /api/analyze 内部完成，无需单独调用）
+        // 第二步：分析 + 润色
+        const result = await analyzeBazi(STATE.userData, STATE.currentService, true);
+        
+        console.log('✅ 综合分析完成');
+        console.log('返回数据:', result);
+        
+        // 保存结果
+        STATE.fullAnalysisResult = result.polished_report;
+        STATE.baziData = result.bazi_pan;
+        
+        // 保存大运数据
+        if (result.dayun_pan && result.dayun_pan.length > 0) {
+            STATE.dayunData = {
+                ages: result.dayun_pan.map(d => d.age_start),
+                dayuns: result.dayun_pan.map(d => d.ganzhi)
+            };
+            console.log('✅ 大运数据已保存:', STATE.dayunData);
+        }
+        
+        // ===== 显示八字排盘 =====
+        displayPredictorInfo();
+        displayBaziPan();
+        
+        // ===== 显示大运排盘（从后端返回的数据） =====
+        if (result.dayun_pan && result.dayun_pan.length > 0) {
+            // 构建大运显示数据
+            const dayunDisplayData = {
+                ages: result.dayun_pan.map(d => d.age_start),
+                dayuns: result.dayun_pan.map(d => d.ganzhi)
+            };
+            // 如果有大运详情，合并显示
+            if (result.dayun_detail && result.dayun_detail.xi_ji) {
+                // 将沈氏喜忌附加到大运显示中
+                const xiJiMap = {};
+                result.dayun_detail.xi_ji.forEach(item => {
+                    xiJiMap[item.age] = { xi: item.xi, ji: item.ji };
                 });
-                
-                const partnerBaziResult = await partnerBaziResponse.json();
-                if (partnerBaziResult.success) {
-                    STATE.partnerBaziData = partnerBaziResult.data.bazi;
-                    console.log('✅ 伴侣排盘成功:', STATE.partnerBaziData);
-                } else {
-                    console.warn('⚠️ 伴侣排盘失败:', partnerBaziResult.error);
-                }
+                dayunDisplayData.xi_ji = xiJiMap;
             }
-            
-            // 显示八字（不显示大运，等AI回来再显示）
-            displayPredictorInfo();
-            displayBaziPan();
-            
-        } catch (error) {
-            console.error('❌ 排盘失败:', error);
-            alert('八字排盘失败：' + error.message);
-            hideLoadingModal();
-            return;
+            displayDayunPan(dayunDisplayData);
+            console.log('✅ 大运排盘已显示');
         }
         
-        progressPercent = 10;
-        updateProgress(currentStep, totalSteps, '准备分析数据', progressPercent, '用户信息验证完成');
-        await sleep(300);
-        
-        var serviceModule = SERVICE_MODULES[STATE.currentService];
-        if (!serviceModule) {
-            throw new Error('未找到服务模块: ' + STATE.currentService);
-        }
-        
-        // 格式化八字数据用于 Prompt
-        const baziText = formatBaziForPrompt(STATE.baziRawData);
-        
-        // 生成 Prompt
-        const prompt = serviceModule.getPrompt(STATE.userData, STATE.partnerData, baziText);
-        
-        console.log('生成的分析提示词长度:', prompt.length);
-        console.log('当前服务:', STATE.currentService);
-        
-        currentStep = 2;
-        progressPercent = 20;
-        updateProgress(currentStep, totalSteps, 'AI命理分析', progressPercent, '正在连接AI分析引擎...');
-        await sleep(500);
-        
-        progressPercent = 30;
-        updateProgress(currentStep, totalSteps, 'AI命理分析', progressPercent, 'AI正在分析您的命理信息...');
-        
-        var progressInterval = setInterval(function() {
-            if (progressPercent < 60) {
-                progressPercent += 1;
-                updateProgress(currentStep, totalSteps, 'AI命理分析', progressPercent, 'AI正在深度分析中...');
-            }
-        }, 1000);
-        
-        console.log('正在调用DeepSeek API...');
-        var analysisResult = await callDeepSeekAPI(prompt, STATE.currentService);
-        
-        clearInterval(progressInterval);
-        
-        console.log('DeepSeek API调用成功，响应长度:', analysisResult.length);
-        STATE.fullAnalysisResult = analysisResult;
-        
-        // ============ 【关键修改】从 DeepSeek 返回结果中解析大运数据并显示 ============
-        const dayunData = parseDayunData(analysisResult);
-        if (dayunData && dayunData.dayuns && dayunData.dayuns.length > 0) {
-            STATE.dayunData = dayunData;
-            displayDayunPan(dayunData);
-            console.log('✅ 已从 DeepSeek 解析并显示真实大运数据:', dayunData);
-        } else {
-            console.warn('⚠️ 未能从 DeepSeek 解析到大运数据，大运卡片将显示提示');
-            const dayunGrid = document.getElementById('dayun-grid');
-            if (dayunGrid) {
-                dayunGrid.innerHTML = `
-                    <div style="padding: 15px; text-align: center; color: #999; background: #f9f5f0; border-radius: 8px;">
-                        ⚠️ 大运排盘数据正在生成中，请稍后查看完整报告
+        // ===== 显示三段综述（在免费区域） =====
+        const summaries = result.summaries;
+        if (summaries) {
+            const freeText = document.getElementById('free-analysis-text');
+            if (freeText) {
+                freeText.innerHTML = `
+                    <div class="analysis-section">
+                        <h5>📊 八字综述</h5>
+                        <div class="analysis-content">${summaries.bazi ? summaries.bazi.replace(/\n/g, '<br>') : '暂无数据'}</div>
+                    </div>
+                    <div class="analysis-section">
+                        <h5>📈 大运综述</h5>
+                        <div class="analysis-content">${summaries.dayun ? summaries.dayun.replace(/\n/g, '<br>') : '暂无数据'}</div>
+                    </div>
+                    <div class="analysis-section">
+                        <h5>📅 流年综述</h5>
+                        <div class="analysis-content">${summaries.liunian ? summaries.liunian.replace(/\n/g, '<br>') : '暂无数据'}</div>
                     </div>
                 `;
             }
-            const dayunCard = document.getElementById('dayun-pan-card');
-            if (dayunCard) dayunCard.style.display = 'block';
         }
         
-        // 如果是八字合婚，解析伴侣大运数据并显示
-        if (STATE.currentService === '八字合婚') {
-            // 伴侣大运在 AI 返回文本中通常以"伴侣大运排盘"或"【伴侣大运排盘】"开头
-            // 我们直接调用一次函数尝试从整体文本中解析（parseDayunData会自动寻找）
-            const partnerDayunData = parseDayunData(analysisResult);
-            if (partnerDayunData && partnerDayunData.dayuns && partnerDayunData.dayuns.length > 0) {
-                STATE.partnerDayunData = partnerDayunData;
-                displayPartnerDayunPan(partnerDayunData);
-                console.log('✅ 已从 DeepSeek 解析并显示伴侣大运数据:', partnerDayunData);
-            } else {
-                console.warn('⚠️ 未能从 DeepSeek 解析到伴侣大运数据');
-            }
+        // ===== 显示润色后的完整报告（在锁定区域） =====
+        const lockedText = document.getElementById('locked-analysis-text');
+        if (lockedText) {
+            const polishedContent = result.polished_report || '暂无完整报告';
+            lockedText.innerHTML = `
+                <div class="analysis-section">
+                    <h5>📖 完整命理报告</h5>
+                    <div class="analysis-content">${polishedContent.replace(/\n/g, '<br>')}</div>
+                </div>
+            `;
+            lockedText.style.display = 'block';
         }
-        // =======================================================================
+        
+        // ===== 如果支付已解锁，直接显示完整内容 =====
+        if (STATE.isPaymentUnlocked) {
+            updateUnlockInterface();
+            showFullAnalysisContent();
+            unlockDownloadButton();
+        }
         
         currentStep = 3;
         progressPercent = 70;
@@ -680,7 +622,8 @@ async function startAnalysis() {
         progressPercent = 88;
         updateProgress(currentStep, totalSteps, '整理分析报告', progressPercent, '正在整理分析报告...');
         
-        processAndDisplayAnalysis(analysisResult);
+        // 处理分析结果显示
+        processAndDisplayAnalysis(result.polished_report || '');
         await sleep(300);
         
         progressPercent = 95;
@@ -708,7 +651,7 @@ async function startAnalysis() {
         }
         
     } catch (error) {
-        console.error('分析失败:', error);
+        console.error('❌ 分析失败:', error);
         hideLoadingModal();
         
         var errorMessage = '命理分析失败，请稍后再试。';

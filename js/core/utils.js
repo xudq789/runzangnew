@@ -71,55 +71,61 @@ export function throttle(func, limit) {
 }
 
 // 计算八字（演示函数，备用）
+// 注意：此函数仅为前端演示，实际排盘由后端完成
 export function calculateBazi(userData) {
-    const year = parseInt(userData.birthYear);
-    const month = parseInt(userData.birthMonth);
-    const day = parseInt(userData.birthDay);
-    const hour = parseInt(userData.birthHour);
-    
-    // 天干地支基础数据
-    const heavenlyStems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
-    const earthlyBranches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-    const elements = ['木', '木', '火', '火', '土', '土', '金', '金', '水', '水'];
-    
-    // 计算年柱（简化算法）
-    const yearIndex = (year - 4) % 60;
-    const yearHeavenly = heavenlyStems[yearIndex % 10];
-    const yearEarthly = earthlyBranches[yearIndex % 12];
-    const yearColumn = yearHeavenly + yearEarthly;
-    const yearElement = elements[yearIndex % 10];
-    
-    // 计算月柱（简化算法）
-    const monthIndex = (month + 1) % 12;
-    const monthHeavenly = heavenlyStems[(yearIndex % 10 * 2 + monthIndex) % 10];
-    const monthEarthly = earthlyBranches[monthIndex];
-    const monthColumn = monthHeavenly + monthEarthly;
-    const monthElement = elements[(yearIndex % 10 * 2 + monthIndex) % 10];
-    
-    // 计算日柱（简化算法）
-    const dayIndex = (year + month + day) % 60;
-    const dayHeavenly = heavenlyStems[dayIndex % 10];
-    const dayEarthly = earthlyBranches[dayIndex % 12];
-    const dayColumn = dayHeavenly + dayEarthly;
-    const dayElement = elements[dayIndex % 10];
-    
-    // 计算时柱（简化算法）
-    const hourIndex = Math.floor(hour / 2) % 12;
-    const hourHeavenly = heavenlyStems[(dayIndex % 10 * 2 + hourIndex) % 10];
-    const hourEarthly = earthlyBranches[hourIndex];
-    const hourColumn = hourHeavenly + hourEarthly;
-    const hourElement = elements[(dayIndex % 10 * 2 + hourIndex) % 10];
-    
-    return {
-        yearColumn,
-        yearElement,
-        monthColumn,
-        monthElement,
-        dayColumn,
-        dayElement,
-        hourColumn,
-        hourElement
-    };
+    try {
+        const year = parseInt(userData.birthYear);
+        const month = parseInt(userData.birthMonth);
+        const day = parseInt(userData.birthDay);
+        const hour = parseInt(userData.birthHour);
+        
+        // 天干地支基础数据
+        const heavenlyStems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+        const earthlyBranches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+        const elements = ['木', '木', '火', '火', '土', '土', '金', '金', '水', '水'];
+        
+        // 计算年柱（简化算法）
+        const yearIndex = (year - 4) % 60;
+        const yearHeavenly = heavenlyStems[yearIndex % 10];
+        const yearEarthly = earthlyBranches[yearIndex % 12];
+        const yearColumn = yearHeavenly + yearEarthly;
+        const yearElement = elements[yearIndex % 10];
+        
+        // 计算月柱（简化算法）
+        const monthIndex = (month + 1) % 12;
+        const monthHeavenly = heavenlyStems[(yearIndex % 10 * 2 + monthIndex) % 10];
+        const monthEarthly = earthlyBranches[monthIndex];
+        const monthColumn = monthHeavenly + monthEarthly;
+        const monthElement = elements[(yearIndex % 10 * 2 + monthIndex) % 10];
+        
+        // 计算日柱（简化算法）
+        const dayIndex = (year + month + day) % 60;
+        const dayHeavenly = heavenlyStems[dayIndex % 10];
+        const dayEarthly = earthlyBranches[dayIndex % 12];
+        const dayColumn = dayHeavenly + dayEarthly;
+        const dayElement = elements[dayIndex % 10];
+        
+        // 计算时柱（简化算法）
+        const hourIndex = Math.floor(hour / 2) % 12;
+        const hourHeavenly = heavenlyStems[(dayIndex % 10 * 2 + hourIndex) % 10];
+        const hourEarthly = earthlyBranches[hourIndex];
+        const hourColumn = hourHeavenly + hourEarthly;
+        const hourElement = elements[(dayIndex % 10 * 2 + hourIndex) % 10];
+        
+        return {
+            yearColumn,
+            yearElement,
+            monthColumn,
+            monthElement,
+            dayColumn,
+            dayElement,
+            hourColumn,
+            hourElement
+        };
+    } catch (error) {
+        console.warn('前端排盘计算失败:', error);
+        return null;
+    }
 }
 
 // 生成年份选项
@@ -188,3 +194,23 @@ export function loadFromStorage(key) {
         return null;
     }
 }
+
+// ========== 新增：全局未捕获异常处理 ==========
+// 捕获未处理的 Promise 异常，防止页面报错
+window.addEventListener('unhandledrejection', function(event) {
+    console.warn('未处理的 Promise 异常:', event.reason);
+    // 阻止默认行为（不显示红色错误）
+    event.preventDefault();
+    return true;
+});
+
+// 捕获全局错误
+window.addEventListener('error', function(event) {
+    // 忽略 favicon 和外部资源加载错误
+    if (event.target && (event.target.tagName === 'LINK' || event.target.tagName === 'SCRIPT')) {
+        event.preventDefault();
+        return true;
+    }
+    console.warn('捕获到错误:', event.message);
+    return true;
+});

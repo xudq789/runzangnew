@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="润藏八字提供专业的八字算命、八字排盘、命理分析服务，包括流年运程、人生详批、八字合婚等。免费测算验证，基于传统命理学说为您提供精准分析报告。">
+    <title>润藏八字、八字算命、八字排盘、八字命理、命理分析服务平台</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <h1 style="display: none;">润藏八字命理分析平台</h1>
+    
+    <div id="api-status" class="api-status">API状态</div>
+    
+    <div class="disclaimer-bar">
+        <div class="disclaimer-wrapper">
+            <div class="disclaimer-content">
+                <strong>重要声明：</strong>本平台提供的命理分析服务仅供娱乐参考，不构成任何实际的人生建议或决策依据。命运掌握在自己手中，请理性对待分析结果，切勿迷信。本服务基于传统命理学说，分析结果仅供参考。
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <ul class="service-nav">
+            <li><a href="#" class="active" data-service="测算验证">测算验证</a></li>
+            <li><a href="#" data-service="流年运程">流年运程</a></li>
+            <li><a href="#" data-service="人生详批">人生详批</a></li>
+            <li><a href="#" data-service="八字合婚">八字合婚</a></li>
+        </ul>
+    </header>
+
+    <div class="seamless-container">
+        <section class="seamless-section hero-section">
+            <div class="image-placeholder">正在加载图片...</div>
+            <img id="hero-image" src="https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/1-1.jpg" alt="测算验证英雄区" class="hero-image">
+        </section>
+
+        <section class="seamless-section info-section">
+            <div class="section-title">
+                <h2 id="form-title">测算验证信息填写</h2>
+                <p>请填写您的个人信息，我们将为您进行专业命理分析</p>
+            </div>
+            
+            <div class="form-container">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="name" class="required">姓名</label>
+                        <input type="text" id="name" placeholder="请输入您的姓名">
+                        <div class="error" id="name-error">请输入姓名</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="gender" class="required">性别</label>
+                        <select id="gender">
+                            <option value="">请选择性别</option>
+                            <option value="male">男</option>
+                            <option value="female">女</option>
+                        </select>
+                        <div class="error" id="gender-error">请选择性别</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="birth-city" class="required">出生城市</label>
+                        <input type="text" id="birth-city" placeholder="请输入出生城市">
+                        <div class="error" id="birth-city-error">请输入出生城市</div>
+                    </div>
+                </div>
+                
+                <div class="birth-time-group">
+                    <label class="required">出生公历时间</label>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <select id="birth-year">
+                                <option value="">出生年份</option>
+                            </select>
+                            <div class="error" id="birth-year-error">请选择出生年份</div>
+                        </div>
+                        <div class="form-group">
+                            <select id="birth-month">
+                                <option value="">出生月份</option>
+                            </select>
+                            <div class="error" id="birth-month-error">请选择出生月份</div>
+                        </div>
+                        <div class="form-group">
+                            <select id="birth-day">
+                                <option value="">出生日期</option>
+                            </select>
+                            <div class="error" id="birth-day-error">请选择出生日期</div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <select id="birth-hour">
+                                <option value="">出生时辰</option>
+                            </select>
+                            <div class="error" id="birth-hour-error">请选择出生时辰</div>
+                        </div>
+                        <div class="form-group">
+                            <select id="birth-minute">
+                                <option value="">出生分钟</option>
+                            </select>
+                            <div class="error" id="birth-minute-error">请选择出生分钟</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="partner-info-section" class="partner-info-section" style="display: none;">
+                    <h3>伴侣信息</h3>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="partner-name" class="required">伴侣姓名</label>
+                            <input type="text" id="partner-name" placeholder="请输入伴侣姓名">
+                            <div class="error" id="partner-name-error">请输入伴侣姓名</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="partner-gender" class="required">伴侣性别</label>
+                            <select id="partner-gender">
+                                <option value="">请选择性别</option>
+                                <option value="male">男</option>
+                                <option value="female">女</option>
+                            </select>
+                            <div class="error" id="partner-gender-error">请选择伴侣性别</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="partner-birth-city" class="required">伴侣出生城市</label>
+                            <input type="text" id="partner-birth-city" placeholder="请输入伴侣出生城市">
+                            <div class="error" id="partner-birth-city-error">请输入伴侣出生城市</div>
+                        </div>
+                    </div>
+                    
+                    <div class="birth-time-group">
+                        <label class="required">伴侣出生公历时间</label>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <select id="partner-birth-year">
+                                    <option value="">出生年份</option>
+                                </select>
+                                <div class="error" id="partner-birth-year-error">请选择伴侣出生年份</div>
+                            </div>
+                            <div class="form-group">
+                                <select id="partner-birth-month">
+                                    <option value="">出生月份</option>
+                                </select>
+                                <div class="error" id="partner-birth-month-error">请选择伴侣出生月份</div>
+                            </div>
+                            <div class="form-group">
+                                <select id="partner-birth-day">
+                                    <option value="">出生日期</option>
+                                </select>
+                                <div class="error" id="partner-birth-day-error">请选择伴侣出生日期</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <select id="partner-birth-hour">
+                                    <option value="">出生时辰</option>
+                                </select>
+                                <div class="error" id="partner-birth-hour-error">请选择伴侣出生时辰</div>
+                            </div>
+                            <div class="form-group">
+                                <select id="partner-birth-minute">
+                                    <option value="">出生分钟</option>
+                                </select>
+                                <div class="error" id="partner-birth-minute-error">请选择伴侣出生分钟</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="analyze-btn" class="dynamic-pulse-btn">
+                    <span id="btn-text">立即测算</span>
+                </button>
+            </div>
+        </section>
+
+        <section class="seamless-section detail-section">
+            <div class="image-placeholder">正在加载图片...</div>
+            <img id="detail-image" src="https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/1-2.jpg" alt="测算验证服务明细" class="detail-image">
+        </section>
+    </div>
+
+    <section id="analysis-result-section" class="analysis-result-section">
+        <div class="result-container">
+            <div class="section-title">
+                <h2>命理分析报告</h2>
+                <p>基于您的出生信息进行的专业命理分析</p>
+            </div>
+            
+            <div class="result-header">
+                <h3 id="result-service-name">测算验证分析报告</h3>
+                <p>分析时间: <span id="analysis-time"></span></p>
+            </div>
+            
+            <div class="result-content">
+                <div class="predictor-info-card" id="predictor-info">
+                    <h4>预测者信息</h4>
+                    <div class="predictor-info-grid" id="predictor-info-grid"></div>
+                </div>
+                
+                <!-- 用户八字排盘卡片 -->
+                <div class="bazi-pan-card" id="bazi-pan">
+                    <h4>八字排盘结果</h4>
+                    <div class="bazi-grid" id="bazi-grid"></div>
+                </div>
+                
+                <!-- 伴侣八字排盘卡片（仅八字合婚时显示） -->
+                <div class="bazi-pan-card" id="partner-bazi-pan" style="display: none;">
+                    <h4>伴侣八字排盘结果</h4>
+                    <div class="bazi-grid" id="partner-bazi-grid"></div>
+                </div>
+                
+                <div class="free-content" id="free-content">
+                    <h4>免费分析内容</h4>
+                    <div id="free-analysis-text"></div>
+                </div>
+                
+                <div class="locked-content" id="locked-content">
+                    <div class="locked-overlay" id="locked-overlay">
+                        <div class="unlock-header">
+                            <div class="lock-icon">🔒</div>
+                            <h4>完整内容已锁定</h4>
+                            <p>解锁完整分析报告，查看全部命理分析内容</p>
+                        </div>
+                        
+                        <div class="unlock-items">
+                            <h5>解锁后可查看以下分析项目</h5>
+                            <ul id="unlock-items-list"></ul>
+                        </div>
+                        
+                        <div class="unlock-btn-container">
+                            <button id="unlock-btn" class="unlock-btn">
+                                解锁完整报告 (¥<span id="unlock-price">19.9</span>)
+                            </button>
+                            <div class="unlock-price">
+                                共包含 <span id="unlock-count">4</span> 项详细分析
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="locked-analysis-text" style="display: none;"></div>
+                </div>
+            </div>
+            
+            <div class="result-actions">
+                <button id="download-report-btn" class="dynamic-pulse-btn download-btn-locked" style="max-width: 200px;" disabled>
+                    <span id="download-btn-text">下载报告</span>
+                </button>
+                <button id="recalculate-btn" class="dynamic-pulse-btn" style="max-width: 200px; background: linear-gradient(135deg, #5c3d2e, #7d6e63);"><span>重新测算</span></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 支付弹窗 -->
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-payment" class="close">&times;</span>
+            <h3 style="color: var(--primary-color); text-align: center; margin-bottom: 15px; font-size: 18px;">
+                支付解锁完整报告
+            </h3>
+            
+            <div class="order-info">
+                <p><strong>服务项目:</strong> <span id="payment-service-type" style="color: var(--primary-color); font-weight: 600;"></span></p>
+                <p><strong>支付金额:</strong> <span id="payment-amount" style="color: var(--secondary-color); font-weight: bold; font-size: 16px;"></span></p>
+                <p><strong>订单编号:</strong> <span id="payment-order-id" style="color: #7d6e63; font-family: monospace;"></span></p>
+                <p><strong>支付方式:</strong> <span style="color: #1677FF; font-weight: 600;">支付宝安全支付</span></p>
+            </div>
+            
+            <div class="payment-methods" style="text-align: center; margin: 20px 0;">
+                <div id="alipay-redirect-container"></div>
+            </div>
+            
+            <div style="text-align: center; margin: 15px 0; padding: 12px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #1677FF; font-size: 14px;">
+                <p id="payment-status-text">请在新打开的支付宝页面完成支付</p>
+                <p style="font-size: 13px; color: #7d6e63; margin-top: 8px;">
+                    支付完成后，页面将自动刷新解锁内容<br>
+                    如遇问题，可点击下方"我已支付"手动确认
+                </p>
+            </div>
+            
+            <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+                <button id="confirm-payment-btn" class="dynamic-pulse-btn" style="max-width: 150px; padding: 10px 20px; font-size: 14px; background: linear-gradient(135deg, #5c3d2e, #7d6e63);">
+                    <span>我已支付</span>
+                </button>
+                <button id="cancel-payment-btn" class="dynamic-pulse-btn" style="max-width: 150px; padding: 10px 20px; font-size: 14px; background: linear-gradient(135deg, #666, #999);">
+                    <span>取消支付</span>
+                </button>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 10px; background-color: #fff8e1; border-radius: 6px; font-size: 12px; color: #7d6e63; text-align: left;">
+                <p style="margin: 5px 0;"><strong>安全提示：</strong></p>
+                <ul style="margin: 5px 0; padding-left: 20px;">
+                    <li>支付过程由支付宝官方安全系统保障</li>
+                    <li>本平台不存储您的支付密码等敏感信息</li>
+                    <li>支付成功后请及时下载报告，关闭页面后无法找回</li>
+                    <li>如有问题，请联系客服微信：runzang888</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载弹窗 -->
+    <div id="loading-modal" class="modal">
+        <div class="modal-content" style="text-align: center; padding: 30px 20px; max-width: 480px;">
+            <div class="spinner"></div>
+            <div class="loading-text" id="loading-title" style="font-size: 17px;">润藏八字正在为您进行深度命理分析</div>
+            
+            <!-- 进度条 -->
+            <div style="margin: 18px 0 10px 0;">
+                <div style="background: #f0f0f0; border-radius: 10px; height: 8px; overflow: hidden; width: 100%;">
+                    <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-radius: 10px; transition: width 0.5s ease;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 12px; color: #999;">
+                    <span id="progress-label">准备分析...</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+            </div>
+            
+            <!-- 分析项目列表 -->
+            <div id="progress-items-container" style="text-align: left; margin: 10px 0 8px 0; padding: 12px 15px; background: #f8f5f0; border-radius: 8px; max-height: 300px; overflow-y: auto; font-size: 13px;">
+                <!-- 动态生成 -->
+            </div>
+            
+            <p style="color: #7d6e63; margin-top: 8px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span>⏱️</span>
+                <span id="loading-timer">预计需要 1 分钟，请耐心等待</span>
+            </p>
+        </div>
+    </div>
+
+    <script src="js/core/main.js" type="module"></script>
+</body>
+</html>

@@ -10,7 +10,6 @@ export const SERVICES = {
             '过往关键流年验证', 
             '专业建议与指导'
         ],
-        // 新增：分析项目列表（用于进度显示）
         analysisSteps: [
             '八字排盘',
             '大运排盘',
@@ -119,7 +118,7 @@ export const STATE = {
     isDownloadLocked: true
 };
 
-// API配置 - 指向你的支付后端
+// ★★★ API 配置 ★★★
 export const API_CONFIG = {
     BACKEND_URL: 'https://api.runzang.top',
     TIMEOUT: 120000

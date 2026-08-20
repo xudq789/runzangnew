@@ -168,3 +168,30 @@ function parseSingleBazi(baziText) {
 
     return baziData;
 }
+
+// 新增综合分析接口
+export async function analyzeBazi(userData, serviceType, needPolish = true) {
+    console.log('🔮 调用综合命理分析引擎...');
+    try {
+        const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/analyze`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_data: userData,
+                service_type: serviceType,
+                need_polish: needPolish
+            }),
+            signal: AbortSignal.timeout(120000)
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `请求失败 (${response.status})`);
+        }
+        const result = await response.json();
+        if (result.success) return result.data;
+        else throw new Error(result.error || '分析失败');
+    } catch (error) {
+        console.error('❌ 综合分析失败:', error);
+        throw error;
+    }
+}

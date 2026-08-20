@@ -125,7 +125,7 @@ export const STATE = {
 
 // API配置
 export const API_CONFIG = {
-    BACKEND_URL: 'https://api.runzang.top',
+    BACKEND_URL: 'https://119.29.160.189:36667',  // 使用 HTTPS
     TIMEOUT: 120000
 };
 

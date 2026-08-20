@@ -477,7 +477,6 @@ function formatBaziForPrompt(baziRawData) {
     return text;
 }
 
-// ============ ★ 核心分析函数 ============
 async function startAnalysis() {
     console.log('开始命理分析...');
     
@@ -561,27 +560,51 @@ async function startAnalysis() {
             console.log('✅ 大运排盘已显示');
         }
         
+        // ★★★ 显示三段综述（在免费区域） ★★★
         const summaries = result.summaries;
+        console.log('📊 收到的综述数据:', summaries);
+        
         if (summaries) {
             const freeText = document.getElementById('free-analysis-text');
+            console.log('📊 free-analysis-text 元素:', freeText);
+            
             if (freeText) {
-                freeText.innerHTML = `
-                    <div class="analysis-section">
+                let html = '';
+                
+                if (summaries.bazi) {
+                    html += `<div class="analysis-section">
                         <h5>📊 八字综述</h5>
-                        <div class="analysis-content">${summaries.bazi ? summaries.bazi.replace(/\n/g, '<br>') : '暂无数据'}</div>
-                    </div>
-                    <div class="analysis-section">
+                        <div class="analysis-content">${summaries.bazi.replace(/\n/g, '<br>')}</div>
+                    </div>`;
+                    console.log('✅ 八字综述已添加');
+                }
+                
+                if (summaries.dayun) {
+                    html += `<div class="analysis-section">
                         <h5>📈 大运综述</h5>
-                        <div class="analysis-content">${summaries.dayun ? summaries.dayun.replace(/\n/g, '<br>') : '暂无数据'}</div>
-                    </div>
-                    <div class="analysis-section">
+                        <div class="analysis-content">${summaries.dayun.replace(/\n/g, '<br>')}</div>
+                    </div>`;
+                    console.log('✅ 大运综述已添加');
+                }
+                
+                if (summaries.liunian) {
+                    html += `<div class="analysis-section">
                         <h5>📅 流年综述</h5>
-                        <div class="analysis-content">${summaries.liunian ? summaries.liunian.replace(/\n/g, '<br>') : '暂无数据'}</div>
-                    </div>
-                `;
+                        <div class="analysis-content">${summaries.liunian.replace(/\n/g, '<br>')}</div>
+                    </div>`;
+                    console.log('✅ 流年综述已添加');
+                }
+                
+                if (!html) {
+                    html = '<div class="analysis-content" style="color: #999; text-align: center; padding: 20px;">暂无综述数据</div>';
+                }
+                
+                freeText.innerHTML = html;
+                console.log('✅ 免费分析内容已更新');
             }
         }
         
+        // ★★★ 显示润色后的完整报告（在锁定区域） ★★★
         const lockedText = document.getElementById('locked-analysis-text');
         if (lockedText) {
             const polishedContent = result.polished_report || '暂无完整报告';
@@ -592,6 +615,7 @@ async function startAnalysis() {
                 </div>
             `;
             lockedText.style.display = 'block';
+            console.log('✅ 完整报告已显示');
         }
         
         if (STATE.isPaymentUnlocked) {
@@ -600,16 +624,10 @@ async function startAnalysis() {
             unlockDownloadButton();
         }
         
+        // ★★★ 更新进度，但不再调用 processAndDisplayAnalysis ★★★
         currentStep = 3;
-        progressPercent = 70;
+        progressPercent = 80;
         updateProgress(currentStep, totalSteps, '生成排盘结果', progressPercent, '八字排盘生成完成');
-        await sleep(300);
-        
-        currentStep = 4;
-        progressPercent = 88;
-        updateProgress(currentStep, totalSteps, '整理分析报告', progressPercent, '正在整理分析报告...');
-        
-        processAndDisplayAnalysis(result.polished_report || '');
         await sleep(300);
         
         progressPercent = 95;

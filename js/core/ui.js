@@ -54,7 +54,7 @@ export const UI = {
 
 export function initFormOptions() {
     const years = [];
-    for (let i = 1900; i <= 2024; i++) years.push(i);
+    for (let i = 1900; i <= 2050; i++) years.push(i);
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
     const days = Array.from({ length: 31 }, (_, i) => i + 1);
     const hours = Array.from({ length: 24 }, (_, i) => i);
@@ -1035,5 +1035,6 @@ export function collectUserData() {
             partnerBirthMinute: UI.partnerBirthMinute().value,
             partnerBirthCity: UI.partnerBirthCity().value
         };
+        STATE.userData.partner_data = STATE.partnerData;
     }
 }

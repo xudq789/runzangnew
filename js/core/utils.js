@@ -123,7 +123,7 @@ export function calculateBazi(userData) {
 }
 
 // 生成年份选项
-export function generateYearOptions(startYear = 1900, endYear = 2024) {
+export function generateYearOptions(startYear = 1900, endYear = 2050) {
     const years = [];
     for (let i = startYear; i <= endYear; i++) {
         years.push({ value: i, text: `${i}年` });

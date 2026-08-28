@@ -525,7 +525,32 @@ async function startAnalysis() {
         
         console.log('🔮 调用综合命理分析引擎...');
         
+        // 模拟进度：在API调用期间平滑推进进度条
+        progressPercent = 10;
+        updateProgress(1, totalSteps, '八字排盘计算', progressPercent, '正在排列八字四柱...');
+        
+        var progressTimer = setInterval(function() {
+            currentStep = Math.min(currentStep + 1, totalSteps - 1);
+            progressPercent = Math.min(progressPercent + Math.floor(Math.random() * 5 + 3), 75);
+            var stepLabels = serviceConfig.analysisSteps || [];
+            var stepLabel = stepLabels[currentStep] || '分析中';
+            var stepMessages = [
+                '正在排列八字四柱...',
+                '正在计算大运排盘...',
+                '正在分析用神喜忌...',
+                '正在解析性格特点...',
+                '正在推算流年运势...',
+                '正在综合评估命局...',
+                '正在生成详细报告...',
+                '正在润色分析结果...'
+            ];
+            var msg = stepMessages[currentStep % stepMessages.length] || '正在深度分析...';
+            updateProgress(currentStep, totalSteps, stepLabel, progressPercent, msg);
+        }, 2000);
+        
         const result = await analyzeBazi(STATE.userData, STATE.currentService, true);
+        
+        clearInterval(progressTimer);
         
         console.log('✅ 综合分析完成');
         console.log('返回数据:', result);
@@ -558,6 +583,28 @@ async function startAnalysis() {
             }
             displayDayunPan(dayunDisplayData);
             console.log('✅ 大运排盘已显示');
+        }
+        
+        // ★★★ 合婚：显示伴侣八字和大运 ★★★
+        if (STATE.currentService === '八字合婚' && result.partner_bazi_pan) {
+            STATE.partnerBaziData = result.partner_bazi_pan;
+            console.log('✅ 伴侣八字数据已保存:', STATE.partnerBaziData);
+            
+            if (result.partner_dayun_pan && result.partner_dayun_pan.length > 0) {
+                STATE.partnerDayunData = {
+                    ages: result.partner_dayun_pan.map(d => d.age_start),
+                    dayuns: result.partner_dayun_pan.map(d => d.ganzhi)
+                };
+                console.log('✅ 伴侣大运数据已保存:', STATE.partnerDayunData);
+                
+                displayPartnerDayunPan({
+                    ages: result.partner_dayun_pan.map(d => d.age_start),
+                    dayuns: result.partner_dayun_pan.map(d => d.ganzhi)
+                });
+                console.log('✅ 伴侣大运排盘已显示');
+            }
+            
+            displayBaziPan();
         }
         
         // ★★★ 显示三段综述（在免费区域） ★★★
@@ -624,18 +671,22 @@ async function startAnalysis() {
             unlockDownloadButton();
         }
         
-        // ★★★ 更新进度，但不再调用 processAndDisplayAnalysis ★★★
-        currentStep = 3;
-        progressPercent = 80;
+        // ★★★ 更新进度到完成 ★★★
+        currentStep = totalSteps - 1;
+        progressPercent = 85;
         updateProgress(currentStep, totalSteps, '生成排盘结果', progressPercent, '八字排盘生成完成');
         await sleep(300);
         
         progressPercent = 95;
         updateProgress(currentStep, totalSteps, '整理分析报告', progressPercent, '报告整理完成');
+        await sleep(300);
+        
+        progressPercent = 100;
+        currentStep = totalSteps;
+        updateProgress(currentStep, totalSteps, '✅ 分析完成', progressPercent, '✅ 所有分析项目已完成！');
+        await sleep(500);
         
         hideLoadingModal();
-        progressPercent = 100;
-        updateProgress(currentStep, totalSteps, '✅ 分析完成', progressPercent, '✅ 所有分析项目已完成！');
         
         showAnalysisResult();
         
@@ -655,6 +706,7 @@ async function startAnalysis() {
         }
         
     } catch (error) {
+        clearInterval(progressTimer);
         console.error('❌ 分析失败:', error);
         hideLoadingModal();
         

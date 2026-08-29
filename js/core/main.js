@@ -591,16 +591,10 @@ async function startAnalysis() {
             console.log('✅ 伴侣八字数据已保存:', STATE.partnerBaziData);
             
             if (result.partner_dayun_pan && result.partner_dayun_pan.length > 0) {
-                STATE.partnerDayunData = {
-                    ages: result.partner_dayun_pan.map(d => d.age_start),
-                    dayuns: result.partner_dayun_pan.map(d => d.ganzhi)
-                };
+                STATE.partnerDayunData = result.partner_dayun_pan;
                 console.log('✅ 伴侣大运数据已保存:', STATE.partnerDayunData);
-                
-                displayPartnerDayunPan({
-                    ages: result.partner_dayun_pan.map(d => d.age_start),
-                    dayuns: result.partner_dayun_pan.map(d => d.ganzhi)
-                });
+
+                displayPartnerDayunPan(result.partner_dayun_pan);
                 console.log('✅ 伴侣大运排盘已显示');
             }
             

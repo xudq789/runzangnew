@@ -671,16 +671,16 @@ async function startAnalysis() {
             }
         }
         
-        // ★★★ 显示DeepSeek付费详情（在锁定区域） ★★★
+        // ★★★ 预加载DeepSeek付费详情（保持隐藏，支付后才显示） ★★★
         const lockedText = document.getElementById('locked-analysis-text');
         if (lockedText) {
             if (STATE.paidDetail) {
                 lockedText.innerHTML = renderDeepSeekSection(STATE.paidDetail, 'paid');
-                lockedText.style.display = 'block';
-                console.log('✅ DeepSeek付费详情已设置');
+                lockedText.style.display = 'none';
+                console.log('✅ DeepSeek付费详情已预加载（隐藏状态）');
             } else {
                 lockedText.innerHTML = '<div class="analysis-content" style="color: #999; text-align: center;">暂无详细报告</div>';
-                lockedText.style.display = 'block';
+                lockedText.style.display = 'none';
             }
         }
         

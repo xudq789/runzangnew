@@ -1335,7 +1335,7 @@ input:focus, select:focus {
 }
 
 .ds-header-analysis {
-    font-size: 16px;
+    font-size: 20px;
     color: var(--primary-color);
 }
 
@@ -1347,9 +1347,9 @@ input:focus, select:focus {
 }
 
 .ds-analysis-text {
-    font-size: 14px;
-    line-height: 1.7;
-    color: #555;
+    font-size: 17px;
+    line-height: 1.8;
+    color: #333;
 }
 
 @media (max-width: 768px) {
@@ -1364,9 +1364,9 @@ input:focus, select:focus {
         font-size: 15px;
     }
     .ds-header-analysis {
-        font-size: 15px;
+        font-size: 18px;
     }
     .ds-analysis-text {
-        font-size: 13px;
+        font-size: 15px;
     }
 }

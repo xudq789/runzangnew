@@ -677,6 +677,8 @@ export async function showPaymentModal() {
             localStorage.setItem('last_analysis_result', STATE.fullAnalysisResult);
             localStorage.setItem('last_analysis_service', STATE.currentService);
             localStorage.setItem('last_user_data', JSON.stringify(STATE.userData || {}));
+            localStorage.setItem('last_free_summary', STATE.freeSummary || '');
+            localStorage.setItem('last_paid_detail', STATE.paidDetail || '');
             localStorage.setItem('last_order_id', orderId);
         }
         

@@ -188,6 +188,8 @@ const PaymentManager = {
             const savedResult = localStorage.getItem('last_analysis_result');
             const savedService = localStorage.getItem('last_analysis_service');
             const savedUserData = localStorage.getItem('last_user_data');
+            const savedFreeSummary = localStorage.getItem('last_free_summary');
+            const savedPaidDetail = localStorage.getItem('last_paid_detail');
             
             if (!savedResult || !savedService) {
                 console.log('没有保存的分析结果');
@@ -199,6 +201,8 @@ const PaymentManager = {
             
             STATE.fullAnalysisResult = savedResult;
             STATE.currentService = savedService;
+            STATE.freeSummary = savedFreeSummary || '';
+            STATE.paidDetail = savedPaidDetail || '';
             
             if (savedUserData) {
                 try {
@@ -213,7 +217,24 @@ const PaymentManager = {
             updateServiceDisplay(savedService);
             displayPredictorInfo();
             displayBaziPan();
-            processAndDisplayAnalysis(savedResult);
+            
+            const freeText = document.getElementById('free-analysis-text');
+            if (freeText) {
+                if (STATE.freeSummary) {
+                    freeText.innerHTML = renderDeepSeekSection(STATE.freeSummary, 'free');
+                } else {
+                    freeText.innerHTML = '<div class="analysis-content" style="color: #999; text-align: center; padding: 20px;">暂无分析摘要</div>';
+                }
+            }
+            
+            const lockedText = document.getElementById('locked-analysis-text');
+            if (lockedText) {
+                if (STATE.paidDetail) {
+                    lockedText.innerHTML = renderDeepSeekSection(STATE.paidDetail, 'paid');
+                    lockedText.style.display = 'none';
+                }
+            }
+            
             showAnalysisResult();
             
             console.log('✅ 分析结果恢复成功，服务类型:', savedService);
@@ -266,6 +287,8 @@ const PaymentManager = {
             localStorage.setItem('last_analysis_result', STATE.fullAnalysisResult);
             localStorage.setItem('last_analysis_service', STATE.currentService);
             localStorage.setItem('last_user_data', JSON.stringify(STATE.userData));
+            localStorage.setItem('last_free_summary', STATE.freeSummary || '');
+            localStorage.setItem('last_paid_detail', STATE.paidDetail || '');
             console.log('✅ 分析数据已保存到 localStorage');
             return true;
         } catch (error) {

@@ -650,8 +650,9 @@ export async function showPaymentModal() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                serviceType: STATE.currentService,
-                userData: STATE.userData
+                service_type: STATE.currentService,
+                payment_method: 'alipay',
+                client_type: isMobile ? 'h5' : 'pc'
             })
         });
         
@@ -659,7 +660,7 @@ export async function showPaymentModal() {
         console.log('支付响应:', result);
         
         if (!result.success) {
-            alert('创建订单失败：' + (result.error || '请稍后重试'));
+            alert('创建订单失败：' + (result.message || '请稍后重试'));
             closePaymentModal();
             return;
         }

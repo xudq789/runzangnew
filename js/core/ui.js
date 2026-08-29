@@ -853,8 +853,12 @@ export function updateUnlockInterface() {
 export function showFullAnalysisContent() {
     const lockedAnalysisText = UI.lockedAnalysisText();
     const freeAnalysisText = UI.freeAnalysisText();
-    if (lockedAnalysisText && lockedAnalysisText.textContent.trim() && freeAnalysisText) {
-        freeAnalysisText.innerHTML = freeAnalysisText.innerHTML + lockedAnalysisText.innerHTML;
+    if (lockedAnalysisText && freeAnalysisText) {
+        const paidHtml = lockedAnalysisText.innerHTML;
+        if (paidHtml && paidHtml.trim()) {
+            const divider = '<div style="border-top: 2px dashed var(--primary-color); margin: 20px 0; padding-top: 15px; text-align: center; color: var(--primary-color); font-size: 14px; font-weight: bold;">— 以下为完整详细报告 —</div>';
+            freeAnalysisText.innerHTML = freeAnalysisText.innerHTML + divider + paidHtml;
+        }
     }
 }
 

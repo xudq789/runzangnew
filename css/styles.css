@@ -1304,3 +1304,69 @@ input:focus, select:focus {
     background: var(--secondary-color);
     border-radius: 4px;
 }
+
+/* ============ DeepSeek报告格式化样式 ============ */
+.ds-segment {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.ds-conclusion {
+    background: linear-gradient(135deg, #fdf6e3, #f9f0dc);
+    border-left: 4px solid var(--secondary-color);
+}
+
+.ds-analysis {
+    background: #fafafa;
+    border-left: 3px solid var(--primary-color);
+}
+
+.ds-header {
+    font-weight: bold;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.ds-header-conclusion {
+    font-size: 20px;
+    color: var(--secondary-color);
+}
+
+.ds-header-analysis {
+    font-size: 16px;
+    color: var(--primary-color);
+}
+
+.ds-conclusion-text {
+    font-size: 17px;
+    line-height: 1.8;
+    color: #333;
+    font-weight: 500;
+}
+
+.ds-analysis-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #555;
+}
+
+@media (max-width: 768px) {
+    .ds-segment {
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+    .ds-header-conclusion {
+        font-size: 18px;
+    }
+    .ds-conclusion-text {
+        font-size: 15px;
+    }
+    .ds-header-analysis {
+        font-size: 15px;
+    }
+    .ds-analysis-text {
+        font-size: 13px;
+    }
+}

@@ -414,6 +414,8 @@ function switchService(serviceName) {
         STATE.isPaymentUnlocked = false;
         STATE.isDownloadLocked = true;
         STATE.fullAnalysisResult = '';
+        STATE.freeSummary = '';
+        STATE.paidDetail = '';
         STATE.baziData = null;
         STATE.partnerBaziData = null;
         STATE.currentOrderId = null;
@@ -475,6 +477,59 @@ function formatBaziForPrompt(baziRawData) {
     text += `日柱：${bazi.day.ganzhi}（${bazi.day.nayin}）\n`;
     text += `时柱：${bazi.hour.ganzhi}（${bazi.hour.nayin}）\n`;
     return text;
+}
+
+// ============ DeepSeek报告格式化渲染 ============
+function renderDeepSeekSection(text, part) {
+    if (!text) return '';
+    
+    const CONCLUSION_HEADERS = ['综合结论'];
+    const segments = [];
+    const lines = text.split('\n');
+    let currentHeader = '';
+    let currentLines = [];
+    
+    for (const line of lines) {
+        const headerMatch = line.trim().match(/^【(.+?)】/);
+        if (headerMatch) {
+            if (currentHeader || currentLines.length > 0) {
+                segments.push({ header: currentHeader, content: currentLines.join('\n').trim() });
+            }
+            currentHeader = headerMatch[1];
+            currentLines = [];
+            const rest = line.trim().replace(/^【.+?】/, '').trim();
+            if (rest) currentLines.push(rest);
+        } else {
+            currentLines.push(line);
+        }
+    }
+    if (currentHeader || currentLines.length > 0) {
+        segments.push({ header: currentHeader, content: currentLines.join('\n').trim() });
+    }
+    
+    if (segments.length === 0) {
+        return `<div class="ds-content ds-analysis">${text.replace(/\n/g, '<br>')}</div>`;
+    }
+    
+    let html = '';
+    for (const seg of segments) {
+        const isConclusion = CONCLUSION_HEADERS.includes(seg.header);
+        const contentHtml = seg.content.replace(/\n/g, '<br>');
+        
+        if (isConclusion) {
+            html += `<div class="ds-segment ds-conclusion">
+                <div class="ds-header ds-header-conclusion">【${seg.header}】</div>
+                <div class="ds-content ds-conclusion-text">${contentHtml}</div>
+            </div>`;
+        } else {
+            html += `<div class="ds-segment ds-analysis">
+                <div class="ds-header ds-header-analysis">【${seg.header}】</div>
+                <div class="ds-content ds-analysis-text">${contentHtml}</div>
+            </div>`;
+        }
+    }
+    
+    return html;
 }
 
 async function startAnalysis() {
@@ -601,62 +656,32 @@ async function startAnalysis() {
             displayBaziPan();
         }
         
-        // ★★★ 显示三段综述（在免费区域） ★★★
-        const summaries = result.summaries;
-        console.log('📊 收到的综述数据:', summaries);
+        // ★★★ 显示DeepSeek免费摘要（在免费区域） ★★★
+        STATE.freeSummary = result.free_summary || '';
+        STATE.paidDetail = result.paid_detail || '';
+        console.log('📊 DeepSeek免费摘要长度:', STATE.freeSummary.length, '付费详情长度:', STATE.paidDetail.length);
         
-        if (summaries) {
-            const freeText = document.getElementById('free-analysis-text');
-            console.log('📊 free-analysis-text 元素:', freeText);
-            
-            if (freeText) {
-                let html = '';
-                
-                if (summaries.bazi) {
-                    html += `<div class="analysis-section">
-                        <h5>📊 八字综述</h5>
-                        <div class="analysis-content">${summaries.bazi.replace(/\n/g, '<br>')}</div>
-                    </div>`;
-                    console.log('✅ 八字综述已添加');
-                }
-                
-                if (summaries.dayun) {
-                    html += `<div class="analysis-section">
-                        <h5>📈 大运综述</h5>
-                        <div class="analysis-content">${summaries.dayun.replace(/\n/g, '<br>')}</div>
-                    </div>`;
-                    console.log('✅ 大运综述已添加');
-                }
-                
-                if (summaries.liunian) {
-                    html += `<div class="analysis-section">
-                        <h5>📅 流年综述</h5>
-                        <div class="analysis-content">${summaries.liunian.replace(/\n/g, '<br>')}</div>
-                    </div>`;
-                    console.log('✅ 流年综述已添加');
-                }
-                
-                if (!html) {
-                    html = '<div class="analysis-content" style="color: #999; text-align: center; padding: 20px;">暂无综述数据</div>';
-                }
-                
-                freeText.innerHTML = html;
-                console.log('✅ 免费分析内容已更新');
+        const freeText = document.getElementById('free-analysis-text');
+        if (freeText) {
+            if (STATE.freeSummary) {
+                freeText.innerHTML = renderDeepSeekSection(STATE.freeSummary, 'free');
+                console.log('✅ DeepSeek免费摘要已显示');
+            } else {
+                freeText.innerHTML = '<div class="analysis-content" style="color: #999; text-align: center; padding: 20px;">暂无分析摘要</div>';
             }
         }
         
-        // ★★★ 显示润色后的完整报告（在锁定区域） ★★★
+        // ★★★ 显示DeepSeek付费详情（在锁定区域） ★★★
         const lockedText = document.getElementById('locked-analysis-text');
         if (lockedText) {
-            const polishedContent = result.polished_report || '暂无完整报告';
-            lockedText.innerHTML = `
-                <div class="analysis-section">
-                    <h5>📖 完整命理报告</h5>
-                    <div class="analysis-content">${polishedContent.replace(/\n/g, '<br>')}</div>
-                </div>
-            `;
-            lockedText.style.display = 'block';
-            console.log('✅ 完整报告已显示');
+            if (STATE.paidDetail) {
+                lockedText.innerHTML = renderDeepSeekSection(STATE.paidDetail, 'paid');
+                lockedText.style.display = 'block';
+                console.log('✅ DeepSeek付费详情已设置');
+            } else {
+                lockedText.innerHTML = '<div class="analysis-content" style="color: #999; text-align: center;">暂无详细报告</div>';
+                lockedText.style.display = 'block';
+            }
         }
         
         if (STATE.isPaymentUnlocked) {
@@ -783,6 +808,8 @@ function newAnalysis() {
     if (freeAnalysisText) freeAnalysisText.innerHTML = '';
     STATE.currentOrderId = null;
     STATE.fullAnalysisResult = '';
+    STATE.freeSummary = '';
+    STATE.paidDetail = '';
     STATE.baziData = null;
     STATE.partnerBaziData = null;
     STATE.dayunData = null;
@@ -805,3 +832,4 @@ window.handlePaymentSuccess = handlePaymentSuccess;
 window.PaymentManager = PaymentManager;
 window.STATE = STATE;
 window.formatBaziForPrompt = formatBaziForPrompt;
+window.renderDeepSeekSection = renderDeepSeekSection;

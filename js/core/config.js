@@ -105,6 +105,8 @@ export const SERVICES = {
 export const STATE = {
     currentService: '测算验证',
     fullAnalysisResult: '',
+    freeSummary: '',
+    paidDetail: '',
     baziData: null,
     partnerBaziData: null,
     currentOrderId: null,

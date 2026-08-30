@@ -30,7 +30,17 @@ const AlipayCallbackHandler = {
         const paymentStatus = urlParams.get('payment_status');
         if (paymentStatus === 'waiting' && orderId) {
             console.log('⏳ 检测到支付等待状态:', orderId);
+            const paymentData = {
+                orderId,
+                amount: null,
+                verified: false,
+                backendVerified: false,
+                waiting: true,
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem('alipay_payment_data', JSON.stringify(paymentData));
             this.cleanUrlParams();
+            return orderId;
         }
         return null;
     },
@@ -54,8 +64,17 @@ const PaymentManager = {
         console.log('🔍 初始化支付状态检查...');
         const orderIdFromCallback = AlipayCallbackHandler.checkBackendCallback();
         if (orderIdFromCallback) {
-            console.log('发现后端回调订单，立即解锁:', orderIdFromCallback);
-            await this.verifyAndUnlock(orderIdFromCallback, true);
+            const paymentData = this.getPaymentData();
+            if (paymentData && paymentData.backendVerified) {
+                console.log('发现后端已验证回调订单，立即解锁:', orderIdFromCallback);
+                await this.verifyAndUnlock(orderIdFromCallback, true);
+            } else if (paymentData && paymentData.waiting) {
+                console.log('⏳ 支付等待中，开始轮询:', orderIdFromCallback);
+                await this.waitForPayment(orderIdFromCallback);
+            } else {
+                console.log('发现后端回调订单，尝试验证:', orderIdFromCallback);
+                await this.verifyAndUnlock(orderIdFromCallback, false);
+            }
             return;
         }
         await this.checkSavedPayment();
@@ -131,6 +150,36 @@ const PaymentManager = {
             console.error('验证并解锁失败:', error);
             return false;
         }
+    },
+    
+    async waitForPayment(orderId) {
+        console.log('⏳ 开始轮询支付状态，订单:', orderId);
+        const maxAttempts = 30;
+        const interval = 3000;
+        
+        for (let i = 0; i < maxAttempts; i++) {
+            await new Promise(resolve => setTimeout(resolve, interval));
+            
+            try {
+                const verified = await this.verifyPaymentStatus(orderId);
+                if (verified) {
+                    console.log('✅ 轮询确认支付成功，订单:', orderId);
+                    const paymentData = this.getPaymentData() || {};
+                    paymentData.verified = true;
+                    paymentData.backendVerified = true;
+                    paymentData.waiting = false;
+                    localStorage.setItem('alipay_payment_data', JSON.stringify(paymentData));
+                    await this.unlockContent(orderId);
+                    return true;
+                }
+                console.log(`⏳ 轮询 ${i + 1}/${maxAttempts}，等待支付确认...`);
+            } catch (error) {
+                console.error('轮询支付状态失败:', error);
+            }
+        }
+        
+        console.log('⏰ 轮询超时，支付未被确认');
+        return false;
     },
     
     async unlockContent(orderId) {

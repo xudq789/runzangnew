@@ -715,6 +715,8 @@ export function resetUnlockInterface() {
     const lockedOverlay = DOM.id('locked-overlay');
     if (!lockedOverlay) return;
     
+    lockedOverlay.style.display = '';
+    
     const unlockHeader = lockedOverlay.querySelector('.unlock-header');
     if (unlockHeader) {
         const lockIcon = unlockHeader.querySelector('.lock-icon');

@@ -547,6 +547,17 @@ function switchService(serviceName) {
         if (dayunGrid) dayunGrid.innerHTML = '';
         const partnerDayunGrid = document.getElementById('partner-dayun-grid');
         if (partnerDayunGrid) partnerDayunGrid.innerHTML = '';
+
+        var lockedAnalysisText = document.getElementById('locked-analysis-text');
+        if (lockedAnalysisText) lockedAnalysisText.innerHTML = '';
+
+        localStorage.removeItem('alipay_payment_data');
+        localStorage.removeItem('last_analysis_result');
+        localStorage.removeItem('last_analysis_service');
+        localStorage.removeItem('last_user_data');
+        localStorage.removeItem('last_free_summary');
+        localStorage.removeItem('last_paid_detail');
+        console.log('✅ localStorage支付数据已清除');
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     console.log('服务切换完成，解锁状态:', STATE.isPaymentUnlocked);

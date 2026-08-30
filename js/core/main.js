@@ -665,6 +665,18 @@ async function startAnalysis() {
     STATE.isDownloadLocked = true;
     STATE.dayunData = null;
     STATE.partnerDayunData = null;
+
+    localStorage.removeItem('last_analysis_result');
+    localStorage.removeItem('last_analysis_service');
+    localStorage.removeItem('last_user_data');
+    localStorage.removeItem('last_free_summary');
+    localStorage.removeItem('last_paid_detail');
+    localStorage.removeItem('last_bazi_data');
+    localStorage.removeItem('last_dayun_data');
+    localStorage.removeItem('last_partner_data');
+    localStorage.removeItem('last_partner_bazi_data');
+    localStorage.removeItem('last_partner_dayun_data');
+
     lockDownloadButton();
     animateButtonStretch();
     showLoadingModal();
@@ -926,6 +938,22 @@ function newAnalysis() {
     STATE.partnerBaziData = null;
     STATE.dayunData = null;
     STATE.partnerDayunData = null;
+
+    localStorage.removeItem('last_analysis_result');
+    localStorage.removeItem('last_analysis_service');
+    localStorage.removeItem('last_user_data');
+    localStorage.removeItem('last_free_summary');
+    localStorage.removeItem('last_paid_detail');
+    localStorage.removeItem('last_bazi_data');
+    localStorage.removeItem('last_dayun_data');
+    localStorage.removeItem('last_partner_data');
+    localStorage.removeItem('last_partner_bazi_data');
+    localStorage.removeItem('last_partner_dayun_data');
+    localStorage.removeItem('alipay_payment_data');
+
+    const dayunCards = document.querySelectorAll('.dayun-pan-card');
+    dayunCards.forEach(card => { if (card.parentNode) card.parentNode.removeChild(card); });
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

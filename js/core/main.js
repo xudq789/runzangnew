@@ -2,10 +2,15 @@
 const AlipayCallbackHandler = {
     checkBackendCallback() {
         const urlParams = new URLSearchParams(window.location.search);
+        console.log('🔍 检查URL参数:', window.location.search);
+        console.log('🔍 所有参数:', Array.from(urlParams.entries()));
+        
         const paymentSuccess = urlParams.get('payment_success');
         const orderId = urlParams.get('order_id');
         const verified = urlParams.get('verified');
         const amount = urlParams.get('amount');
+        
+        console.log('🔍 解析参数:', { paymentSuccess, orderId, verified, amount });
         
         if (paymentSuccess === 'true' && orderId && verified === 'true') {
             console.log('✅ 检测到后端已验证的支付成功参数:', { orderId, amount, verified });
@@ -141,7 +146,9 @@ const PaymentManager = {
         });
         
         try {
+            console.log('🔓 调用 restoreAnalysis()...');
             const restored = await this.restoreAnalysis();
+            console.log('🔓 restoreAnalysis() 返回:', restored);
             if (restored) {
                 this.updateUIAfterPayment();
                 this.showSuccessMessage();
@@ -184,6 +191,7 @@ const PaymentManager = {
     },
     
     async restoreAnalysis() {
+        console.log('📥 开始恢复分析结果...');
         try {
             const savedResult = localStorage.getItem('last_analysis_result');
             const savedService = localStorage.getItem('last_analysis_service');
@@ -191,8 +199,19 @@ const PaymentManager = {
             const savedFreeSummary = localStorage.getItem('last_free_summary');
             const savedPaidDetail = localStorage.getItem('last_paid_detail');
             
+            console.log('📥 localStorage数据检查:', {
+                hasResult: !!savedResult,
+                hasService: !!savedService,
+                hasUserData: !!savedUserData,
+                hasFreeSummary: !!savedFreeSummary,
+                hasPaidDetail: !!savedPaidDetail,
+                resultLength: savedResult ? savedResult.length : 0,
+                freeSummaryLength: savedFreeSummary ? savedFreeSummary.length : 0,
+                paidDetailLength: savedPaidDetail ? savedPaidDetail.length : 0
+            });
+            
             if (!savedResult || !savedService) {
-                console.log('没有保存的分析结果');
+                console.log('❌ 没有保存的分析结果');
                 return false;
             }
             

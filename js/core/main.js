@@ -154,12 +154,10 @@ const PaymentManager = {
     
     async waitForPayment(orderId) {
         console.log('⏳ 开始轮询支付状态，订单:', orderId);
-        const maxAttempts = 30;
-        const interval = 3000;
-        
+        const maxAttempts = 45;
+        const interval = 2000;
+
         for (let i = 0; i < maxAttempts; i++) {
-            await new Promise(resolve => setTimeout(resolve, interval));
-            
             try {
                 const verified = await this.verifyPaymentStatus(orderId);
                 if (verified) {
@@ -176,6 +174,7 @@ const PaymentManager = {
             } catch (error) {
                 console.error('轮询支付状态失败:', error);
             }
+            await new Promise(resolve => setTimeout(resolve, interval));
         }
         
         console.log('⏰ 轮询超时，支付未被确认');

@@ -168,6 +168,12 @@ const PaymentManager = {
                     this.showSuccessMessage();
                 }
             }
+
+            const lockedOverlay = document.getElementById('locked-overlay');
+            if (lockedOverlay) {
+                lockedOverlay.style.display = 'none';
+                console.log('✅ 锁定覆盖层已隐藏');
+            }
         } catch (error) {
             console.error('解锁内容失败:', error);
             this.unlockDownloadButtonDirectly();
@@ -233,9 +239,11 @@ const PaymentManager = {
             
             const parsedBaziData = parseBaziData(savedResult);
             STATE.baziData = parsedBaziData.userBazi;
-            updateServiceDisplay(savedService);
-            displayPredictorInfo();
-            displayBaziPan();
+            console.log('📥 八字解析结果:', STATE.baziData ? '成功' : '失败（将跳过八字排盘显示）');
+            
+            try { updateServiceDisplay(savedService); } catch(e) { console.warn('updateServiceDisplay失败:', e); }
+            try { displayPredictorInfo(); } catch(e) { console.warn('displayPredictorInfo失败:', e); }
+            try { displayBaziPan(); } catch(e) { console.warn('displayBaziPan失败:', e); }
             
             const freeText = document.getElementById('free-analysis-text');
             if (freeText) {
@@ -388,7 +396,9 @@ async function initApp() {
         setDefaultValues();
         updateServiceDisplay(STATE.currentService);
         updateUnlockInfo();
-        lockDownloadButton();
+        if (!STATE.isPaymentUnlocked) {
+            lockDownloadButton();
+        }
         setupEventListeners();
         STATE.apiStatus = await checkAPIStatus();
         preloadImages();
@@ -821,7 +831,7 @@ function downloadReport() {
     }
     
     var baziInfo = '';
-    if (STATE.baziData) {
+    if (STATE.baziData && STATE.baziData.year && STATE.baziData.month && STATE.baziData.day && STATE.baziData.hour) {
         baziInfo = '八字排盘：\n年柱：' + STATE.baziData.year.ganzhi + ' (' + STATE.baziData.year.nayin + ')\n月柱：' + STATE.baziData.month.ganzhi + ' (' + STATE.baziData.month.nayin + ')\n日柱：' + STATE.baziData.day.ganzhi + ' (' + STATE.baziData.day.nayin + ')\n时柱：' + STATE.baziData.hour.ganzhi + ' (' + STATE.baziData.hour.nayin + ')';
     }
     

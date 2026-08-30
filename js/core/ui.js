@@ -212,12 +212,12 @@ export function displayBaziPan() {
     if (userGrid) {
         userGrid.innerHTML = '';
         const bazi = STATE.baziData;
-        if (bazi) {
+        if (bazi && bazi.year && bazi.month && bazi.day && bazi.hour) {
             const columns = [
-                { label: '年柱', value: bazi.year.ganzhi, element: bazi.year.nayin },
-                { label: '月柱', value: bazi.month.ganzhi, element: bazi.month.nayin },
-                { label: '日柱', value: bazi.day.ganzhi, element: bazi.day.nayin },
-                { label: '时柱', value: bazi.hour.ganzhi, element: bazi.hour.nayin }
+                { label: '年柱', value: bazi.year.ganzhi || '', element: bazi.year.nayin || '' },
+                { label: '月柱', value: bazi.month.ganzhi || '', element: bazi.month.nayin || '' },
+                { label: '日柱', value: bazi.day.ganzhi || '', element: bazi.day.nayin || '' },
+                { label: '时柱', value: bazi.hour.ganzhi || '', element: bazi.hour.nayin || '' }
             ];
             columns.forEach(col => {
                 const div = document.createElement('div');
@@ -244,12 +244,12 @@ export function displayBaziPan() {
     if (partnerGrid) {
         partnerGrid.innerHTML = '';
         const bazi = STATE.partnerBaziData;
-        if (bazi) {
+        if (bazi && bazi.year && bazi.month && bazi.day && bazi.hour) {
             const columns = [
-                { label: '年柱', value: bazi.year.ganzhi, element: bazi.year.nayin },
-                { label: '月柱', value: bazi.month.ganzhi, element: bazi.month.nayin },
-                { label: '日柱', value: bazi.day.ganzhi, element: bazi.day.nayin },
-                { label: '时柱', value: bazi.hour.ganzhi, element: bazi.hour.nayin }
+                { label: '年柱', value: bazi.year.ganzhi || '', element: bazi.year.nayin || '' },
+                { label: '月柱', value: bazi.month.ganzhi || '', element: bazi.month.nayin || '' },
+                { label: '日柱', value: bazi.day.ganzhi || '', element: bazi.day.nayin || '' },
+                { label: '时柱', value: bazi.hour.ganzhi || '', element: bazi.hour.nayin || '' }
             ];
             columns.forEach(col => {
                 const div = document.createElement('div');

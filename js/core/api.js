@@ -114,14 +114,10 @@ export function parseBaziData(analysisResult) {
 // 解析单个八字
 function parseSingleBazi(baziText) {
     const baziData = {
-        yearColumn: '',
-        yearElement: '',
-        monthColumn: '',
-        monthElement: '',
-        dayColumn: '',
-        dayElement: '',
-        hourColumn: '',
-        hourElement: ''
+        year: { ganzhi: '', nayin: '' },
+        month: { ganzhi: '', nayin: '' },
+        day: { ganzhi: '', nayin: '' },
+        hour: { ganzhi: '', nayin: '' }
     };
 
     const lines = baziText.split('\n');
@@ -131,26 +127,26 @@ function parseSingleBazi(baziText) {
         if (trimmedLine.includes('年柱')) {
             const match = trimmedLine.match(/年柱[：:]\s*([^\s(]+)(?:\s*\(([^)]+)\))?/);
             if (match) {
-                baziData.yearColumn = match[1] || '';
-                baziData.yearElement = match[2] || '';
+                baziData.year.ganzhi = match[1] || '';
+                baziData.year.nayin = match[2] || '';
             }
         } else if (trimmedLine.includes('月柱')) {
             const match = trimmedLine.match(/月柱[：:]\s*([^\s(]+)(?:\s*\(([^)]+)\))?/);
             if (match) {
-                baziData.monthColumn = match[1] || '';
-                baziData.monthElement = match[2] || '';
+                baziData.month.ganzhi = match[1] || '';
+                baziData.month.nayin = match[2] || '';
             }
         } else if (trimmedLine.includes('日柱')) {
             const match = trimmedLine.match(/日柱[：:]\s*([^\s(]+)(?:\s*\(([^)]+)\))?/);
             if (match) {
-                baziData.dayColumn = match[1] || '';
-                baziData.dayElement = match[2] || '';
+                baziData.day.ganzhi = match[1] || '';
+                baziData.day.nayin = match[2] || '';
             }
         } else if (trimmedLine.includes('时柱')) {
             const match = trimmedLine.match(/时柱[：:]\s*([^\s(]+)(?:\s*\(([^)]+)\))?/);
             if (match) {
-                baziData.hourColumn = match[1] || '';
-                baziData.hourElement = match[2] || '';
+                baziData.hour.ganzhi = match[1] || '';
+                baziData.hour.nayin = match[2] || '';
             }
         }
     });

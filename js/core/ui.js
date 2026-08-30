@@ -493,15 +493,6 @@ export async function showPaymentModal() {
         STATE.currentOrderId = orderId;
         STATE.currentOutTradeNo = outTradeNo;
         
-        if (STATE.fullAnalysisResult) {
-            localStorage.setItem('last_analysis_result', STATE.fullAnalysisResult);
-            localStorage.setItem('last_analysis_service', STATE.currentService);
-            localStorage.setItem('last_user_data', JSON.stringify(STATE.userData || {}));
-            localStorage.setItem('last_free_summary', STATE.freeSummary || '');
-            localStorage.setItem('last_paid_detail', STATE.paidDetail || '');
-            localStorage.setItem('last_order_id', orderId);
-        }
-        
         const paymentMethods = document.querySelector('.payment-methods');
         if (paymentMethods) {
             const buttonHtml = `
@@ -609,19 +600,26 @@ function updatePaymentStatusText(text) {
 function handlePaymentSuccessDirect(orderId) {
     STATE.isPaymentUnlocked = true;
     STATE.isDownloadLocked = false;
-    
-    if (typeof unlockDownloadButton === 'function') {
-        unlockDownloadButton();
+
+    localStorage.setItem('alipay_payment_data', JSON.stringify({
+        orderId: orderId,
+        verified: true,
+        verifiedAt: new Date().toISOString(),
+        waiting: false
+    }));
+
+    unlockDownloadButton();
+    updateUnlockInterface();
+    showFullAnalysisContent();
+
+    const lockedOverlay = document.getElementById('locked-overlay');
+    if (lockedOverlay) lockedOverlay.style.display = 'none';
+
+    if (window.PaymentManager && typeof PaymentManager.showSuccessMessage === 'function') {
+        PaymentManager.showSuccessMessage();
     }
-    if (typeof updateUnlockInterface === 'function') {
-        updateUnlockInterface();
-    }
-    if (typeof showFullAnalysisContent === 'function') {
-        showFullAnalysisContent();
-    }
-    if (window.PaymentManager && typeof PaymentManager.unlockContent === 'function') {
-        PaymentManager.unlockContent(orderId);
-    }
+
+    try { localStorage.removeItem('alipay_payment_data'); } catch(e) {}
 }
 
 export function closePaymentModal() {

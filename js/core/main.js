@@ -207,6 +207,8 @@ const PaymentManager = {
                 lockedOverlay.style.display = 'none';
                 console.log('✅ 锁定覆盖层已隐藏');
             }
+
+            try { localStorage.removeItem('alipay_payment_data'); } catch(e) {}
         } catch (error) {
             console.error('解锁内容失败:', error);
             unlockDownloadButton();
@@ -403,6 +405,12 @@ function handlePaymentSuccess() {
     updateUnlockInterface();
     showFullAnalysisContent();
     unlockDownloadButton();
+
+    const lockedOverlay = document.getElementById('locked-overlay');
+    if (lockedOverlay) lockedOverlay.style.display = 'none';
+
+    try { localStorage.removeItem('alipay_payment_data'); } catch(e) {}
+
     PaymentManager.showSuccessMessage();
 }
 

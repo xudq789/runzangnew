@@ -12,12 +12,24 @@ const AlipayCallbackHandler = {
         
         console.log('🔍 解析参数:', { paymentSuccess, orderId, verified, amount });
         
+        // Handle payment failure
+        const paymentStatus = urlParams.get('payment_status');
+        if (paymentStatus === 'failed') {
+            console.error('❌ 支付失败或订单无效');
+            this.cleanUrlParams();
+            setTimeout(() => {
+                alert('支付失败或订单无效，请重新下单');
+            }, 500);
+            return null;
+        }
+        
         if (paymentSuccess === 'true' && orderId) {
-            console.log('✅ 检测到支付回调:', { orderId, amount });
+            console.log('✅ 检测到支付回调:', { orderId, amount, verified });
             const paymentData = {
                 orderId,
                 amount,
-                verified: false,
+                verified: verified === 'true',
+                backendVerified: verified === 'true',
                 timestamp: new Date().toISOString()
             };
             localStorage.setItem('alipay_payment_data', JSON.stringify(paymentData));
@@ -26,7 +38,6 @@ const AlipayCallbackHandler = {
             return orderId;
         }
         
-        const paymentStatus = urlParams.get('payment_status');
         if (paymentStatus === 'waiting' && orderId) {
             console.log('⏳ 检测到支付等待状态:', orderId);
             const paymentData = {
@@ -64,9 +75,15 @@ const PaymentManager = {
         const orderIdFromCallback = AlipayCallbackHandler.checkBackendCallback();
         if (orderIdFromCallback) {
             const paymentData = this.getPaymentData();
+            if (paymentData && paymentData.backendVerified) {
+                console.log('✅ 后端已验证，直接解锁:', orderIdFromCallback);
+                await this.unlockContent(orderIdFromCallback);
+                return;
+            }
             if (paymentData && paymentData.waiting) {
                 console.log('⏳ 支付等待中，开始轮询:', orderIdFromCallback);
-                await this.waitForPayment(orderIdFromCallback);
+                this.waitForPaymentNonBlocking(orderIdFromCallback);
+                return;
             } else {
                 console.log('发现支付回调，向服务端验证:', orderIdFromCallback);
                 await this.verifyAndUnlock(orderIdFromCallback);
@@ -166,6 +183,38 @@ const PaymentManager = {
         return false;
     },
     
+    waitForPaymentNonBlocking(orderId) {
+        console.log('⏳ 后台轮询支付状态（非阻塞）, 订单:', orderId);
+        let attempts = 0;
+        const maxAttempts = 45;
+        const interval = 2000;
+        
+        const poll = async () => {
+            if (attempts >= maxAttempts) {
+                console.log('⏰ 后台轮询超时');
+                return;
+            }
+            attempts++;
+            try {
+                const verified = await this.verifyPaymentStatus(orderId);
+                if (verified) {
+                    console.log('✅ 后台轮询确认支付成功:', orderId);
+                    const paymentData = this.getPaymentData() || {};
+                    paymentData.verified = true;
+                    paymentData.waiting = false;
+                    localStorage.setItem('alipay_payment_data', JSON.stringify(paymentData));
+                    await this.unlockContent(orderId);
+                    return;
+                }
+            } catch (error) {
+                console.error('后台轮询支付状态失败:', error);
+            }
+            setTimeout(poll, interval);
+        };
+        
+        setTimeout(poll, interval);
+    },
+    
     async unlockContent(orderId) {
         console.log('🔓 开始解锁内容，订单:', orderId);
         STATE.isPaymentUnlocked = true;
@@ -199,6 +248,14 @@ const PaymentManager = {
                     console.log('但有当前分析结果，直接解锁');
                     this.updateUIAfterPayment();
                     this.showSuccessMessage();
+                } else {
+                    console.warn('⚠️ 无法恢复分析结果，保存订单信息后重载');
+                    localStorage.setItem('pending_unlock_order', JSON.stringify({
+                        orderId,
+                        timestamp: new Date().toISOString()
+                    }));
+                    setTimeout(() => window.location.reload(), 1000);
+                    return;
                 }
             }
 

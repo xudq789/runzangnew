@@ -519,6 +519,13 @@ export async function showPaymentModal() {
             if (payBtn) {
                 payBtn.onclick = () => {
                     console.log('跳转到支付宝支付:', paymentUrl);
+                    // Save pending order before redirect (critical for mobile)
+                    const existingPaymentData = PaymentManager.getPaymentData() || {};
+                    existingPaymentData.orderId = orderId;
+                    existingPaymentData.waiting = true;
+                    existingPaymentData.pendingAt = new Date().toISOString();
+                    localStorage.setItem('alipay_payment_data', JSON.stringify(existingPaymentData));
+                    console.log('已保存待支付订单到 localStorage:', orderId);
                     window.location.href = paymentUrl;
                 };
             }

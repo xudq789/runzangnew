@@ -122,8 +122,22 @@ function parseSingleBazi(baziText) {
 
     const lines = baziText.split('\n');
 
-    lines.forEach(line => {
+    // Try to find the line with all four pillars (e.g., "乾造：己巳 丙子 丙寅 甲午")
+    for (const line of lines) {
         const trimmedLine = line.trim();
+        
+        // Match format like "乾造：己巳 丙子 丙寅 甲午" or "坤造：己巳 丙子 丙寅 甲午"
+        const pillarsMatch = trimmedLine.match(/[乾坤]造[：:]\s*([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])\s+([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])\s+([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])\s+([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])/);
+        
+        if (pillarsMatch) {
+            baziData.year.ganzhi = pillarsMatch[1];
+            baziData.month.ganzhi = pillarsMatch[2];
+            baziData.day.ganzhi = pillarsMatch[3];
+            baziData.hour.ganzhi = pillarsMatch[4];
+            break;
+        }
+        
+        // Fallback: try individual pillar format (e.g., "年柱：己巳（大林木）")
         if (trimmedLine.includes('年柱')) {
             const match = trimmedLine.match(/年柱[：:]\s*([^\s(]+)(?:\s*\(([^)]+)\))?/);
             if (match) {
@@ -149,7 +163,7 @@ function parseSingleBazi(baziText) {
                 baziData.hour.nayin = match[2] || '';
             }
         }
-    });
+    }
 
     return baziData;
 }

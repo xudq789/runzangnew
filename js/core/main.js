@@ -247,20 +247,54 @@ const PaymentManager = {
             STATE.paidDetail = savedPaidDetail || '';
             
             if (savedUserData) {
-                try {
-                    STATE.userData = JSON.parse(savedUserData);
-                } catch (e) {
-                    console.error('解析用户数据失败:', e);
-                }
+                try { STATE.userData = JSON.parse(savedUserData); } catch (e) { console.error('解析用户数据失败:', e); }
             }
             
-            const parsedBaziData = parseBaziData(savedResult);
-            STATE.baziData = parsedBaziData.userBazi;
+            const savedBaziData = localStorage.getItem('last_bazi_data');
+            if (savedBaziData) {
+                try { STATE.baziData = JSON.parse(savedBaziData); } catch (e) { console.warn('解析baziData失败，尝试parseBaziData'); }
+            }
+            if (!STATE.baziData) {
+                const parsedBaziData = parseBaziData(savedResult);
+                STATE.baziData = parsedBaziData.userBazi;
+            }
             console.log('📥 八字解析结果:', STATE.baziData ? '成功' : '失败（将跳过八字排盘显示）');
+            
+            const savedDayunData = localStorage.getItem('last_dayun_data');
+            if (savedDayunData) {
+                try { STATE.dayunData = JSON.parse(savedDayunData); } catch (e) { console.warn('解析dayunData失败:', e); }
+            }
+            
+            const savedPartnerData = localStorage.getItem('last_partner_data');
+            if (savedPartnerData) {
+                try { STATE.partnerData = JSON.parse(savedPartnerData); } catch (e) { console.warn('解析partnerData失败:', e); }
+            }
+            
+            const savedPartnerBaziData = localStorage.getItem('last_partner_bazi_data');
+            if (savedPartnerBaziData) {
+                try { STATE.partnerBaziData = JSON.parse(savedPartnerBaziData); } catch (e) { console.warn('解析partnerBaziData失败:', e); }
+            }
+            
+            const savedPartnerDayunData = localStorage.getItem('last_partner_dayun_data');
+            if (savedPartnerDayunData) {
+                try { STATE.partnerDayunData = JSON.parse(savedPartnerDayunData); } catch (e) { console.warn('解析partnerDayunData失败:', e); }
+            }
             
             try { updateServiceDisplay(savedService); } catch(e) { console.warn('updateServiceDisplay失败:', e); }
             try { displayPredictorInfo(); } catch(e) { console.warn('displayPredictorInfo失败:', e); }
             try { displayBaziPan(); } catch(e) { console.warn('displayBaziPan失败:', e); }
+            
+            if (STATE.dayunData) {
+                try { displayDayunPan(STATE.dayunData); } catch(e) { console.warn('displayDayunPan失败:', e); }
+            }
+            
+            if (savedService === '八字合婚' && STATE.partnerBaziData) {
+                try {
+                    if (STATE.partnerDayunData) {
+                        displayPartnerDayunPan(STATE.partnerDayunData);
+                    }
+                } catch(e) { console.warn('displayPartnerDayunPan失败:', e); }
+            }
             
             const freeText = document.getElementById('free-analysis-text');
             if (freeText) {
@@ -333,6 +367,11 @@ const PaymentManager = {
             localStorage.setItem('last_user_data', JSON.stringify(STATE.userData));
             localStorage.setItem('last_free_summary', STATE.freeSummary || '');
             localStorage.setItem('last_paid_detail', STATE.paidDetail || '');
+            if (STATE.baziData) localStorage.setItem('last_bazi_data', JSON.stringify(STATE.baziData));
+            if (STATE.dayunData) localStorage.setItem('last_dayun_data', JSON.stringify(STATE.dayunData));
+            if (STATE.partnerData) localStorage.setItem('last_partner_data', JSON.stringify(STATE.partnerData));
+            if (STATE.partnerBaziData) localStorage.setItem('last_partner_bazi_data', JSON.stringify(STATE.partnerBaziData));
+            if (STATE.partnerDayunData) localStorage.setItem('last_partner_dayun_data', JSON.stringify(STATE.partnerDayunData));
             console.log('✅ 分析数据已保存到 localStorage');
             return true;
         } catch (error) {
@@ -518,6 +557,11 @@ function switchService(serviceName) {
         localStorage.removeItem('last_user_data');
         localStorage.removeItem('last_free_summary');
         localStorage.removeItem('last_paid_detail');
+        localStorage.removeItem('last_bazi_data');
+        localStorage.removeItem('last_dayun_data');
+        localStorage.removeItem('last_partner_data');
+        localStorage.removeItem('last_partner_bazi_data');
+        localStorage.removeItem('last_partner_dayun_data');
         console.log('✅ localStorage支付数据已清除');
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });

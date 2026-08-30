@@ -12,17 +12,16 @@ const AlipayCallbackHandler = {
         
         console.log('🔍 解析参数:', { paymentSuccess, orderId, verified, amount });
         
-        if (paymentSuccess === 'true' && orderId && verified === 'true') {
-            console.log('✅ 检测到后端已验证的支付成功参数:', { orderId, amount, verified });
+        if (paymentSuccess === 'true' && orderId) {
+            console.log('✅ 检测到支付回调:', { orderId, amount });
             const paymentData = {
                 orderId,
                 amount,
-                verified: true,
-                backendVerified: true,
+                verified: false,
                 timestamp: new Date().toISOString()
             };
             localStorage.setItem('alipay_payment_data', JSON.stringify(paymentData));
-            console.log('支付验证信息已保存到 localStorage');
+            console.log('支付回调已保存，待服务端验证');
             this.cleanUrlParams();
             return orderId;
         }
@@ -65,15 +64,12 @@ const PaymentManager = {
         const orderIdFromCallback = AlipayCallbackHandler.checkBackendCallback();
         if (orderIdFromCallback) {
             const paymentData = this.getPaymentData();
-            if (paymentData && paymentData.backendVerified) {
-                console.log('发现后端已验证回调订单，立即解锁:', orderIdFromCallback);
-                await this.verifyAndUnlock(orderIdFromCallback, true);
-            } else if (paymentData && paymentData.waiting) {
+            if (paymentData && paymentData.waiting) {
                 console.log('⏳ 支付等待中，开始轮询:', orderIdFromCallback);
                 await this.waitForPayment(orderIdFromCallback);
             } else {
-                console.log('发现后端回调订单，尝试验证:', orderIdFromCallback);
-                await this.verifyAndUnlock(orderIdFromCallback, false);
+                console.log('发现支付回调，向服务端验证:', orderIdFromCallback);
+                await this.verifyAndUnlock(orderIdFromCallback);
             }
             return;
         }
@@ -88,11 +84,6 @@ const PaymentManager = {
                 return;
             }
             console.log('找到已保存的支付数据:', paymentData.orderId);
-            if (paymentData.backendVerified) {
-                console.log('支付已由后端验证过，解锁内容');
-                await this.unlockContent(paymentData.orderId);
-                return;
-            }
             const verified = await this.verifyPaymentStatus(paymentData.orderId);
             if (verified) {
                 await this.unlockContent(paymentData.orderId);
@@ -133,13 +124,8 @@ const PaymentManager = {
         }
     },
     
-    async verifyAndUnlock(orderId, isBackendVerified = false) {
+    async verifyAndUnlock(orderId) {
         try {
-            if (isBackendVerified) {
-                console.log('✅ 后端已验证支付，直接解锁');
-                await this.unlockContent(orderId);
-                return true;
-            }
             const verified = await this.verifyPaymentStatus(orderId);
             if (verified) {
                 await this.unlockContent(orderId);
@@ -164,7 +150,6 @@ const PaymentManager = {
                     console.log('✅ 轮询确认支付成功，订单:', orderId);
                     const paymentData = this.getPaymentData() || {};
                     paymentData.verified = true;
-                    paymentData.backendVerified = true;
                     paymentData.waiting = false;
                     localStorage.setItem('alipay_payment_data', JSON.stringify(paymentData));
                     await this.unlockContent(orderId);
@@ -201,7 +186,7 @@ const PaymentManager = {
                 this.updateUIAfterPayment();
                 this.showSuccessMessage();
                 setTimeout(() => {
-                    this.unlockDownloadButtonDirectly();
+                    unlockDownloadButton();
                 }, 300);
                 setTimeout(() => {
                     const resultSection = document.getElementById('analysis-result-section');
@@ -224,24 +209,8 @@ const PaymentManager = {
             }
         } catch (error) {
             console.error('解锁内容失败:', error);
-            this.unlockDownloadButtonDirectly();
+            unlockDownloadButton();
         }
-    },
-    
-    unlockDownloadButtonDirectly() {
-        const downloadBtn = document.getElementById('download-report-btn');
-        const downloadBtnText = document.getElementById('download-btn-text');
-        if (downloadBtn && downloadBtnText) {
-            downloadBtn.disabled = false;
-            downloadBtn.classList.remove('download-btn-locked');
-            downloadBtnText.textContent = '下载报告';
-            downloadBtn.style.background = 'linear-gradient(135deg, var(--primary-color), #3a7bd5)';
-            downloadBtn.style.boxShadow = '0 4px 15px rgba(58, 123, 213, 0.4)';
-            console.log('✅ 直接解锁下载按钮成功');
-            return true;
-        }
-        console.error('❌ 找不到下载按钮元素');
-        return false;
     },
     
     async restoreAnalysis() {
@@ -374,28 +343,18 @@ const PaymentManager = {
 };
 
 // ============ 【导入所有依赖】 ============
-// 从同一目录 (js/core/) 导入
 import { SERVICES, STATE, API_CONFIG } from './config.js';
 import { checkAPIStatus, parseBaziData, analyzeBazi } from './api.js';
 import {
-    UI, initFormOptions, setDefaultValues, updateServiceDisplay,
+    UI, initFormOptions, updateServiceDisplay,
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,
     displayDayunPan, displayPartnerDayunPan,
-    updateProgress,
-    parseDayunData,
-    processAndDisplayAnalysis, showPaymentModal, closePaymentModal,
+    updateProgress, showPaymentModal, closePaymentModal,
     updateUnlockInterface, showFullAnalysisContent, lockDownloadButton,
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData
 } from './ui.js';
-
-// 模块文件在上级目录的 modules/ 下
-// 注意：新架构已绕过这些模块，但保留导入以防万一
-// import { CesuanModule } from '../modules/cesuan.js';
-// import { YunchengModule } from '../modules/yuncheng.js';
-// import { XiangpiModule } from '../modules/xiangpi.js';
-// import { HehunModule } from '../modules/hehun.js';
 
 // ============ 支付成功处理函数 ============
 function handlePaymentSuccess() {
@@ -441,7 +400,6 @@ async function initApp() {
         await PaymentManager.initPaymentCheck();
         console.log('2. 常规初始化...');
         initFormOptions();
-        setDefaultValues();
         updateServiceDisplay(STATE.currentService);
         updateUnlockInfo();
         if (!STATE.isPaymentUnlocked) {
@@ -533,7 +491,10 @@ function switchService(serviceName) {
     if (oldService !== serviceName) {
         hideAnalysisResult();
         var freeAnalysisText = UI.freeAnalysisText();
-        if (freeAnalysisText) freeAnalysisText.innerHTML = '';
+        if (freeAnalysisText) {
+            freeAnalysisText.innerHTML = '';
+            delete freeAnalysisText.dataset.paidAppended;
+        }
         var predictorInfoGrid = UI.predictorInfoGrid();
         if (predictorInfoGrid) predictorInfoGrid.innerHTML = '';
         var baziGrid = UI.baziGrid();
@@ -577,29 +538,20 @@ function sleep(ms) {
     return new Promise(function(resolve) { setTimeout(resolve, ms); });
 }
 
-// ============ 格式化排盘数据（保留备用） ============
-function formatBaziForPrompt(baziRawData) {
-    if (!baziRawData) return '';
-    const bazi = baziRawData.bazi;
-    
-    let text = `【八字排盘】（由专业排盘系统精确计算）\n`;
-    text += `年柱：${bazi.year.ganzhi}（${bazi.year.nayin}） 生肖：${bazi.year.zodiac}\n`;
-    text += `月柱：${bazi.month.ganzhi}（${bazi.month.nayin}）\n`;
-    text += `日柱：${bazi.day.ganzhi}（${bazi.day.nayin}）\n`;
-    text += `时柱：${bazi.hour.ganzhi}（${bazi.hour.nayin}）\n`;
-    return text;
+// ============ DeepSeek报告格式化渲染 ============
+function escapeHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// ============ DeepSeek报告格式化渲染 ============
 function renderDeepSeekSection(text, part) {
     if (!text) return '';
-    
+
     const CONCLUSION_HEADERS = ['综合结论'];
     const segments = [];
     const lines = text.split('\n');
     let currentHeader = '';
     let currentLines = [];
-    
+
     for (const line of lines) {
         const headerMatch = line.trim().match(/^【(.+?)】/);
         if (headerMatch) {
@@ -617,29 +569,30 @@ function renderDeepSeekSection(text, part) {
     if (currentHeader || currentLines.length > 0) {
         segments.push({ header: currentHeader, content: currentLines.join('\n').trim() });
     }
-    
+
     if (segments.length === 0) {
-        return `<div class="ds-content ds-analysis">${text.replace(/\n/g, '<br>')}</div>`;
+        return `<div class="ds-content ds-analysis">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`;
     }
-    
+
     let html = '';
     for (const seg of segments) {
         const isConclusion = CONCLUSION_HEADERS.includes(seg.header);
-        const contentHtml = seg.content.replace(/\n/g, '<br>');
-        
+        const contentHtml = escapeHtml(seg.content).replace(/\n/g, '<br>');
+        const headerHtml = escapeHtml('【' + seg.header + '】');
+
         if (isConclusion) {
             html += `<div class="ds-segment ds-conclusion">
-                <div class="ds-header ds-header-conclusion">【${seg.header}】</div>
+                <div class="ds-header ds-header-conclusion">${headerHtml}</div>
                 <div class="ds-content ds-conclusion-text">${contentHtml}</div>
             </div>`;
         } else {
             html += `<div class="ds-segment ds-analysis">
-                <div class="ds-header ds-header-analysis">【${seg.header}】</div>
+                <div class="ds-header ds-header-analysis">${headerHtml}</div>
                 <div class="ds-content ds-analysis-text">${contentHtml}</div>
             </div>`;
         }
     }
-    
+
     return html;
 }
 
@@ -839,18 +792,19 @@ async function startAnalysis() {
         clearInterval(progressTimer);
         console.error('❌ 分析失败:', error);
         hideLoadingModal();
-        
+
+        var errMsg = String(error && error.message || error || '');
         var errorMessage = '命理分析失败，请稍后再试。';
-        if (error.message.indexOf('401') !== -1 || error.message.indexOf('Unauthorized') !== -1) {
+        if (errMsg.indexOf('401') !== -1 || errMsg.indexOf('Unauthorized') !== -1) {
             errorMessage = 'API密钥错误，请联系管理员。';
-        } else if (error.message.indexOf('429') !== -1) {
+        } else if (errMsg.indexOf('429') !== -1) {
             errorMessage = '请求过于频繁，请稍后再试。';
-        } else if (error.message.indexOf('网络') !== -1 || error.message.indexOf('Network') !== -1) {
+        } else if (errMsg.indexOf('网络') !== -1 || errMsg.indexOf('Network') !== -1) {
             errorMessage = '网络连接失败，请检查您的网络设置。';
-        } else if (error.message.indexOf('超时') !== -1 || error.message.indexOf('timeout') !== -1) {
+        } else if (errMsg.indexOf('超时') !== -1 || errMsg.indexOf('timeout') !== -1) {
             errorMessage = '分析请求超时，请稍后再试。';
         }
-        alert(errorMessage + '\n\n错误详情：' + error.message);
+        alert(errorMessage + '\n\n错误详情：' + errMsg);
     }
 }
 
@@ -916,7 +870,10 @@ function newAnalysis() {
     hideAnalysisResult();
     resetUnlockInterface();
     var freeAnalysisText = UI.freeAnalysisText();
-    if (freeAnalysisText) freeAnalysisText.innerHTML = '';
+    if (freeAnalysisText) {
+        freeAnalysisText.innerHTML = '';
+        delete freeAnalysisText.dataset.paidAppended;
+    }
     STATE.currentOrderId = null;
     STATE.fullAnalysisResult = '';
     STATE.freeSummary = '';
@@ -942,5 +899,4 @@ window.newAnalysis = newAnalysis;
 window.handlePaymentSuccess = handlePaymentSuccess;
 window.PaymentManager = PaymentManager;
 window.STATE = STATE;
-window.formatBaziForPrompt = formatBaziForPrompt;
 window.renderDeepSeekSection = renderDeepSeekSection;

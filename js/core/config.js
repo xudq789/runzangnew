@@ -109,6 +109,8 @@ export const STATE = {
     paidDetail: '',
     baziData: null,
     partnerBaziData: null,
+    dayunData: null,
+    partnerDayunData: null,
     currentOrderId: null,
     currentOutTradeNo: null,
     userData: null,
@@ -122,9 +124,4 @@ export const STATE = {
 export const API_CONFIG = {
     BACKEND_URL: 'https://api.runzang.top',
     TIMEOUT: 120000
-};
-
-// 支付配置
-export const PAYMENT_CONFIG = {
-    GATEWAY_URL: `${API_CONFIG.BACKEND_URL}/api/payment`
 };

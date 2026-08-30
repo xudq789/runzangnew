@@ -2,54 +2,6 @@
 import { DOM } from './utils.js';
 import { API_CONFIG } from './config.js';
 
-// 调用后端DeepSeek代理接口
-export async function callDeepSeekAPI(prompt, serviceType) {
-    console.log('📡 调用后端DeepSeek代理服务...');
-    console.log(`📋 服务类型: ${serviceType}`);
-    console.log(`📏 提示词长度: ${prompt.length}`);
-
-    try {
-        const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/deepseek/chat`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                prompt: prompt,
-                serviceType: serviceType
-            }),
-            signal: AbortSignal.timeout(API_CONFIG.TIMEOUT || 120000)
-        });
-
-        console.log(`📊 响应状态: ${response.status}`);
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('❌ 后端错误:', errorData);
-            throw new Error(errorData.error || `请求失败 (${response.status})`);
-        }
-
-        const result = await response.json();
-        console.log('✅ 后端响应成功');
-
-        if (result.success && result.data && result.data.analysis) {
-            console.log(`📝 响应长度: ${result.data.analysis.length}`);
-            return result.data.analysis;
-        } else {
-            throw new Error('后端返回数据格式错误');
-        }
-
-    } catch (error) {
-        console.error('❌ 分析请求失败:', error);
-
-        if (error.name === 'AbortError' || error.name === 'TimeoutError') {
-            throw new Error('分析请求超时，请稍后再试');
-        }
-
-        throw error;
-    }
-}
-
 // ★★★ 修复：检查后端服务状态（使用正确的路径） ★★★
 export async function checkAPIStatus() {
     console.log('🔍 检查后端服务状态...');
@@ -120,8 +72,8 @@ function parseSingleBazi(baziText) {
         hour: { ganzhi: '', nayin: '' }
     };
 
-    // Try format: "己巳年、丙子月、丙寅日、甲午时"
-    const inlineMatch = baziText.match(/([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])年[、,]\s*([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])月[、,]\s*([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])日[、,]\s*([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])时/);
+    // Try format: "己巳年、丙子月、丙寅日、甲午时" (also matches ，and ,)
+    const inlineMatch = baziText.match(/([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])年[、,，]\s*([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])月[、,，]\s*([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])日[、,，]\s*([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])时/);
     if (inlineMatch) {
         baziData.year.ganzhi = inlineMatch[1];
         baziData.month.ganzhi = inlineMatch[2];
@@ -196,12 +148,16 @@ export async function analyzeBazi(userData, serviceType, needPolish = true) {
                 need_polish: needPolish,
                 current_year: new Date().getFullYear()
             }),
-            signal: AbortSignal.timeout(120000)
+            signal: AbortSignal.timeout(API_CONFIG.TIMEOUT)
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `请求失败 (${response.status})`);
+            let errorMsg = `请求失败 (${response.status})`;
+            try {
+                const errorData = await response.json();
+                errorMsg = errorData.error || errorMsg;
+            } catch (e) { /* non-JSON error body */ }
+            throw new Error(errorMsg);
         }
 
         const result = await response.json();

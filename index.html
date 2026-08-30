@@ -9,7 +9,10 @@
     <!-- 禁用 favicon 请求（消除 404 错误） -->
     <link rel="icon" href="data:,">
     
-    <link rel="stylesheet" href="css/styles.css?v=3">
+    <!-- 预连接图片CDN -->
+    <link rel="preconnect" href="https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com" crossorigin>
+    
+    <link rel="stylesheet" href="css/styles.css?v=4">
 </head>
 <body>
     <h1 style="display: none;">润藏八字命理分析平台</h1>
@@ -184,7 +187,7 @@
 
         <section class="seamless-section detail-section">
             <div class="image-placeholder">正在加载图片...</div>
-            <img id="detail-image" src="https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/1-2.jpg" alt="测算验证服务明细" class="detail-image">
+            <img id="detail-image" src="https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/1-2.jpg" alt="测算验证服务明细" class="detail-image" loading="lazy">
         </section>
     </div>
 
@@ -337,6 +340,6 @@
     </div>
 
     <!-- 主入口文件 -->
-    <script src="js/core/main.js?v=6" type="module"></script>
+    <script src="js/core/main.js?v=7" type="module"></script>
 </body>
 </html>

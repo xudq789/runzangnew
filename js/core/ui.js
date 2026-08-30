@@ -1,5 +1,5 @@
 // UI控制模块
-import { DOM, formatDate, hideElement, showElement, generateOrderId, calculateBazi } from './utils.js';
+import { DOM, formatDate, hideElement, showElement } from './utils.js';
 import { SERVICES, STATE, API_CONFIG } from './config.js';
 
 // UI元素集合
@@ -82,25 +82,6 @@ export function initFormOptions() {
     fillSelect('partner-birth-day', days, '日');
     fillSelect('partner-birth-hour', hours, '时');
     fillSelect('partner-birth-minute', minutes, '分');
-}
-
-export function setDefaultValues() {
-    UI.name().value = '张三';
-    UI.gender().value = 'male';
-    UI.birthCity().value = '北京';
-    UI.birthYear().value = 1990;
-    UI.birthMonth().value = 1;
-    UI.birthDay().value = 1;
-    UI.birthHour().value = 12;
-    UI.birthMinute().value = 0;
-    UI.partnerName().value = '李四';
-    UI.partnerGender().value = 'female';
-    UI.partnerBirthCity().value = '上海';
-    UI.partnerBirthYear().value = 1992;
-    UI.partnerBirthMonth().value = 6;
-    UI.partnerBirthDay().value = 15;
-    UI.partnerBirthHour().value = 15;
-    UI.partnerBirthMinute().value = 30;
 }
 
 export function updateServiceDisplay(serviceName) {
@@ -275,49 +256,52 @@ export function displayBaziPan() {
 }
 
 // ============ 大运排盘显示（修复版） ============
-export function displayDayunPan(dayunData) {
-    console.log('📊 显示大运排盘...', dayunData);
-    
-    // 查找或创建大运卡片容器
-    let dayunCard = document.getElementById('dayun-pan-card');
-    if (!dayunCard) {
-        const baziPan = document.getElementById('bazi-pan');
-        if (baziPan) {
-            const card = document.createElement('div');
-            card.id = 'dayun-pan-card';
-            card.className = 'dayun-pan-card';
-            card.style.display = 'block';
-            card.style.marginTop = '20px';
-            card.style.padding = '15px';
-            card.style.background = '#fff';
-            card.style.borderRadius = '10px';
-            card.style.boxShadow = '0 5px 15px rgba(0,0,0,0.05)';
-            card.style.border = '1px solid #ddd';
-            card.innerHTML = `
-                <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">大运排盘</h4>
-                <div id="dayun-grid" style="width: 100%; overflow-x: auto;"></div>
-            `;
-            // 插入到 baziPan 之后，修复只能显示一步的问题
-            if (baziPan.nextSibling) {
-                baziPan.parentNode.insertBefore(card, baziPan.nextSibling);
-            } else {
-                baziPan.parentNode.appendChild(card);
-            }
-            dayunCard = card;
-        }
-    }
-    
-    if (!dayunCard) return;
-    
-    const dayunGrid = document.getElementById('dayun-grid');
-    if (!dayunGrid) return;
-    
-    dayunGrid.innerHTML = '';
-    
+function _buildDayunTableHtml(dayunList, startAge) {
+    const displayList = dayunList.slice(0, 8);
+    const numColumns = displayList.length;
+
+    let html = `
+        <table style="width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-size: 13px;">
+            <thead>
+                <tr>
+                    <th style="padding: 8px 10px; background: var(--primary-color); color: white; text-align: center; font-weight: 600; width: 10%;">大运</th>
+    `;
+
+    displayList.forEach((dy, index) => {
+        const ageLabel = (dy.age_start != null) ? `${dy.age_start}岁` : `${startAge + index * 10}岁`;
+        const bgColor = index % 2 === 0 ? 'var(--primary-color)' : '#a0522d';
+        html += `
+            <th style="padding: 8px 10px; background: ${bgColor}; color: white; text-align: center; font-weight: 600; width: ${Math.min(90 / numColumns, 15)}%;">${ageLabel}</th>
+        `;
+    });
+
+    html += `
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding: 8px 10px; background: #f5f1e8; text-align: center; font-weight: 600; color: var(--dark-color);">干支</td>
+    `;
+
+    displayList.forEach((dy, index) => {
+        const bgColor = index % 2 === 0 ? '#faf8f5' : '#fff';
+        html += `
+            <td style="padding: 8px 10px; text-align: center; font-weight: 500; color: var(--primary-color); background: ${bgColor};">${dy.ganzhi || '--'}</td>
+        `;
+    });
+
+    html += `
+                </tr>
+            </tbody>
+        </table>
+    `;
+    return html;
+}
+
+function _normalizeDayunData(dayunData) {
     let dayunList = [];
     let startAge = 8;
-    
-    // 数据解析逻辑
+
     if (dayunData && dayunData.dayuns && Array.isArray(dayunData.dayuns) && dayunData.dayuns.length > 0) {
         const ages = dayunData.ages || [];
         const dayuns = dayunData.dayuns || [];
@@ -333,223 +317,70 @@ export function displayDayunPan(dayunData) {
     } else if (Array.isArray(dayunData) && dayunData.length > 0) {
         dayunList = dayunData;
     }
-    
-    if (!dayunList || dayunList.length === 0) {
-        dayunGrid.innerHTML = `<div style="padding: 15px; text-align: center; color: #999;">⚠️ 大运排盘数据暂不可用</div>`;
-        dayunCard.style.display = 'block';
-        return;
-    }
-    
-    // 取前8步大运
-    const displayList = dayunList.slice(0, 8);
-    const numColumns = displayList.length;
-    
-    // 构建一个标准、干净的表格
-    let tableHtml = `
-        <table style="width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-size: 13px;">
-            <thead>
-                <tr>
-                    <th style="padding: 8px 10px; background: var(--primary-color); color: white; text-align: center; font-weight: 600; width: 10%;">大运</th>
-    `;
-    
-    displayList.forEach((dy, index) => {
-        let ageLabel = '';
-        if (dy.age_start !== undefined && dy.age_start !== null) {
-            ageLabel = `${dy.age_start}岁`;
-        } else {
-            ageLabel = `${startAge + index * 10}岁`;
-        }
-        const bgColor = index % 2 === 0 ? 'var(--primary-color)' : '#a0522d';
-        tableHtml += `
-            <th style="padding: 8px 10px; background: ${bgColor}; color: white; text-align: center; font-weight: 600; width: ${Math.min(90 / numColumns, 15)}%;">${ageLabel}</th>
-        `;
-    });
-    
-    tableHtml += `
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td style="padding: 8px 10px; background: #f5f1e8; text-align: center; font-weight: 600; color: var(--dark-color);">干支</td>
-    `;
-    
-    displayList.forEach((dy, index) => {
-        const bgColor = index % 2 === 0 ? '#faf8f5' : '#fff';
-        tableHtml += `
-            <td style="padding: 8px 10px; text-align: center; font-weight: 500; color: var(--primary-color); background: ${bgColor};">${dy.ganzhi || '--'}</td>
-        `;
-    });
-    
-    tableHtml += `
-                </tr>
-            </tbody>
-        </table>
-    `;
-    
-    dayunGrid.innerHTML = tableHtml;
-    dayunCard.style.display = 'block';
+
+    return { dayunList, startAge };
 }
 
-// 显示伴侣大运排盘
+function _ensureDayunCard(cardId, gridId, title, anchorId) {
+    let card = document.getElementById(cardId);
+    if (!card) {
+        const anchor = document.getElementById(anchorId);
+        if (!anchor || (anchor.style && anchor.style.display === 'none')) return null;
+        card = document.createElement('div');
+        card.id = cardId;
+        card.className = 'dayun-pan-card';
+        card.style.cssText = 'display:block;margin-top:20px;padding:15px;background:#fff;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.05);border:1px solid #ddd;';
+        card.innerHTML = `
+            <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">${title}</h4>
+            <div id="${gridId}" style="width: 100%; overflow-x: auto;"></div>
+        `;
+        if (anchor.nextSibling) {
+            anchor.parentNode.insertBefore(card, anchor.nextSibling);
+        } else {
+            anchor.parentNode.appendChild(card);
+        }
+    }
+    return card;
+}
+
+export function displayDayunPan(dayunData) {
+    console.log('📊 显示大运排盘...', dayunData);
+
+    const card = _ensureDayunCard('dayun-pan-card', 'dayun-grid', '大运排盘', 'bazi-pan');
+    if (!card) return;
+
+    const grid = document.getElementById('dayun-grid');
+    if (!grid) return;
+
+    const { dayunList, startAge } = _normalizeDayunData(dayunData);
+    if (dayunList.length === 0) {
+        grid.innerHTML = '<div style="padding: 15px; text-align: center; color: #999;">⚠️ 大运排盘数据暂不可用</div>';
+        card.style.display = 'block';
+        return;
+    }
+
+    grid.innerHTML = _buildDayunTableHtml(dayunList, startAge);
+    card.style.display = 'block';
+}
+
 export function displayPartnerDayunPan(dayunData) {
     console.log('📊 显示伴侣大运排盘...', dayunData);
-    
-    let dayunCard = document.getElementById('partner-dayun-pan-card');
-    if (!dayunCard) {
-        const partnerBaziPan = document.getElementById('partner-bazi-pan');
-        if (partnerBaziPan && partnerBaziPan.style.display !== 'none') {
-            const card = document.createElement('div');
-            card.id = 'partner-dayun-pan-card';
-            card.className = 'dayun-pan-card';
-            card.style.display = 'block';
-            card.style.marginTop = '20px';
-            card.style.padding = '15px';
-            card.style.background = '#fff';
-            card.style.borderRadius = '10px';
-            card.style.boxShadow = '0 5px 15px rgba(0,0,0,0.05)';
-            card.style.border = '1px solid #ddd';
-            card.innerHTML = `
-                <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">伴侣大运排盘</h4>
-                <div id="partner-dayun-grid" style="width: 100%; overflow-x: auto;"></div>
-            `;
-            // 插入到 partnerBaziPan 之后
-            if (partnerBaziPan.nextSibling) {
-                partnerBaziPan.parentNode.insertBefore(card, partnerBaziPan.nextSibling);
-            } else {
-                partnerBaziPan.parentNode.appendChild(card);
-            }
-            dayunCard = card;
-        }
-    }
-    
-    if (!dayunCard) return;
-    
-    const dayunGrid = document.getElementById('partner-dayun-grid');
-    if (!dayunGrid) return;
-    
-    dayunGrid.innerHTML = '';
-    
-    let dayunList = [];
-    let startAge = 8;
-    
-    if (dayunData && dayunData.list && Array.isArray(dayunData.list) && dayunData.list.length > 0) {
-        dayunList = dayunData.list;
-        startAge = dayunData.start_age || 8;
-    } else if (Array.isArray(dayunData) && dayunData.length > 0) {
-        dayunList = dayunData;
-    }
-    
-    if (!dayunList || dayunList.length === 0) {
-        dayunGrid.innerHTML = `<div style="padding: 15px; text-align: center; color: #999;">⚠️ 伴侣大运排盘数据暂不可用</div>`;
-        dayunCard.style.display = 'block';
+
+    const card = _ensureDayunCard('partner-dayun-pan-card', 'partner-dayun-grid', '伴侣大运排盘', 'partner-bazi-pan');
+    if (!card) return;
+
+    const grid = document.getElementById('partner-dayun-grid');
+    if (!grid) return;
+
+    const { dayunList, startAge } = _normalizeDayunData(dayunData);
+    if (dayunList.length === 0) {
+        grid.innerHTML = '<div style="padding: 15px; text-align: center; color: #999;">⚠️ 伴侣大运排盘数据暂不可用</div>';
+        card.style.display = 'block';
         return;
     }
-    
-    const displayList = dayunList.slice(0, 8);
-    const numColumns = displayList.length;
-    
-    let tableHtml = `
-        <table style="width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-size: 13px;">
-            <thead>
-                <tr>
-                    <th style="padding: 8px 10px; background: var(--primary-color); color: white; text-align: center; font-weight: 600; width: 10%;">大运</th>
-    `;
-    
-    displayList.forEach((dy, index) => {
-        let ageLabel = '';
-        if (dy.age_start !== undefined && dy.age_start !== null) {
-            ageLabel = `${dy.age_start}岁`;
-        } else {
-            ageLabel = `${startAge + index * 10}岁`;
-        }
-        const bgColor = index % 2 === 0 ? 'var(--primary-color)' : '#a0522d';
-        tableHtml += `
-            <th style="padding: 8px 10px; background: ${bgColor}; color: white; text-align: center; font-weight: 600; width: ${Math.min(90 / numColumns, 15)}%;">${ageLabel}</th>
-        `;
-    });
-    
-    tableHtml += `
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td style="padding: 8px 10px; background: #f5f1e8; text-align: center; font-weight: 600; color: var(--dark-color);">干支</td>
-    `;
-    
-    displayList.forEach((dy, index) => {
-        const bgColor = index % 2 === 0 ? '#faf8f5' : '#fff';
-        tableHtml += `
-            <td style="padding: 8px 10px; text-align: center; font-weight: 500; color: var(--primary-color); background: ${bgColor};">${dy.ganzhi || '--'}</td>
-        `;
-    });
-    
-    tableHtml += `
-                </tr>
-            </tbody>
-        </table>
-    `;
-    
-    dayunGrid.innerHTML = tableHtml;
-    dayunCard.style.display = 'block';
-}
 
-// ============ 解析大运数据（增强版） ============
-export function parseDayunData(analysisResult) {
-    console.log('🔍 解析大运数据...');
-    
-    const result = { ages: [], dayuns: [], elements: [] };
-    
-    // 方法1：匹配标准格式 "岁：[8 18 28 38 48 58 68 78]"
-    const ageRegex = /岁[：:]\s*\[?([\d\s]+)\]?/;
-    const dayunRegex = /大运[：:]\s*\[?([^\n\]]+)\]?/;
-    
-    const ageMatch = analysisResult.match(ageRegex);
-    if (ageMatch) {
-        result.ages = ageMatch[1].trim().split(/\s+/).map(Number).filter(a => !isNaN(a) && a > 0);
-    }
-    
-    const dayunMatch = analysisResult.match(dayunRegex);
-    if (dayunMatch) {
-        result.dayuns = dayunMatch[1].trim().split(/\s+/).filter(d => d.length === 2);
-    }
-    
-    // 方法2：如果方法1没匹配到，用逐行解析
-    if (result.ages.length === 0 || result.dayuns.length === 0) {
-        const lines = analysisResult.split('\n');
-        let foundDayunSection = false;
-        let tempAges = [], tempDayuns = [];
-        
-        for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed.includes('【大运排盘】')) {
-                foundDayunSection = true;
-                continue;
-            }
-            if (foundDayunSection && trimmed.match(/^【/)) break;
-            if (!foundDayunSection) continue;
-            
-            const ageNumbers = trimmed.match(/\d+/g);
-            if (ageNumbers && trimmed.includes('岁')) {
-                tempAges = ageNumbers.map(Number);
-            }
-            const dayunMatches = trimmed.match(/[\u4e00-\u9fa5]{2}/g);
-            if (dayunMatches && trimmed.includes('大运')) {
-                tempDayuns = dayunMatches;
-            }
-        }
-        
-        if (tempAges.length > 0 && tempDayuns.length > 0) {
-            result.ages = tempAges;
-            result.dayuns = tempDayuns;
-        }
-    }
-    
-    const maxLen = Math.min(8, result.ages.length, result.dayuns.length);
-    result.ages = result.ages.slice(0, maxLen);
-    result.dayuns = result.dayuns.slice(0, maxLen);
-    
-    console.log('✅ 大运数据:', result);
-    return result;
+    grid.innerHTML = _buildDayunTableHtml(dayunList, startAge);
+    card.style.display = 'block';
 }
 
 // ============ 进度更新 ============
@@ -615,17 +446,6 @@ export function updateProgress(currentStep, totalSteps, stepName, percent, messa
     });
     
     container.innerHTML = html;
-}
-
-// ============ 处理分析结果（简化版） ============
-export function processAndDisplayAnalysis(result) {
-    // 此函数已废弃，内容现在由 main.js 直接显示
-    // 保留此函数仅用于兼容旧代码
-    console.log('⚠️ processAndDisplayAnalysis 已废弃');
-    const freeAnalysisText = UI.freeAnalysisText();
-    if (freeAnalysisText && freeAnalysisText.innerHTML === '' || freeAnalysisText && freeAnalysisText.innerHTML === '<div class="loading-text">正在生成分析结果...</div>') {
-        freeAnalysisText.innerHTML = '<div class="analysis-content" style="color: #999; text-align: center; padding: 20px;">分析完成，请查看上方报告内容</div>';
-    }
 }
 
 // ============ 支付相关函数 ============
@@ -808,7 +628,10 @@ export function closePaymentModal() {
     const paymentModal = UI.paymentModal();
     if (paymentModal) {
         hideElement(paymentModal);
-        document.body.style.overflow = 'auto';
+        const loadingModal = document.getElementById('loading-modal');
+        if (!loadingModal || loadingModal.style.display === 'none') {
+            document.body.style.overflow = 'auto';
+        }
     }
     if (window._paymentPolling) {
         clearInterval(window._paymentPolling);
@@ -858,9 +681,10 @@ export function showFullAnalysisContent() {
     const freeAnalysisText = UI.freeAnalysisText();
     if (lockedAnalysisText && freeAnalysisText) {
         const paidHtml = lockedAnalysisText.innerHTML;
-        if (paidHtml && paidHtml.trim()) {
+        if (paidHtml && paidHtml.trim() && !freeAnalysisText.dataset.paidAppended) {
             const divider = '<div style="border-top: 2px dashed var(--primary-color); margin: 20px 0; padding-top: 15px; text-align: center; color: var(--primary-color); font-size: 14px; font-weight: bold;">— 以下为完整详细报告 —</div>';
             freeAnalysisText.innerHTML = freeAnalysisText.innerHTML + divider + paidHtml;
+            freeAnalysisText.dataset.paidAppended = 'true';
         }
     }
 }

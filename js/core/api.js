@@ -120,6 +120,16 @@ function parseSingleBazi(baziText) {
         hour: { ganzhi: '', nayin: '' }
     };
 
+    // Try format: "己巳年、丙子月、丙寅日、甲午时"
+    const inlineMatch = baziText.match(/([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])年[、,]\s*([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])月[、,]\s*([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])日[、,]\s*([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])时/);
+    if (inlineMatch) {
+        baziData.year.ganzhi = inlineMatch[1];
+        baziData.month.ganzhi = inlineMatch[2];
+        baziData.day.ganzhi = inlineMatch[3];
+        baziData.hour.ganzhi = inlineMatch[4];
+        return baziData;
+    }
+
     const lines = baziText.split('\n');
 
     // Try to find the line with all four pillars (e.g., "乾造：己巳 丙子 丙寅 甲午")
@@ -137,27 +147,27 @@ function parseSingleBazi(baziText) {
             break;
         }
         
-        // Fallback: try individual pillar format (e.g., "年柱：己巳（大林木）")
+        // Fallback: try individual pillar format (e.g., "年柱：己巳（大林木）" or "年柱：己巳(大林木)")
         if (trimmedLine.includes('年柱')) {
-            const match = trimmedLine.match(/年柱[：:]\s*([^\s(]+)(?:\s*\(([^)]+)\))?/);
+            const match = trimmedLine.match(/年柱[：:]\s*([^\s(（]+)[(（]([^)）]+)[)）]/);
             if (match) {
                 baziData.year.ganzhi = match[1] || '';
                 baziData.year.nayin = match[2] || '';
             }
         } else if (trimmedLine.includes('月柱')) {
-            const match = trimmedLine.match(/月柱[：:]\s*([^\s(]+)(?:\s*\(([^)]+)\))?/);
+            const match = trimmedLine.match(/月柱[：:]\s*([^\s(（]+)[(（]([^)）]+)[)）]/);
             if (match) {
                 baziData.month.ganzhi = match[1] || '';
                 baziData.month.nayin = match[2] || '';
             }
         } else if (trimmedLine.includes('日柱')) {
-            const match = trimmedLine.match(/日柱[：:]\s*([^\s(]+)(?:\s*\(([^)]+)\))?/);
+            const match = trimmedLine.match(/日柱[：:]\s*([^\s(（]+)[(（]([^)）]+)[)）]/);
             if (match) {
                 baziData.day.ganzhi = match[1] || '';
                 baziData.day.nayin = match[2] || '';
             }
         } else if (trimmedLine.includes('时柱')) {
-            const match = trimmedLine.match(/时柱[：:]\s*([^\s(]+)(?:\s*\(([^)]+)\))?/);
+            const match = trimmedLine.match(/时柱[：:]\s*([^\s(（]+)[(（]([^)）]+)[)）]/);
             if (match) {
                 baziData.hour.ganzhi = match[1] || '';
                 baziData.hour.nayin = match[2] || '';

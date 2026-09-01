@@ -221,11 +221,19 @@ const PaymentManager = {
         STATE.isDownloadLocked = false;
         STATE.currentOrderId = orderId;
         
-        console.log('状态已更新:', {
-            isPaymentUnlocked: STATE.isPaymentUnlocked,
-            isDownloadLocked: STATE.isDownloadLocked,
-            currentOrderId: STATE.currentOrderId
-        });
+        try {
+            const resp = await fetch(`${API_CONFIG.BACKEND_URL}/api/payment/unlock/${orderId}`);
+            const unlockResult = await resp.json();
+            if (unlockResult.success && unlockResult.data.verified) {
+                STATE.paidDetail = unlockResult.data.paidDetail || '';
+                localStorage.setItem('last_paid_detail', STATE.paidDetail);
+                console.log('🔓 付费内容已获取，长度:', STATE.paidDetail.length);
+            } else {
+                console.warn('⚠️ 解锁接口返回未验证:', unlockResult);
+            }
+        } catch (e) {
+            console.error('解锁接口调用失败:', e);
+        }
         
         try {
             console.log('🔓 调用 restoreAnalysis()...');
@@ -442,7 +450,7 @@ const PaymentManager = {
 
 // ============ 【导入所有依赖】 ============
 import { SERVICES, STATE, API_CONFIG } from './config.js';
-import { checkAPIStatus, parseBaziData, analyzeBazi } from './api.js';
+import { checkAPIStatus, parseBaziData, analyzeBazi, startAnalysisTask, pollAnalysisResult } from './api.js?v=13';
 import {
     UI, initFormOptions, updateServiceDisplay,
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,
@@ -453,6 +461,18 @@ import {
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData
 } from './ui.js';
+
+var _pollState = {
+    active: false,
+    taskId: null,
+    timer: null,
+    progressTimer: null,
+    consecutiveErrors: 0,
+    pollCount: 0,
+    currentStep: 0,
+    progressPercent: 0,
+    totalSteps: 8
+};
 
 // ============ 支付成功处理函数 ============
 function handlePaymentSuccess() {
@@ -718,6 +738,11 @@ async function startAnalysis() {
         return;
     }
     
+    if (_pollState.active) {
+        console.log('已有分析任务进行中');
+        return;
+    }
+    
     var resultServiceName = document.getElementById('result-service-name');
     if (resultServiceName) {
         resultServiceName.textContent = STATE.currentService + '分析报告';
@@ -731,31 +756,16 @@ async function startAnalysis() {
     STATE.dayunData = null;
     STATE.partnerDayunData = null;
 
-    localStorage.removeItem('last_analysis_result');
-    localStorage.removeItem('last_analysis_service');
-    localStorage.removeItem('last_user_data');
-    localStorage.removeItem('last_free_summary');
-    localStorage.removeItem('last_paid_detail');
-    localStorage.removeItem('last_bazi_data');
-    localStorage.removeItem('last_dayun_data');
-    localStorage.removeItem('last_partner_data');
-    localStorage.removeItem('last_partner_bazi_data');
-    localStorage.removeItem('last_partner_dayun_data');
-
     lockDownloadButton();
     animateButtonStretch();
     showLoadingModal();
     
     var serviceConfig = SERVICES[STATE.currentService];
     var totalSteps = serviceConfig.analysisSteps ? serviceConfig.analysisSteps.length : 8;
-    var currentStep = 0;
-    var progressPercent = 0;
     
     try {
         collectUserData();
-        currentStep = 1;
-        progressPercent = 5;
-        updateProgress(currentStep, totalSteps, '验证用户信息', progressPercent, '正在验证用户信息...');
+        updateProgress(1, totalSteps, '验证用户信息', 5, '正在验证用户信息...');
         await sleep(300);
         
         var freeAnalysisText = UI.freeAnalysisText();
@@ -763,163 +773,53 @@ async function startAnalysis() {
             freeAnalysisText.innerHTML = '<div class="loading-text">正在生成分析结果...</div>';
         }
         
-        console.log('🔮 调用综合命理分析引擎...');
+        console.log('🔮 创建分析任务...');
+        updateProgress(1, totalSteps, '八字排盘计算', 10, '正在排列八字四柱...');
         
-        // 模拟进度：在API调用期间平滑推进进度条
-        progressPercent = 10;
-        updateProgress(1, totalSteps, '八字排盘计算', progressPercent, '正在排列八字四柱...');
+        var taskId = await startAnalysisTask(STATE.userData, STATE.currentService, true);
+        console.log('✅ 任务已创建:', taskId);
         
-        var progressTimer = setInterval(function() {
-            currentStep = Math.min(currentStep + 1, totalSteps - 1);
-            progressPercent = Math.min(progressPercent + Math.floor(Math.random() * 5 + 3), 75);
-            var stepLabels = serviceConfig.analysisSteps || [];
-            var stepLabel = stepLabels[currentStep] || '分析中';
-            var stepMessages = [
-                '正在排列八字四柱...',
-                '正在计算大运排盘...',
-                '正在分析用神喜忌...',
-                '正在解析性格特点...',
-                '正在推算流年运势...',
-                '正在综合评估命局...',
-                '正在生成详细报告...',
-                '正在润色分析结果...'
-            ];
-            var msg = stepMessages[currentStep % stepMessages.length] || '正在深度分析...';
-            updateProgress(currentStep, totalSteps, stepLabel, progressPercent, msg);
+        _pollState.active = true;
+        _pollState.taskId = taskId;
+        _pollState.consecutiveErrors = 0;
+        _pollState.pollCount = 0;
+        _pollState.currentStep = 1;
+        _pollState.progressPercent = 10;
+        _pollState.totalSteps = totalSteps;
+        localStorage.setItem('current_task_id', taskId);
+        
+        _pollState.progressTimer = setInterval(function() {
+            if (_pollState.progressPercent < 75) {
+                _pollState.currentStep = Math.min(_pollState.currentStep + 1, totalSteps - 1);
+                _pollState.progressPercent = Math.min(_pollState.progressPercent + Math.floor(Math.random() * 5 + 3), 75);
+                var stepLabels = serviceConfig.analysisSteps || [];
+                var stepLabel = stepLabels[_pollState.currentStep] || '分析中';
+                var stepMessages = [
+                    '正在排列八字四柱...',
+                    '正在计算大运排盘...',
+                    '正在分析用神喜忌...',
+                    '正在解析性格特点...',
+                    '正在推算流年运势...',
+                    '正在综合评估命局...',
+                    '正在生成详细报告...',
+                    '正在润色分析结果...'
+                ];
+                var msg = stepMessages[_pollState.currentStep % stepMessages.length] || '正在深度分析...';
+                updateProgress(_pollState.currentStep, totalSteps, stepLabel, _pollState.progressPercent, msg);
+            }
         }, 2000);
         
-        const result = await analyzeBazi(STATE.userData, STATE.currentService, true);
-        
-        clearInterval(progressTimer);
-        
-        console.log('✅ 综合分析完成');
-        console.log('返回数据:', result);
-        
-        STATE.fullAnalysisResult = result.polished_report;
-        STATE.baziData = result.bazi_pan;
-        
-        if (result.dayun_pan && result.dayun_pan.length > 0) {
-            STATE.dayunData = {
-                ages: result.dayun_pan.map(d => d.age_start),
-                dayuns: result.dayun_pan.map(d => d.ganzhi)
-            };
-            console.log('✅ 大运数据已保存:', STATE.dayunData);
-        }
-        
-        displayPredictorInfo();
-        displayBaziPan();
-        
-        if (result.dayun_pan && result.dayun_pan.length > 0) {
-            const dayunDisplayData = {
-                ages: result.dayun_pan.map(d => d.age_start),
-                dayuns: result.dayun_pan.map(d => d.ganzhi)
-            };
-            if (result.dayun_detail && result.dayun_detail.xi_ji) {
-                const xiJiMap = {};
-                result.dayun_detail.xi_ji.forEach(item => {
-                    xiJiMap[item.age] = { xi: item.xi, ji: item.ji };
-                });
-                dayunDisplayData.xi_ji = xiJiMap;
-            }
-            displayDayunPan(dayunDisplayData);
-            console.log('✅ 大运排盘已显示');
-        }
-        
-        // ★★★ 合婚：显示伴侣八字和大运 ★★★
-        if (STATE.currentService === '八字合婚' && result.partner_bazi_pan) {
-            STATE.partnerBaziData = result.partner_bazi_pan;
-            console.log('✅ 伴侣八字数据已保存:', STATE.partnerBaziData);
-            
-            if (result.partner_dayun_pan && result.partner_dayun_pan.length > 0) {
-                STATE.partnerDayunData = result.partner_dayun_pan;
-                console.log('✅ 伴侣大运数据已保存:', STATE.partnerDayunData);
-
-                displayPartnerDayunPan(result.partner_dayun_pan);
-                console.log('✅ 伴侣大运排盘已显示');
-            }
-            
-            displayBaziPan();
-        }
-        
-        // ★★★ 显示DeepSeek免费摘要（在免费区域） ★★★
-        STATE.freeSummary = result.free_summary || '';
-        STATE.paidDetail = result.paid_detail || '';
-        console.log('📊 DeepSeek免费摘要长度:', STATE.freeSummary.length, '付费详情长度:', STATE.paidDetail.length);
-        
-        const freeText = document.getElementById('free-analysis-text');
-        if (freeText) {
-            if (STATE.freeSummary) {
-                freeText.innerHTML = renderDeepSeekSection(STATE.freeSummary, 'free');
-                console.log('✅ DeepSeek免费摘要已显示');
-            } else {
-                freeText.innerHTML = '<div class="analysis-content" style="color: #999; text-align: center; padding: 20px;">暂无分析摘要</div>';
-            }
-        }
-        
-        // ★★★ 预加载DeepSeek付费详情（保持隐藏，支付后才显示） ★★★
-        const lockedText = document.getElementById('locked-analysis-text');
-        if (lockedText) {
-            if (STATE.paidDetail) {
-                lockedText.innerHTML = renderDeepSeekSection(STATE.paidDetail, 'paid');
-                lockedText.style.display = 'none';
-                console.log('✅ DeepSeek付费详情已预加载（隐藏状态）');
-            } else {
-                lockedText.innerHTML = '<div class="analysis-content" style="color: #999; text-align: center;">暂无详细报告</div>';
-                lockedText.style.display = 'none';
-            }
-        }
-        
-        if (STATE.isPaymentUnlocked) {
-            updateUnlockInterface();
-            showFullAnalysisContent();
-            unlockDownloadButton();
-        }
-        
-        // ★★★ 更新进度到完成 ★★★
-        currentStep = totalSteps - 1;
-        progressPercent = 85;
-        updateProgress(currentStep, totalSteps, '生成排盘结果', progressPercent, '八字排盘生成完成');
-        await sleep(300);
-        
-        progressPercent = 95;
-        updateProgress(currentStep, totalSteps, '整理分析报告', progressPercent, '报告整理完成');
-        await sleep(300);
-        
-        progressPercent = 100;
-        currentStep = totalSteps;
-        updateProgress(currentStep, totalSteps, '✅ 分析完成', progressPercent, '✅ 所有分析项目已完成！');
-        await sleep(500);
-        
-        hideLoadingModal();
-        
-        showAnalysisResult();
-        
-        console.log('命理分析完成，结果已显示');
-        
-        PaymentManager.saveAnalysisBeforePayment();
-        
-        var paymentData = PaymentManager.getPaymentData();
-        if (paymentData && paymentData.verified) {
-            var savedService = localStorage.getItem('last_analysis_service');
-            if (savedService === STATE.currentService && !STATE.isPaymentUnlocked) {
-                console.log('当前服务已支付，自动解锁');
-                setTimeout(function() {
-                    PaymentManager.updateUIAfterPayment();
-                }, 500);
-            }
-        }
+        _startPolling();
         
     } catch (error) {
-        clearInterval(progressTimer);
-        console.error('❌ 分析失败:', error);
+        console.error('❌ 创建任务失败:', error);
         hideLoadingModal();
-
+        _stopPolling();
+        
         var errMsg = String(error && error.message || error || '');
         var errorMessage = '命理分析失败，请稍后再试。';
         if (errMsg.indexOf('401') !== -1 || errMsg.indexOf('Unauthorized') !== -1) {
             errorMessage = 'API密钥错误，请联系管理员。';
-        } else if (errMsg.indexOf('429') !== -1) {
-            errorMessage = '请求过于频繁，请稍后再试。';
         } else if (errMsg.indexOf('网络') !== -1 || errMsg.indexOf('Network') !== -1) {
             errorMessage = '网络连接失败，请检查您的网络设置。';
         } else if (errMsg.indexOf('超时') !== -1 || errMsg.indexOf('timeout') !== -1) {
@@ -928,6 +828,181 @@ async function startAnalysis() {
         alert(errorMessage + '\n\n错误详情：' + errMsg);
     }
 }
+
+function _startPolling() {
+    if (_pollState.timer) clearInterval(_pollState.timer);
+    
+    _pollState.timer = setInterval(async function() {
+        if (!_pollState.active) return;
+        
+        _pollState.pollCount++;
+        if (_pollState.pollCount > 100) {
+            _stopPolling();
+            hideLoadingModal();
+            localStorage.removeItem('current_task_id');
+            alert('分析时间过长，请稍后重试。如问题持续存在，请联系客服。');
+            return;
+        }
+        
+        try {
+            var result = await pollAnalysisResult(_pollState.taskId);
+            _pollState.consecutiveErrors = 0;
+            
+            if (result.status === 'completed') {
+                _stopPolling();
+                localStorage.removeItem('current_task_id');
+                console.log('✅ 分析任务完成');
+                _handleAnalysisResult(result.data);
+            } else if (result.status === 'failed') {
+                _stopPolling();
+                hideLoadingModal();
+                localStorage.removeItem('current_task_id');
+                alert('分析失败：' + (result.error || '未知错误') + '\n请稍后重试。');
+            }
+        } catch (error) {
+            _pollState.consecutiveErrors++;
+            console.warn('轮询失败 (' + _pollState.consecutiveErrors + '/5):', error.message);
+            
+            if (_pollState.consecutiveErrors >= 5) {
+                _stopPolling();
+                hideLoadingModal();
+                localStorage.removeItem('current_task_id');
+                alert('网络连接中断，分析结果可能仍在生成中。\n请稍后重新进入页面查看。');
+            }
+        }
+    }, 3000);
+}
+
+function _stopPolling() {
+    _pollState.active = false;
+    if (_pollState.timer) {
+        clearInterval(_pollState.timer);
+        _pollState.timer = null;
+    }
+    if (_pollState.progressTimer) {
+        clearInterval(_pollState.progressTimer);
+        _pollState.progressTimer = null;
+    }
+}
+
+async function _handleAnalysisResult(result) {
+    var totalSteps = _pollState.totalSteps;
+    
+    console.log('✅ 综合分析完成');
+    console.log('返回数据:', result);
+    
+    STATE.fullAnalysisResult = result.polished_report;
+    STATE.baziData = result.bazi_pan;
+    
+    if (result.dayun_pan && result.dayun_pan.length > 0) {
+        STATE.dayunData = {
+            ages: result.dayun_pan.map(d => d.age_start),
+            dayuns: result.dayun_pan.map(d => d.ganzhi)
+        };
+        console.log('✅ 大运数据已保存:', STATE.dayunData);
+    }
+    
+    displayPredictorInfo();
+    displayBaziPan();
+    
+    if (result.dayun_pan && result.dayun_pan.length > 0) {
+        const dayunDisplayData = {
+            ages: result.dayun_pan.map(d => d.age_start),
+            dayuns: result.dayun_pan.map(d => d.ganzhi)
+        };
+        if (result.dayun_detail && result.dayun_detail.xi_ji) {
+            const xiJiMap = {};
+            result.dayun_detail.xi_ji.forEach(item => {
+                xiJiMap[item.age] = { xi: item.xi, ji: item.ji };
+            });
+            dayunDisplayData.xi_ji = xiJiMap;
+        }
+        displayDayunPan(dayunDisplayData);
+        console.log('✅ 大运排盘已显示');
+    }
+    
+    if (STATE.currentService === '八字合婚' && result.partner_bazi_pan) {
+        STATE.partnerBaziData = result.partner_bazi_pan;
+        console.log('✅ 伴侣八字数据已保存:', STATE.partnerBaziData);
+        
+        if (result.partner_dayun_pan && result.partner_dayun_pan.length > 0) {
+            STATE.partnerDayunData = result.partner_dayun_pan;
+            console.log('✅ 伴侣大运数据已保存:', STATE.partnerDayunData);
+            displayPartnerDayunPan(result.partner_dayun_pan);
+            console.log('✅ 伴侣大运排盘已显示');
+        }
+        displayBaziPan();
+    }
+    
+    STATE.freeSummary = result.free_summary || '';
+    STATE.paidDetail = result.paid_detail || '';
+    console.log('📊 DeepSeek免费摘要长度:', STATE.freeSummary.length, '付费详情长度:', STATE.paidDetail.length);
+    
+    const freeText = document.getElementById('free-analysis-text');
+    if (freeText) {
+        if (STATE.freeSummary) {
+            freeText.innerHTML = renderDeepSeekSection(STATE.freeSummary, 'free');
+            console.log('✅ DeepSeek免费摘要已显示');
+        } else {
+            freeText.innerHTML = '<div class="analysis-content" style="color: #999; text-align: center; padding: 20px;">暂无分析摘要</div>';
+        }
+    }
+    
+    const lockedText = document.getElementById('locked-analysis-text');
+    if (lockedText) {
+        if (STATE.paidDetail) {
+            lockedText.innerHTML = renderDeepSeekSection(STATE.paidDetail, 'paid');
+            lockedText.style.display = 'none';
+            console.log('✅ DeepSeek付费详情已预加载（隐藏状态）');
+        } else {
+            lockedText.innerHTML = '<div class="analysis-content" style="color: #999; text-align: center;">暂无详细报告</div>';
+            lockedText.style.display = 'none';
+        }
+    }
+    
+    if (STATE.isPaymentUnlocked) {
+        updateUnlockInterface();
+        showFullAnalysisContent();
+        unlockDownloadButton();
+    }
+    
+    var currentStep = totalSteps - 1;
+    updateProgress(currentStep, totalSteps, '生成排盘结果', 85, '八字排盘生成完成');
+    await sleep(300);
+    
+    updateProgress(currentStep, totalSteps, '整理分析报告', 95, '报告整理完成');
+    await sleep(300);
+    
+    updateProgress(totalSteps, totalSteps, '✅ 分析完成', 100, '✅ 所有分析项目已完成！');
+    await sleep(500);
+    
+    hideLoadingModal();
+    showAnalysisResult();
+    
+    console.log('命理分析完成，结果已显示');
+    
+    PaymentManager.saveAnalysisBeforePayment();
+    
+    var paymentData = PaymentManager.getPaymentData();
+    if (paymentData && paymentData.verified) {
+        var savedService = localStorage.getItem('last_analysis_service');
+        if (savedService === STATE.currentService && !STATE.isPaymentUnlocked) {
+            console.log('当前服务已支付，自动解锁');
+            setTimeout(function() {
+                PaymentManager.updateUIAfterPayment();
+            }, 500);
+        }
+    }
+}
+
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible' && _pollState.active) {
+        console.log('📱 页面恢复可见，检查轮询状态...');
+        if (!_pollState.timer) {
+            _startPolling();
+        }
+    }
+});
 
 function downloadReport() {
     console.log('📥 尝试下载报告...');

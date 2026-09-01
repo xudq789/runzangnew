@@ -4,6 +4,7 @@ export const SERVICES = {
         heroImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/1-1.jpg',
         detailImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/1-2.jpg',
         price: 0.01,
+        price: 18,
         lockedItems: [
             '富贵层次评估',
             '过往大运吉凶分析',
@@ -26,6 +27,7 @@ export const SERVICES = {
         heroImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/2-1.jpg',
         detailImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/2-2.jpg',
         price: 0.01,
+        price: 28,
         lockedItems: [
             '富贵层次评估',
             '测算当年及往后5年运势',
@@ -38,7 +40,6 @@ export const SERVICES = {
             '八字排盘',
             '大运排盘',
             '八字喜用分析',
-            '性格特点',
             '适宜行业职业推荐',
             '富贵层次评估',
             '测算当年及往后5年运势',
@@ -52,6 +53,7 @@ export const SERVICES = {
         heroImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/3-1.jpg',
         detailImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/3-2.jpg',
         price: 0.01,
+        price: 38,
         lockedItems: [
             '富贵层次评估',
             '人生每步大运吉凶分析',
@@ -64,9 +66,6 @@ export const SERVICES = {
         analysisSteps: [
             '八字排盘',
             '大运排盘',
-            '八字喜用分析',
-            '性格特点',
-            '适宜行业职业推荐',
             '富贵层次评估',
             '人生每步大运吉凶分析',
             '人生高低点分析',
@@ -80,6 +79,7 @@ export const SERVICES = {
         heroImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/4-1.jpg',
         detailImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/4-2.jpg',
         price: 0.01,
+        price: 38,
         lockedItems: [
             '双方八字契合度分析',
             '感情发展趋势解读',
@@ -92,36 +92,3 @@ export const SERVICES = {
             '伴侣八字排盘',
             '八字喜用分析',
             '性格特点',
-            '双方八字契合度分析',
-            '感情发展趋势解读',
-            '婚姻稳定性分析',
-            '双方性格匹配度分析',
-            '婚姻建议和注意事项'
-        ]
-    }
-};
-
-// 全局状态
-export const STATE = {
-    currentService: '测算验证',
-    fullAnalysisResult: '',
-    freeSummary: '',
-    paidDetail: '',
-    baziData: null,
-    partnerBaziData: null,
-    dayunData: null,
-    partnerDayunData: null,
-    currentOrderId: null,
-    currentOutTradeNo: null,
-    userData: null,
-    partnerData: null,
-    apiStatus: null,
-    isPaymentUnlocked: false,
-    isDownloadLocked: true
-};
-
-// ★★★ API 配置 ★★★
-export const API_CONFIG = {
-    BACKEND_URL: 'https://api.runzang.top',
-    TIMEOUT: 120000
-};

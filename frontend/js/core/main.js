@@ -442,7 +442,7 @@ const PaymentManager = {
 
 // ============ 【导入所有依赖】 ============
 import { SERVICES, STATE, API_CONFIG } from './config.js';
-import { checkAPIStatus, parseBaziData, analyzeBazi, startAnalysisTask, pollAnalysisResult } from './api.js?v=12';
+import { checkAPIStatus, parseBaziData, analyzeBazi, startAnalysisTask, pollAnalysisResult } from './api.js?v=13';
 import {
     UI, initFormOptions, updateServiceDisplay,
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,

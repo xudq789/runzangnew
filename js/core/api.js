@@ -173,3 +173,53 @@ export async function analyzeBazi(userData, serviceType, needPolish = true) {
         throw error;
     }
 }
+
+export async function startAnalysisTask(userData, serviceType, needPolish = true) {
+    const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/analyze/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            user_data: userData,
+            service_type: serviceType,
+            need_polish: needPolish,
+            current_year: new Date().getFullYear()
+        }),
+        signal: AbortSignal.timeout(15000)
+    });
+
+    if (!response.ok) {
+        let errorMsg = `请求失败 (${response.status})`;
+        try {
+            const errorData = await response.json();
+            errorMsg = errorData.error || errorMsg;
+        } catch (e) { /* ignore */ }
+        throw new Error(errorMsg);
+    }
+
+    const result = await response.json();
+    if (result.success) {
+        return result.task_id;
+    }
+    throw new Error(result.error || '创建任务失败');
+}
+
+export async function pollAnalysisResult(taskId) {
+    const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/analyze/status/${taskId}`, {
+        signal: AbortSignal.timeout(10000)
+    });
+
+    if (!response.ok) {
+        throw new Error(`查询失败 (${response.status})`);
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+        throw new Error(result.error || '查询失败');
+    }
+
+    return {
+        status: result.status,
+        data: result.data || null,
+        error: result.error || null
+    };
+}

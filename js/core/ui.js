@@ -472,7 +472,8 @@ export async function showPaymentModal() {
             body: JSON.stringify({
                 service_type: STATE.currentService,
                 payment_method: 'alipay',
-                client_type: isMobile ? 'h5' : 'pc'
+                client_type: isMobile ? 'h5' : 'pc',
+                task_id: localStorage.getItem('current_task_id') || ''
             })
         });
         

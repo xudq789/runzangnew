@@ -1398,14 +1398,14 @@ input:focus, select:focus {
 
 /* 首次优惠价（划线原价） */
 .orig-price {
-    color: #999;
+    color: #7a5a30;
     text-decoration: line-through;
     margin-right: 6px;
     font-size: 13px;
     font-weight: 400;
 }
 .sale-price {
-    color: var(--secondary-color);
+    color: #5c3d2e;
     font-weight: 700;
     white-space: nowrap;
 }

@@ -1371,12 +1371,13 @@ input:focus, select:focus {
 
 @media (max-width: 720px) {
   #bazi-grid, #partner-bazi-grid { overflow-x: auto; }
-  .pan-table { gap: 5px; min-width: 340px; }
+  .pan-table { grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; gap: 5px; }
+  .pan-col { min-width: 0; padding: 8px 2px 10px; }
   .pan-gan, .pan-zhi { font-size: 22px; }
-  .pan-col { padding: 8px 2px 10px; }
   .pan-label { font-size: 11px; }
   .pan-shishen { font-size: 13px; }
   .pan-canggan { gap: 3px; }
+  .pan-cang-item { min-width: 0; padding: 0 1px; }
   .pan-cang-gan { font-size: 13px; }
   .pan-cang-ss { font-size: 8px; }
   .pan-meta { font-size: 10px; }
@@ -1394,6 +1395,27 @@ input:focus, select:focus {
   .dayun-shishen { font-size: 12px; }
   .dayun-age { font-size: 10px; }
   .dayun-wrap::-webkit-scrollbar { height: 6px; }
+}
+
+@media (max-width: 400px) {
+  .bazi-pan-card { padding: 12px 10px; }
+  .pan-table { gap: 3px; }
+  .pan-col { padding: 6px 1px 8px; }
+  .pan-label { font-size: 10px; letter-spacing: 1px; }
+  .pan-shishen { font-size: 12px; margin: 4px 0 1px; }
+  .pan-gan, .pan-zhi { font-size: 19px; }
+  .pan-canggan {
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    margin-top: 4px;
+    padding-top: 4px;
+  }
+  .pan-cang-item { display: flex; align-items: center; gap: 3px; min-height: 14px; }
+  .pan-cang-gan { font-size: 13px; line-height: 1; }
+  .pan-cang-ss { font-size: 9px; margin-top: 0; }
+  .pan-wxtxt { font-size: 9px; }
+  .pan-meta { font-size: 9px; margin-top: 3px; }
 }
 
 /* 首次优惠价（划线原价） */

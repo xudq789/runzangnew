@@ -187,138 +187,120 @@ export function displayPredictorInfo() {
     });
 }
 
+// ============ 八字排盘（专业四柱表） ============
+function _wxClass(wx) {
+    return { '木': 'wx-mu', '火': 'wx-huo', '土': 'wx-tu', '金': 'wx-jin', '水': 'wx-shui' }[wx] || '';
+}
+
+function _renderBaziPan(grid, bazi, genderText) {
+    if (!grid) return;
+    grid.innerHTML = '';
+    if (!bazi || !bazi.year || !bazi.month || !bazi.day || !bazi.hour) {
+        grid.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">暂无排盘数据</div>';
+        return;
+    }
+
+    const wrap = document.createElement('div');
+    wrap.className = 'pan-wrap';
+    if (genderText) {
+        const head = document.createElement('div');
+        head.className = 'pan-head';
+        head.textContent = genderText;
+        wrap.appendChild(head);
+    }
+
+    const cols = [
+        { name: '年柱', p: bazi.year },
+        { name: '月柱', p: bazi.month },
+        { name: '日柱', p: bazi.day, day: true },
+        { name: '时柱', p: bazi.hour }
+    ];
+
+    const table = document.createElement('div');
+    table.className = 'pan-table';
+
+    cols.forEach(col => {
+        const p = col.p;
+        const gz = p.ganzhi || '--';
+        const gan = p.gan || gz[0] || '';
+        const zhi = p.zhi || gz[1] || '';
+        const canggan = (p.zhi_canggan || []);
+        const cangSs = (p.zhi_canggan_shishen || []);
+
+        const cell = document.createElement('div');
+        cell.className = 'pan-col' + (col.day ? ' pan-col-day' : '');
+
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'pan-label';
+        nameDiv.textContent = col.name;
+
+        const ssDiv = document.createElement('div');
+        ssDiv.className = 'pan-shishen' + (col.day ? ' pan-shishen-day' : '');
+        ssDiv.textContent = p.gan_shishen || (col.day ? '日主' : '');
+
+        const ganDiv = document.createElement('div');
+        ganDiv.className = 'pan-gan ' + _wxClass(p.gan_wuxing || '');
+        ganDiv.textContent = gan;
+
+        const zhiDiv = document.createElement('div');
+        zhiDiv.className = 'pan-zhi ' + _wxClass(p.zhi_wuxing || '');
+        zhiDiv.textContent = zhi;
+
+        const cangDiv = document.createElement('div');
+        cangDiv.className = 'pan-canggan';
+        if (canggan.length) {
+            canggan.forEach((cg, i) => {
+                const item = document.createElement('div');
+                item.className = 'pan-cang-item';
+                const g = document.createElement('div');
+                g.className = 'pan-cang-gan ' + _wxClass(({ '甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土', '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水' }[cg] || ''));
+                g.textContent = cg;
+                const s = document.createElement('div');
+                s.className = 'pan-cang-ss';
+                s.textContent = cangSs[i] || '';
+                item.appendChild(g);
+                item.appendChild(s);
+                cangDiv.appendChild(item);
+            });
+        }
+
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'pan-meta';
+        metaDiv.textContent = p.nayin || '';
+
+        cell.appendChild(nameDiv);
+        cell.appendChild(ssDiv);
+        cell.appendChild(ganDiv);
+        cell.appendChild(zhiDiv);
+        cell.appendChild(cangDiv);
+        cell.appendChild(metaDiv);
+        table.appendChild(cell);
+    });
+
+    wrap.appendChild(table);
+    grid.appendChild(wrap);
+}
+
 export function displayBaziPan() {
-    // 显示用户八字
-    const userGrid = document.getElementById('bazi-grid');
-    if (userGrid) {
-        userGrid.innerHTML = '';
-        const bazi = STATE.baziData;
-        if (bazi && bazi.year && bazi.month && bazi.day && bazi.hour) {
-            const columns = [
-                { label: '年柱', value: bazi.year.ganzhi || '', element: bazi.year.nayin || '' },
-                { label: '月柱', value: bazi.month.ganzhi || '', element: bazi.month.nayin || '' },
-                { label: '日柱', value: bazi.day.ganzhi || '', element: bazi.day.nayin || '' },
-                { label: '时柱', value: bazi.hour.ganzhi || '', element: bazi.hour.nayin || '' }
-            ];
-            columns.forEach(col => {
-                const div = document.createElement('div');
-                div.className = 'bazi-column';
-                const labelDiv = document.createElement('div');
-                labelDiv.className = 'bazi-label';
-                labelDiv.textContent = col.label;
-                const valueDiv = document.createElement('div');
-                valueDiv.className = 'bazi-value';
-                valueDiv.textContent = col.value;
-                const elementDiv = document.createElement('div');
-                elementDiv.className = 'bazi-element';
-                elementDiv.textContent = col.element || '';
-                div.appendChild(labelDiv);
-                div.appendChild(valueDiv);
-                div.appendChild(elementDiv);
-                userGrid.appendChild(div);
-            });
-        }
-    }
-    
-    // 显示伴侣八字（合婚时）
-    const partnerGrid = document.getElementById('partner-bazi-grid');
-    if (partnerGrid) {
-        partnerGrid.innerHTML = '';
-        const bazi = STATE.partnerBaziData;
-        if (bazi && bazi.year && bazi.month && bazi.day && bazi.hour) {
-            const columns = [
-                { label: '年柱', value: bazi.year.ganzhi || '', element: bazi.year.nayin || '' },
-                { label: '月柱', value: bazi.month.ganzhi || '', element: bazi.month.nayin || '' },
-                { label: '日柱', value: bazi.day.ganzhi || '', element: bazi.day.nayin || '' },
-                { label: '时柱', value: bazi.hour.ganzhi || '', element: bazi.hour.nayin || '' }
-            ];
-            columns.forEach(col => {
-                const div = document.createElement('div');
-                div.className = 'bazi-column';
-                const labelDiv = document.createElement('div');
-                labelDiv.className = 'bazi-label';
-                labelDiv.textContent = col.label;
-                const valueDiv = document.createElement('div');
-                valueDiv.className = 'bazi-value';
-                valueDiv.textContent = col.value;
-                const elementDiv = document.createElement('div');
-                elementDiv.className = 'bazi-element';
-                elementDiv.textContent = col.element || '';
-                div.appendChild(labelDiv);
-                div.appendChild(valueDiv);
-                div.appendChild(elementDiv);
-                partnerGrid.appendChild(div);
-            });
-        } else if (STATE.currentService === '八字合婚') {
-            partnerGrid.innerHTML = `<div style="padding: 15px; text-align: center; color: #999; background: #f9f5f0; border-radius: 8px;">请先进行八字合婚测算</div>`;
-        }
-    }
+    const genderText = (STATE.userData && STATE.userData.gender === '女') ? '坤造' : '乾造';
+    _renderBaziPan(document.getElementById('bazi-grid'), STATE.baziData, genderText);
+    _renderBaziPan(document.getElementById('partner-bazi-grid'), STATE.partnerBaziData,
+        STATE.currentService === '八字合婚' && STATE.partnerData && STATE.partnerData.partnerGender === '女' ? '坤造（伴侣）' : '乾造（伴侣）');
 }
 
-// ============ 大运排盘显示（修复版） ============
-function _buildDayunTableHtml(dayunList, startAge) {
-    const displayList = dayunList.slice(0, 8);
-    const numColumns = displayList.length;
-
-    let html = `
-        <table style="width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-size: 13px;">
-            <thead>
-                <tr>
-                    <th style="padding: 8px 10px; background: var(--primary-color); color: white; text-align: center; font-weight: 600; width: 10%;">大运</th>
-    `;
-
-    displayList.forEach((dy, index) => {
-        const ageLabel = (dy.age_start != null) ? `${dy.age_start}岁` : `${startAge + index * 10}岁`;
-        const bgColor = index % 2 === 0 ? 'var(--primary-color)' : '#a0522d';
-        html += `
-            <th style="padding: 8px 10px; background: ${bgColor}; color: white; text-align: center; font-weight: 600; width: ${Math.min(90 / numColumns, 15)}%;">${ageLabel}</th>
-        `;
-    });
-
-    html += `
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td style="padding: 8px 10px; background: #f5f1e8; text-align: center; font-weight: 600; color: var(--dark-color);">干支</td>
-    `;
-
-    displayList.forEach((dy, index) => {
-        const bgColor = index % 2 === 0 ? '#faf8f5' : '#fff';
-        html += `
-            <td style="padding: 8px 10px; text-align: center; font-weight: 500; color: var(--primary-color); background: ${bgColor};">${dy.ganzhi || '--'}</td>
-        `;
-    });
-
-    html += `
-                </tr>
-            </tbody>
-        </table>
-    `;
-    return html;
-}
-
+// ============ 大运排盘（八步专业格） ============
 function _normalizeDayunData(dayunData) {
-    let dayunList = [];
-    let startAge = 8;
-
-    if (dayunData && dayunData.dayuns && Array.isArray(dayunData.dayuns) && dayunData.dayuns.length > 0) {
+    if (Array.isArray(dayunData)) return dayunData;
+    if (dayunData && Array.isArray(dayunData.list)) return dayunData.list;
+    if (dayunData && Array.isArray(dayunData.dayuns)) {
         const ages = dayunData.ages || [];
-        const dayuns = dayunData.dayuns || [];
-        dayunList = ages.map((age, i) => ({
+        return ages.map((age, i) => ({
             age_start: age,
-            age_end: age + 10,
-            ganzhi: dayuns[i] || ''
+            age_end: age + 9,
+            ganzhi: dayunData.dayuns[i] || ''
         }));
-        startAge = ages[0] || 8;
-    } else if (dayunData && dayunData.list && Array.isArray(dayunData.list) && dayunData.list.length > 0) {
-        dayunList = dayunData.list;
-        startAge = dayunData.start_age || 8;
-    } else if (Array.isArray(dayunData) && dayunData.length > 0) {
-        dayunList = dayunData;
     }
-
-    return { dayunList, startAge };
+    return [];
 }
 
 function _ensureDayunCard(cardId, gridId, title, anchorId) {
@@ -329,11 +311,7 @@ function _ensureDayunCard(cardId, gridId, title, anchorId) {
         card = document.createElement('div');
         card.id = cardId;
         card.className = 'dayun-pan-card';
-        card.style.cssText = 'display:block;margin-top:20px;padding:15px;background:#fff;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.05);border:1px solid #ddd;';
-        card.innerHTML = `
-            <h4 style="color: var(--primary-color); font-size: 18px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--light-color);">${title}</h4>
-            <div id="${gridId}" style="width: 100%; overflow-x: auto;"></div>
-        `;
+        card.innerHTML = `<h4>${title}</h4><div id="${gridId}"></div>`;
         if (anchor.nextSibling) {
             anchor.parentNode.insertBefore(card, anchor.nextSibling);
         } else {
@@ -343,45 +321,71 @@ function _ensureDayunCard(cardId, gridId, title, anchorId) {
     return card;
 }
 
-export function displayDayunPan(dayunData) {
-    console.log('📊 显示大运排盘...', dayunData);
-
-    const card = _ensureDayunCard('dayun-pan-card', 'dayun-grid', '大运排盘', 'bazi-pan');
-    if (!card) return;
-
-    const grid = document.getElementById('dayun-grid');
+function _renderDayunPan(grid, dayunList) {
     if (!grid) return;
-
-    const { dayunList, startAge } = _normalizeDayunData(dayunData);
-    if (dayunList.length === 0) {
-        grid.innerHTML = '<div style="padding: 15px; text-align: center; color: #999;">⚠️ 大运排盘数据暂不可用</div>';
-        card.style.display = 'block';
+    const list = (dayunList || []).slice(0, 8);
+    if (list.length === 0) {
+        grid.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">⚠️ 大运排盘数据暂不可用</div>';
         return;
     }
+    const wrap = document.createElement('div');
+    wrap.className = 'dayun-wrap';
 
-    grid.innerHTML = _buildDayunTableHtml(dayunList, startAge);
+    list.forEach((dy, i) => {
+        const gz = dy.ganzhi || '--';
+        const ageStart = dy.age_start != null ? dy.age_start : null;
+        const cell = document.createElement('div');
+        cell.className = 'dayun-col' + (i === 0 ? ' dayun-col-first' : '');
+
+        const step = document.createElement('div');
+        step.className = 'dayun-step';
+        step.textContent = '第' + (i + 1) + '步';
+
+        const ss = document.createElement('div');
+        ss.className = 'dayun-shishen';
+        ss.textContent = dy.gan_shishen || '';
+
+        const gzDiv = document.createElement('div');
+        gzDiv.className = 'dayun-ganzhi';
+        gzDiv.textContent = gz;
+
+        const ageDiv = document.createElement('div');
+        ageDiv.className = 'dayun-age';
+        if (dy.year_start != null && dy.year_end != null) {
+            ageDiv.textContent = ageStart != null ? ageStart + '岁起' : '';
+        } else if (ageStart != null) {
+            ageDiv.textContent = ageStart + '-' + ((dy.age_end != null ? dy.age_end : ageStart + 9)) + '岁';
+        }
+
+        cell.appendChild(step);
+        cell.appendChild(ss);
+        cell.appendChild(gzDiv);
+        cell.appendChild(ageDiv);
+        wrap.appendChild(cell);
+    });
+
+    grid.innerHTML = '';
+    grid.appendChild(wrap);
+}
+
+export function displayDayunPan(dayunData) {
+    const card = _ensureDayunCard('dayun-pan-card', 'dayun-grid', '大运排盘', 'bazi-pan');
+    if (!card) return;
+    const grid = document.getElementById('dayun-grid');
+    if (!grid) return;
     card.style.display = 'block';
+    _renderDayunPan(grid, _normalizeDayunData(dayunData));
 }
 
 export function displayPartnerDayunPan(dayunData) {
-    console.log('📊 显示伴侣大运排盘...', dayunData);
-
     const card = _ensureDayunCard('partner-dayun-pan-card', 'partner-dayun-grid', '伴侣大运排盘', 'partner-bazi-pan');
     if (!card) return;
-
     const grid = document.getElementById('partner-dayun-grid');
     if (!grid) return;
-
-    const { dayunList, startAge } = _normalizeDayunData(dayunData);
-    if (dayunList.length === 0) {
-        grid.innerHTML = '<div style="padding: 15px; text-align: center; color: #999;">⚠️ 伴侣大运排盘数据暂不可用</div>';
-        card.style.display = 'block';
-        return;
-    }
-
-    grid.innerHTML = _buildDayunTableHtml(dayunList, startAge);
     card.style.display = 'block';
+    _renderDayunPan(grid, _normalizeDayunData(dayunData));
 }
+
 
 // ============ 进度更新 ============
 export function updateProgress(currentStep, totalSteps, stepName, percent, message) {

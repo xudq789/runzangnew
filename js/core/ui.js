@@ -1,6 +1,6 @@
 // UI控制模块
-import { DOM, formatDate, hideElement, showElement } from './utils.js?v=14';
-import { SERVICES, STATE, API_CONFIG } from './config.js?v=14';
+import { DOM, formatDate, hideElement, showElement } from './utils.js?v=15';
+import { SERVICES, STATE, API_CONFIG } from './config.js?v=15';
 
 // UI元素集合
 export const UI = {

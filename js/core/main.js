@@ -895,10 +895,7 @@ async function _handleAnalysisResult(result) {
     STATE.baziData = result.bazi_pan;
     
     if (result.dayun_pan && result.dayun_pan.length > 0) {
-        STATE.dayunData = {
-            ages: result.dayun_pan.map(d => d.age_start),
-            dayuns: result.dayun_pan.map(d => d.ganzhi)
-        };
+        STATE.dayunData = result.dayun_pan;
         console.log('✅ 大运数据已保存:', STATE.dayunData);
     }
     
@@ -906,18 +903,7 @@ async function _handleAnalysisResult(result) {
     displayBaziPan();
     
     if (result.dayun_pan && result.dayun_pan.length > 0) {
-        const dayunDisplayData = {
-            ages: result.dayun_pan.map(d => d.age_start),
-            dayuns: result.dayun_pan.map(d => d.ganzhi)
-        };
-        if (result.dayun_detail && result.dayun_detail.xi_ji) {
-            const xiJiMap = {};
-            result.dayun_detail.xi_ji.forEach(item => {
-                xiJiMap[item.age] = { xi: item.xi, ji: item.ji };
-            });
-            dayunDisplayData.xi_ji = xiJiMap;
-        }
-        displayDayunPan(dayunDisplayData);
+        displayDayunPan(result.dayun_pan);
         console.log('✅ 大运排盘已显示');
     }
     

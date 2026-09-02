@@ -1,6 +1,6 @@
 // UI控制模块
-import { DOM, formatDate, hideElement, showElement } from './utils.js?v=15';
-import { SERVICES, STATE, API_CONFIG } from './config.js?v=15';
+import { DOM, formatDate, hideElement, showElement } from './utils.js?v=16';
+import { SERVICES, STATE, API_CONFIG } from './config.js?v=16';
 
 // UI元素集合
 export const UI = {
@@ -192,6 +192,9 @@ function _wxClass(wx) {
     return { '木': 'wx-mu', '火': 'wx-huo', '土': 'wx-tu', '金': 'wx-jin', '水': 'wx-shui' }[wx] || '';
 }
 
+const _GAN_WX = { '甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土', '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水' };
+const _ZHI_WX = { '子': '水', '丑': '土', '寅': '木', '卯': '木', '辰': '土', '巳': '火', '午': '火', '未': '土', '申': '金', '酉': '金', '戌': '土', '亥': '水' };
+
 function _renderBaziPan(grid, bazi, genderText) {
     if (!grid) return;
     grid.innerHTML = '';
@@ -199,15 +202,24 @@ function _renderBaziPan(grid, bazi, genderText) {
         grid.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">暂无排盘数据</div>';
         return;
     }
+    const ud = STATE.userData || {};
 
     const wrap = document.createElement('div');
     wrap.className = 'pan-wrap';
-    if (genderText) {
-        const head = document.createElement('div');
-        head.className = 'pan-head';
-        head.textContent = genderText;
-        wrap.appendChild(head);
-    }
+
+    // 头部信息条：乾造印章 + 公历/生肖
+    const head = document.createElement('div');
+    head.className = 'pan-head';
+    const seal = document.createElement('span');
+    seal.className = 'pan-seal';
+    seal.textContent = genderText || '';
+    const info = document.createElement('span');
+    info.className = 'pan-head-info';
+    const zodiac = bazi.year.zodiac ? (' · ' + bazi.year.zodiac + '年') : '';
+    info.textContent = (ud.birthYear ? ('公历 ' + ud.birthYear + '年' + ud.birthMonth + '月' + ud.birthDay + '日 ' + ud.birthHour + '时' + (ud.birthMinute ? ud.birthMinute + '分' : '')) : '') + zodiac;
+    head.appendChild(seal);
+    head.appendChild(info);
+    wrap.appendChild(head);
 
     const cols = [
         { name: '年柱', p: bazi.year },
@@ -226,54 +238,68 @@ function _renderBaziPan(grid, bazi, genderText) {
         const zhi = p.zhi || gz[1] || '';
         const canggan = (p.zhi_canggan || []);
         const cangSs = (p.zhi_canggan_shishen || []);
+        const colWx = p.zhi_wuxing || '';
 
         const cell = document.createElement('div');
         cell.className = 'pan-col' + (col.day ? ' pan-col-day' : '');
 
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'pan-label';
-        nameDiv.textContent = col.name;
+        const label = document.createElement('div');
+        label.className = 'pan-label';
+        label.textContent = col.name;
+        cell.appendChild(label);
 
-        const ssDiv = document.createElement('div');
-        ssDiv.className = 'pan-shishen' + (col.day ? ' pan-shishen-day' : '');
-        ssDiv.textContent = p.gan_shishen || (col.day ? '日主' : '');
+        const ss = document.createElement('div');
+        ss.className = 'pan-shishen' + (col.day ? ' pan-shishen-day' : '');
+        ss.textContent = p.gan_shishen || (col.day ? '日主' : '');
+        cell.appendChild(ss);
 
-        const ganDiv = document.createElement('div');
-        ganDiv.className = 'pan-gan ' + _wxClass(p.gan_wuxing || '');
-        ganDiv.textContent = gan;
+        const gzWrap = document.createElement('div');
+        gzWrap.className = 'pan-ganzhi';
+        const ganEl = document.createElement('div');
+        ganEl.className = 'pan-gan ' + _wxClass(p.gan_wuxing || _GAN_WX[gan] || '');
+        ganEl.textContent = gan;
+        const zhiEl = document.createElement('div');
+        zhiEl.className = 'pan-zhi ' + _wxClass(colWx);
+        zhiEl.textContent = zhi;
+        gzWrap.appendChild(ganEl);
+        gzWrap.appendChild(zhiEl);
+        cell.appendChild(gzWrap);
 
-        const zhiDiv = document.createElement('div');
-        zhiDiv.className = 'pan-zhi ' + _wxClass(p.zhi_wuxing || '');
-        zhiDiv.textContent = zhi;
+        const wxLine = document.createElement('div');
+        wxLine.className = 'pan-wxline';
+        const dot = document.createElement('span');
+        dot.className = 'pan-wxdot ' + _wxClass(colWx);
+        const wxTxt = document.createElement('span');
+        wxTxt.className = 'pan-wxtxt ' + _wxClass(colWx);
+        wxTxt.textContent = colWx;
+        wxLine.appendChild(dot);
+        wxLine.appendChild(wxTxt);
+        cell.appendChild(wxLine);
 
-        const cangDiv = document.createElement('div');
-        cangDiv.className = 'pan-canggan';
         if (canggan.length) {
+            const cang = document.createElement('div');
+            cang.className = 'pan-canggan';
             canggan.forEach((cg, i) => {
                 const item = document.createElement('div');
                 item.className = 'pan-cang-item';
                 const g = document.createElement('div');
-                g.className = 'pan-cang-gan ' + _wxClass(({ '甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土', '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水' }[cg] || ''));
+                g.className = 'pan-cang-gan ' + _wxClass(_GAN_WX[cg] || '');
                 g.textContent = cg;
                 const s = document.createElement('div');
                 s.className = 'pan-cang-ss';
                 s.textContent = cangSs[i] || '';
                 item.appendChild(g);
                 item.appendChild(s);
-                cangDiv.appendChild(item);
+                cang.appendChild(item);
             });
+            cell.appendChild(cang);
         }
 
-        const metaDiv = document.createElement('div');
-        metaDiv.className = 'pan-meta';
-        metaDiv.textContent = p.nayin || '';
+        const meta = document.createElement('div');
+        meta.className = 'pan-meta';
+        meta.textContent = p.nayin || '';
+        cell.appendChild(meta);
 
-        cell.appendChild(nameDiv);
-        cell.appendChild(ssDiv);
-        cell.appendChild(ganDiv);
-        cell.appendChild(zhiDiv);
-        cell.appendChild(cangDiv);
-        cell.appendChild(metaDiv);
         table.appendChild(cell);
     });
 
@@ -285,7 +311,7 @@ export function displayBaziPan() {
     const genderText = (STATE.userData && STATE.userData.gender === '女') ? '坤造' : '乾造';
     _renderBaziPan(document.getElementById('bazi-grid'), STATE.baziData, genderText);
     _renderBaziPan(document.getElementById('partner-bazi-grid'), STATE.partnerBaziData,
-        STATE.currentService === '八字合婚' && STATE.partnerData && STATE.partnerData.partnerGender === '女' ? '坤造（伴侣）' : '乾造（伴侣）');
+        STATE.currentService === '八字合婚' && STATE.partnerData && STATE.partnerData.partnerGender === '女' ? '坤造' : '乾造');
 }
 
 // ============ 大运排盘（八步专业格） ============
@@ -333,33 +359,40 @@ function _renderDayunPan(grid, dayunList) {
 
     list.forEach((dy, i) => {
         const gz = dy.ganzhi || '--';
+        const gan = gz[0] || '';
+        const zhi = gz[1] || '';
         const ageStart = dy.age_start != null ? dy.age_start : null;
         const cell = document.createElement('div');
         cell.className = 'dayun-col' + (i === 0 ? ' dayun-col-first' : '');
 
         const step = document.createElement('div');
         step.className = 'dayun-step';
-        step.textContent = '第' + (i + 1) + '步';
+        step.textContent = (i + 1) + '运';
+
+        const gzDiv = document.createElement('div');
+        gzDiv.className = 'dayun-ganzhi';
+        const gEl = document.createElement('span');
+        gEl.className = 'dayun-gan ' + _wxClass(_GAN_WX[gan] || '');
+        gEl.textContent = gan;
+        const zEl = document.createElement('span');
+        zEl.className = 'dayun-zhi ' + _wxClass(_ZHI_WX[zhi] || '');
+        zEl.textContent = zhi;
+        gzDiv.appendChild(gEl);
+        gzDiv.appendChild(zEl);
 
         const ss = document.createElement('div');
         ss.className = 'dayun-shishen';
         ss.textContent = dy.gan_shishen || '';
 
-        const gzDiv = document.createElement('div');
-        gzDiv.className = 'dayun-ganzhi';
-        gzDiv.textContent = gz;
-
         const ageDiv = document.createElement('div');
         ageDiv.className = 'dayun-age';
-        if (dy.year_start != null && dy.year_end != null) {
-            ageDiv.textContent = ageStart != null ? ageStart + '岁起' : '';
-        } else if (ageStart != null) {
-            ageDiv.textContent = ageStart + '-' + ((dy.age_end != null ? dy.age_end : ageStart + 9)) + '岁';
+        if (ageStart != null) {
+            ageDiv.textContent = ageStart + '-' + (dy.age_end != null ? dy.age_end : ageStart + 9) + '岁';
         }
 
         cell.appendChild(step);
-        cell.appendChild(ss);
         cell.appendChild(gzDiv);
+        cell.appendChild(ss);
         cell.appendChild(ageDiv);
         wrap.appendChild(cell);
     });
@@ -369,7 +402,7 @@ function _renderDayunPan(grid, dayunList) {
 }
 
 export function displayDayunPan(dayunData) {
-    const card = _ensureDayunCard('dayun-pan-card', 'dayun-grid', '大运排盘', 'bazi-pan');
+    const card = _ensureDayunCard('dayun-pan-card', 'dayun-grid', '大运排盘（八步）', 'bazi-pan');
     if (!card) return;
     const grid = document.getElementById('dayun-grid');
     if (!grid) return;
@@ -378,7 +411,7 @@ export function displayDayunPan(dayunData) {
 }
 
 export function displayPartnerDayunPan(dayunData) {
-    const card = _ensureDayunCard('partner-dayun-pan-card', 'partner-dayun-grid', '伴侣大运排盘', 'partner-bazi-pan');
+    const card = _ensureDayunCard('partner-dayun-pan-card', 'partner-dayun-grid', '伴侣大运排盘（八步）', 'partner-bazi-pan');
     if (!card) return;
     const grid = document.getElementById('partner-dayun-grid');
     if (!grid) return;

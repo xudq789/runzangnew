@@ -1274,3 +1274,108 @@ input:focus, select:focus {
         animation: none;
     }
 }
+
+/* ============ 专业排盘（八字四柱表 / 八步大运） ============ */
+#bazi-grid, #partner-bazi-grid { display: block; }
+
+.pan-wrap { font-family: 'STKaiti','KaiTi','楷体','Noto Serif SC','SimSun',serif; }
+
+.pan-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 6px 0 12px;
+  border-bottom: 1px dashed #d8c39a;
+  margin-bottom: 14px;
+}
+.pan-seal {
+  color: #b3362d;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 2px 10px;
+  border: 2px solid #b3362d;
+  border-radius: 6px;
+  background: rgba(179,54,45,.04);
+}
+.pan-head-info { color: #6b5637; font-size: 13px; letter-spacing: 1px; }
+
+.pan-table { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+.pan-col {
+  text-align: center;
+  padding: 10px 4px 12px;
+  background: linear-gradient(180deg, #fbf6ec, #f2e6cf);
+  border: 1px solid #ddc79c;
+  border-radius: 12px;
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.5);
+}
+.pan-col-day {
+  background: linear-gradient(180deg, #fff7e0, #f6e4b8);
+  border: 2px solid #c9a24b;
+  box-shadow: 0 3px 10px rgba(180,140,60,.25);
+}
+.pan-label { font-size: 12px; color: #96783c; letter-spacing: 2px; }
+.pan-shishen { font-size: 14px; color: #8a5a22; font-weight: 600; margin: 6px 0 2px; }
+.pan-shishen-day { color: #b3362d; font-weight: 700; }
+
+.pan-ganzhi { display: flex; flex-direction: column; align-items: center; line-height: 1.06; margin: 2px 0; }
+.pan-gan, .pan-zhi { font-size: 34px; font-weight: 700; }
+
+.wx-mu  { color: #1e7a34; }
+.wx-huo { color: #c0392b; }
+.wx-tu  { color: #8a6a3f; }
+.wx-jin { color: #9c7c1c; }
+.wx-shui{ color: #1769aa; }
+
+.pan-wxline { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 3px 0; }
+.pan-wxdot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.pan-wxtxt { font-size: 11px; opacity: .85; }
+
+.pan-canggan { display: flex; justify-content: center; gap: 6px; margin-top: 7px; padding-top: 7px; border-top: 1px solid rgba(150,120,60,.25); }
+.pan-cang-item { min-width: 22px; }
+.pan-cang-gan { font-size: 17px; font-weight: 600; color: #5c4630; }
+.pan-cang-ss { font-size: 9px; color: #a08a68; margin-top: 1px; }
+
+.pan-meta { margin-top: 6px; font-size: 11px; color: #a08a68; letter-spacing: 1px; }
+
+/* 大运排盘 */
+.dayun-pan-card {
+  display: none;
+  margin-top: 20px;
+  padding: 18px;
+  background: linear-gradient(180deg, #fff, #fdf9f0);
+  border-radius: 12px;
+  box-shadow: 0 5px 18px rgba(90,60,30,.08);
+  border: 1px solid #e2d2b4;
+}
+.dayun-pan-card h4 { color: #8b4513; font-size: 18px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #f0e2c8; }
+
+.dayun-wrap { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+.dayun-col {
+  text-align: center;
+  padding: 10px 2px 8px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #fdf6ea, #f1e2c8);
+  border: 1px solid #dfcaa2;
+}
+.dayun-col-first { border: 2px solid #c9a24b; background: linear-gradient(180deg, #fff6dd, #f5e2b4); }
+.dayun-step { font-size: 11px; color: #96783c; letter-spacing: 1px; }
+.dayun-ganzhi { display: flex; justify-content: center; gap: 6px; margin: 4px 0; }
+.dayun-gan, .dayun-zhi { font-size: 26px; font-weight: 700; line-height: 1; }
+.dayun-shishen { font-size: 13px; color: #8a5a22; font-weight: 600; min-height: 16px; }
+.dayun-age { font-size: 11px; color: #9c8a6a; }
+
+@media (max-width: 720px) {
+  .pan-table { gap: 5px; }
+  .pan-gan, .pan-zhi { font-size: 26px; }
+  .pan-col { padding: 8px 2px 10px; }
+  .pan-canggan { gap: 3px; }
+  .pan-cang-gan { font-size: 14px; }
+  .pan-cang-ss { font-size: 8px; }
+  .dayun-wrap { grid-template-columns: repeat(4, 1fr); }
+  .dayun-gan, .dayun-zhi { font-size: 22px; }
+}

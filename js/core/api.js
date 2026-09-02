@@ -1,6 +1,6 @@
 // API通信模块
-import { DOM } from './utils.js';
-import { API_CONFIG } from './config.js';
+import { DOM } from './utils.js?v=14';
+import { API_CONFIG } from './config.js?v=14';
 
 // ★★★ 修复：检查后端服务状态（使用正确的路径） ★★★
 export async function checkAPIStatus() {

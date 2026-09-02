@@ -449,8 +449,8 @@ const PaymentManager = {
 };
 
 // ============ 【导入所有依赖】 ============
-import { SERVICES, STATE, API_CONFIG } from './config.js?v=16';
-import { checkAPIStatus, parseBaziData, analyzeBazi, startAnalysisTask, pollAnalysisResult } from './api.js?v=16';
+import { SERVICES, STATE, API_CONFIG } from './config.js?v=17';
+import { checkAPIStatus, parseBaziData, analyzeBazi, startAnalysisTask, pollAnalysisResult } from './api.js?v=17';
 import {
     UI, initFormOptions, updateServiceDisplay,
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,
@@ -460,7 +460,7 @@ import {
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData
-} from './ui.js?v=16';
+} from './ui.js?v=17';
 
 var _pollState = {
     active: false,

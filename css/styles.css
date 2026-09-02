@@ -1370,12 +1370,28 @@ input:focus, select:focus {
 .dayun-age { font-size: 11px; color: #9c8a6a; }
 
 @media (max-width: 720px) {
-  .pan-table { gap: 5px; }
-  .pan-gan, .pan-zhi { font-size: 26px; }
+  #bazi-grid, #partner-bazi-grid { overflow-x: auto; }
+  .pan-table { gap: 5px; min-width: 340px; }
+  .pan-gan, .pan-zhi { font-size: 22px; }
   .pan-col { padding: 8px 2px 10px; }
+  .pan-label { font-size: 11px; }
+  .pan-shishen { font-size: 13px; }
   .pan-canggan { gap: 3px; }
-  .pan-cang-gan { font-size: 14px; }
+  .pan-cang-gan { font-size: 13px; }
   .pan-cang-ss { font-size: 8px; }
-  .dayun-wrap { grid-template-columns: repeat(4, 1fr); }
-  .dayun-gan, .dayun-zhi { font-size: 22px; }
+  .pan-meta { font-size: 10px; }
+  /* 大运：8 步单行不分行，可横向滑动 */
+  .dayun-wrap {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 68px;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .dayun-col { min-width: 68px; }
+  .dayun-gan, .dayun-zhi { font-size: 20px; }
+  .dayun-shishen { font-size: 12px; }
+  .dayun-age { font-size: 10px; }
+  .dayun-wrap::-webkit-scrollbar { height: 6px; }
 }

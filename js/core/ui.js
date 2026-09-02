@@ -1,6 +1,6 @@
 // UI控制模块
-import { DOM, formatDate, hideElement, showElement } from './utils.js?v=16';
-import { SERVICES, STATE, API_CONFIG } from './config.js?v=16';
+import { DOM, formatDate, hideElement, showElement } from './utils.js?v=17';
+import { SERVICES, STATE, API_CONFIG } from './config.js?v=17';
 
 // UI元素集合
 export const UI = {
@@ -125,13 +125,21 @@ export function updateServiceDisplay(serviceName) {
     updateUnlockInfo();
 }
 
+function _unlockPriceHtml(cfg) {
+    const orig = cfg.originalPrice;
+    if (orig && orig > cfg.price) {
+        return `<del class="orig-price">¥${orig}</del> <span class="sale-price">首次优惠 ¥${cfg.price}</span>`;
+    }
+    return `<span class="sale-price">¥${cfg.price}</span>`;
+}
+
 export function updateUnlockInfo() {
     const serviceConfig = SERVICES[STATE.currentService];
     if (!serviceConfig) return;
     
     const unlockPriceElement = UI.unlockPrice();
     if (unlockPriceElement) {
-        unlockPriceElement.textContent = serviceConfig.price;
+        unlockPriceElement.innerHTML = _unlockPriceHtml(serviceConfig);
     }
     
     const unlockItemsList = UI.unlockItemsList();
@@ -791,7 +799,7 @@ export function resetUnlockInterface() {
         const unlockPrice = unlockBtnContainer.querySelector('.unlock-price');
         const serviceConfig = SERVICES[STATE.currentService];
         if (serviceConfig && unlockBtn && unlockPrice) {
-            unlockBtn.innerHTML = `解锁完整报告 (¥<span id="unlock-price">${serviceConfig.price}</span>)`;
+            unlockBtn.innerHTML = `解锁完整报告 (<span id="unlock-price">${_unlockPriceHtml(serviceConfig)}</span>)`;
             unlockBtn.style.background = 'linear-gradient(135deg, var(--secondary-color), #e6b800)';
             unlockBtn.style.cursor = 'pointer';
             unlockBtn.disabled = false;

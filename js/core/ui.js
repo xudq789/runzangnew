@@ -82,6 +82,13 @@ export function initFormOptions() {
     fillSelect('partner-birth-day', days, '日');
     fillSelect('partner-birth-hour', hours, '时');
     fillSelect('partner-birth-minute', minutes, '分');
+
+    const birthYearEl = DOM.id('birth-year');
+    if (birthYearEl) birthYearEl.value = '1990';
+    const partnerBirthYearEl = DOM.id('partner-birth-year');
+    if (partnerBirthYearEl) partnerBirthYearEl.value = '1990';
+    const birthCityEl = DOM.id('birth-city');
+    if (birthCityEl) birthCityEl.value = '北京';
 }
 
 export function updateServiceDisplay(serviceName) {

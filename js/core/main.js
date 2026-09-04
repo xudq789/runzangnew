@@ -449,8 +449,8 @@ const PaymentManager = {
 };
 
 // ============ 【导入所有依赖】 ============
-import { SERVICES, STATE, API_CONFIG } from './config.js?v=17';
-import { checkAPIStatus, parseBaziData, analyzeBazi, startAnalysisTask, pollAnalysisResult } from './api.js?v=17';
+import { SERVICES, STATE, API_CONFIG } from './config.js?v=19';
+import { checkAPIStatus, parseBaziData, analyzeBazi, startAnalysisTask, pollAnalysisResult } from './api.js?v=19';
 import {
     UI, initFormOptions, updateServiceDisplay,
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,
@@ -460,7 +460,7 @@ import {
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData
-} from './ui.js?v=17';
+} from './ui.js?v=19';
 
 var _pollState = {
     active: false,
@@ -544,6 +544,10 @@ function setupEventListeners() {
     document.querySelectorAll('.service-nav a').forEach(function(link) {
         link.addEventListener('click', function(event) {
             event.preventDefault();
+            if (this.dataset.home) {
+                if (window.showHomePage) window.showHomePage();
+                return;
+            }
             var serviceName = this.dataset.service;
             switchService(serviceName);
         });
@@ -590,6 +594,11 @@ function switchService(serviceName) {
         console.error('服务不存在:', serviceName);
         return;
     }
+    // 切回服务时关闭首页视图
+    var homeSection = document.getElementById('home-section');
+    if (homeSection) homeSection.style.display = 'none';
+    var seamlessContainer = document.querySelector('.seamless-container');
+    if (seamlessContainer) seamlessContainer.style.display = '';
     var oldService = STATE.currentService;
     if (oldService !== serviceName) {
         console.log('切换到不同服务，彻底重置状态');

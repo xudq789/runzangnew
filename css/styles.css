@@ -1302,9 +1302,10 @@ input:focus, select:focus {
 }
 .pan-head-info { color: #6b5637; font-size: 13px; letter-spacing: 1px; }
 
-.pan-table { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.pan-table { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; gap: 10px; }
 
 .pan-col {
+  min-width: 0;
   text-align: center;
   padding: 10px 4px 12px;
   background: linear-gradient(180deg, #fbf6ec, #f2e6cf);

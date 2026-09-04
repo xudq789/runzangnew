@@ -1,6 +1,6 @@
 // UI控制模块
-import { DOM, formatDate, hideElement, showElement } from './utils.js?v=17';
-import { SERVICES, STATE, API_CONFIG } from './config.js?v=17';
+import { DOM, formatDate, hideElement, showElement } from './utils.js?v=19';
+import { SERVICES, STATE, API_CONFIG } from './config.js?v=19';
 
 // UI元素集合
 export const UI = {
@@ -210,7 +210,7 @@ function _wxClass(wx) {
 const _GAN_WX = { '甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土', '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水' };
 const _ZHI_WX = { '子': '水', '丑': '土', '寅': '木', '卯': '木', '辰': '土', '巳': '火', '午': '火', '未': '土', '申': '金', '酉': '金', '戌': '土', '亥': '水' };
 
-function _renderBaziPan(grid, bazi, genderText) {
+function _renderBaziPan(grid, bazi, genderText, showBirth) {
     if (!grid) return;
     grid.innerHTML = '';
     if (!bazi || !bazi.year || !bazi.month || !bazi.day || !bazi.hour) {
@@ -231,7 +231,11 @@ function _renderBaziPan(grid, bazi, genderText) {
     const info = document.createElement('span');
     info.className = 'pan-head-info';
     const zodiac = bazi.year.zodiac ? (' · ' + bazi.year.zodiac + '年') : '';
-    info.textContent = (ud.birthYear ? ('公历 ' + ud.birthYear + '年' + ud.birthMonth + '月' + ud.birthDay + '日 ' + ud.birthHour + '时' + (ud.birthMinute ? ud.birthMinute + '分' : '')) : '') + zodiac;
+    if (showBirth !== false) {
+        info.textContent = (ud.birthYear ? ('公历 ' + ud.birthYear + '年' + ud.birthMonth + '月' + ud.birthDay + '日 ' + ud.birthHour + '时' + (ud.birthMinute ? ud.birthMinute + '分' : '')) : '') + zodiac;
+    } else {
+        info.textContent = bazi.year.zodiac ? (bazi.year.zodiac + '年生') : '';
+    }
     head.appendChild(seal);
     head.appendChild(info);
     wrap.appendChild(head);
@@ -432,6 +436,15 @@ export function displayPartnerDayunPan(dayunData) {
     if (!grid) return;
     card.style.display = 'block';
     _renderDayunPan(grid, _normalizeDayunData(dayunData));
+}
+
+// ============ 首页公开案例渲染（隐藏出生信息） ============
+export function renderPublicBaziPan(grid, bazi, genderText) {
+    _renderBaziPan(grid, bazi, genderText || '', false);
+}
+
+export function renderPublicDayunPan(grid, dayunList) {
+    _renderDayunPan(grid, _normalizeDayunData(dayunList));
 }
 
 

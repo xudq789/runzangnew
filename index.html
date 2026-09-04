@@ -35,7 +35,7 @@
     <!-- 预连接图片CDN -->
     <link rel="preconnect" href="https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com" crossorigin>
     
-    <link rel="stylesheet" href="css/styles.css?v=12">
+    <link rel="stylesheet" href="css/styles.css?v=19">
     <script>
         (function(){
             var bp = document.createElement('script');
@@ -65,12 +65,27 @@
 
     <header>
         <ul class="service-nav">
+            <li><a href="#" data-home="1" id="nav-home">首页</a></li>
             <li><a href="#" class="active" data-service="测算验证">测算验证</a></li>
             <li><a href="#" data-service="流年运程">流年运程</a></li>
             <li><a href="#" data-service="人生详批">人生详批</a></li>
             <li><a href="#" data-service="八字合婚">八字合婚</a></li>
         </ul>
     </header>
+
+    <section id="home-section" class="home-section" style="display: none;">
+        <div class="home-container">
+            <div class="section-title">
+                <h2>润藏八字 · 往期案例分析</h2>
+                <p>匿名收录历次测算结果，展示八字排盘、大运排盘与八字喜用分析，仅供娱乐参考，请勿对号入座</p>
+            </div>
+            <div id="home-case-list" class="home-case-list"></div>
+            <div id="home-status" class="home-status"></div>
+            <div id="home-load-more-wrap" style="display: none; text-align: center; margin: 20px 0;">
+                <button id="home-load-more" class="dynamic-pulse-btn" style="max-width: 220px;"><span>加载更多案例</span></button>
+            </div>
+        </div>
+    </section>
 
     <div class="seamless-container">
         <section class="seamless-section hero-section">
@@ -407,6 +422,7 @@
     </section>
 
     <!-- 主入口文件 -->
-    <script src="js/core/main.js?v=18" type="module"></script>
+    <script src="js/core/main.js?v=19" type="module"></script>
+    <script src="js/core/home.js?v=19" type="module"></script>
 </body>
 </html>

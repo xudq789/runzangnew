@@ -490,11 +490,10 @@ input:focus, select:focus {
     text-align: right;
 }
 
-/* 八字排盘 */
+/* 八字排盘（pan-wrap 渲染容器，块级全宽） */
 .bazi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
+    display: block;
+    width: 100%;
 }
 
 .bazi-column {

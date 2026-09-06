@@ -305,6 +305,11 @@ const PaymentManager = {
                 return false;
             }
             
+            if (!SERVICES[savedService]) {
+                console.warn('保存的服务已下架:', savedService, '回退到默认服务');
+                savedService = '人生详批';
+            }
+            
             console.log('📥 从存储恢复分析结果...');
             console.log('保存的服务:', savedService, '当前服务:', STATE.currentService);
             
@@ -449,8 +454,8 @@ const PaymentManager = {
 };
 
 // ============ 【导入所有依赖】 ============
-import { SERVICES, STATE, API_CONFIG } from './config.js?v=19';
-import { checkAPIStatus, parseBaziData, analyzeBazi, startAnalysisTask, pollAnalysisResult } from './api.js?v=19';
+import { SERVICES, STATE, API_CONFIG } from './config.js?v=20';
+import { checkAPIStatus, parseBaziData, analyzeBazi, startAnalysisTask, pollAnalysisResult } from './api.js?v=20';
 import {
     UI, initFormOptions, updateServiceDisplay,
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,
@@ -460,7 +465,7 @@ import {
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData
-} from './ui.js?v=19';
+} from './ui.js?v=20';
 
 var _pollState = {
     active: false,
@@ -1026,7 +1031,7 @@ function downloadReport() {
         return;
     }
     
-    var currentServiceName = STATE.currentService || '测算验证';
+    var currentServiceName = STATE.currentService || '人生详批';
     
     var predictorInfo = '命理分析报告 - ' + currentServiceName + '\n\n预测者信息：\n姓名：' + STATE.userData.name + '\n性别：' + STATE.userData.gender + '\n出生时间：' + STATE.userData.birthYear + '年' + STATE.userData.birthMonth + '月' + STATE.userData.birthDay + '日' + STATE.userData.birthHour + '时' + STATE.userData.birthMinute + '分\n出生城市：' + STATE.userData.birthCity + '\n测算服务：' + currentServiceName + '\n测算时间：' + new Date().toLocaleString('zh-CN');
     

@@ -223,3 +223,28 @@ export async function pollAnalysisResult(taskId) {
         error: result.error || null
     };
 }
+
+// 四柱反推：由四柱找可能的公历出生时间
+export async function reverseBaziFromPillars(payload) {
+    const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/bazi/reverse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload || {}),
+        signal: AbortSignal.timeout(20000)
+    });
+
+    if (!response.ok) {
+        let errMsg = `请求失败 (${response.status})`;
+        try {
+            const errorData = await response.json();
+            errMsg = errorData.error || errMsg;
+        } catch (e) { /* ignore */ }
+        throw new Error(errMsg);
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+        throw new Error(result.error || '反推失败');
+    }
+    return result;
+}

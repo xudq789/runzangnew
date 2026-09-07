@@ -35,7 +35,7 @@
     <!-- 预连接图片CDN -->
     <link rel="preconnect" href="https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com" crossorigin>
     
-    <link rel="stylesheet" href="css/styles.css?v=22">
+    <link rel="stylesheet" href="css/styles.css?v=23">
     <script>
         (function(){
             var bp = document.createElement('script');
@@ -99,6 +99,12 @@
             </div>
             
             <div class="form-container">
+                <div class="mode-switch" id="user-mode-switch">
+                    <span class="mode-switch-label">录入方式</span>
+                    <button type="button" class="mode-btn active" data-mode="datetime">按出生时间</button>
+                    <button type="button" class="mode-btn" data-mode="direct">已有八字</button>
+                </div>
+                
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="name" class="required">姓名</label>
@@ -116,14 +122,14 @@
                         <div class="error" id="gender-error">请选择性别</div>
                     </div>
                     
-                    <div class="form-group">
+                    <div class="form-group" id="user-birth-city-group">
                         <label for="birth-city" class="required">出生城市</label>
                         <input type="text" id="birth-city" placeholder="请输入出生城市">
                         <div class="error" id="birth-city-error">请输入出生城市</div>
                     </div>
                 </div>
                 
-                <div class="birth-time-group">
+                <div class="birth-time-group" id="user-birth-time-group">
                     <label class="required">出生公历时间</label>
                     <div class="form-row">
                         <div class="form-group">
@@ -162,8 +168,52 @@
                     </div>
                 </div>
                 
+                <div id="user-direct-fields" style="display: none;">
+                    <div class="direct-hint">已有排盘结果时可直接录入四柱与起运信息，大运按阳男阴女顺排、阴男阳女逆排自动推算（性别以上方选择为准）。</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="direct-year" class="required">年柱</label>
+                            <select id="direct-year"><option value="">年柱干支</option></select>
+                            <div class="error" id="direct-year-error">请选择年柱</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="direct-month" class="required">月柱</label>
+                            <select id="direct-month"><option value="">月柱干支</option></select>
+                            <div class="error" id="direct-month-error">请选择月柱</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="direct-day" class="required">日柱</label>
+                            <select id="direct-day"><option value="">日柱干支</option></select>
+                            <div class="error" id="direct-day-error">请选择日柱</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="direct-hour" class="required">时柱</label>
+                            <select id="direct-hour"><option value="">时柱干支</option></select>
+                            <div class="error" id="direct-hour-error">请选择时柱</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="dayun-start-age" class="required">起运岁数（虚岁）</label>
+                            <input type="number" id="dayun-start-age" min="1" max="99" placeholder="如 5">
+                            <div class="error" id="dayun-start-age-error">请输入起运岁数</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="dayun-start-year" class="required">起运年份（公历）</label>
+                            <select id="dayun-start-year"><option value="">第一步大运开始年份</option></select>
+                            <div class="error" id="dayun-start-year-error">请选择起运年份</div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div id="partner-info-section" class="partner-info-section" style="display: none;">
                     <h3>伴侣信息</h3>
+                    
+                    <div class="mode-switch" id="partner-mode-switch">
+                        <span class="mode-switch-label">伴侣录入方式</span>
+                        <button type="button" class="mode-btn active" data-mode="datetime">按出生时间</button>
+                        <button type="button" class="mode-btn" data-mode="direct">已有八字</button>
+                    </div>
                     
                     <div class="form-grid">
                         <div class="form-group">
@@ -182,14 +232,14 @@
                             <div class="error" id="partner-gender-error">请选择伴侣性别</div>
                         </div>
                         
-                        <div class="form-group">
+                        <div class="form-group" id="partner-birth-city-group">
                             <label for="partner-birth-city" class="required">伴侣出生城市</label>
                             <input type="text" id="partner-birth-city" placeholder="请输入伴侣出生城市">
                             <div class="error" id="partner-birth-city-error">请输入伴侣出生城市</div>
                         </div>
                     </div>
                     
-                    <div class="birth-time-group">
+                    <div class="birth-time-group" id="partner-birth-time-group">
                         <label class="required">伴侣出生公历时间</label>
                         <div class="form-row">
                             <div class="form-group">
@@ -224,6 +274,43 @@
                                     <option value="">出生分钟</option>
                                 </select>
                                 <div class="error" id="partner-birth-minute-error">请选择伴侣出生分钟</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="partner-direct-fields" style="display: none;">
+                        <div class="direct-hint">伴侣已有排盘结果时可直接录入四柱与起运信息。</div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="partner-direct-year" class="required">年柱</label>
+                                <select id="partner-direct-year"><option value="">年柱干支</option></select>
+                                <div class="error" id="partner-direct-year-error">请选择年柱</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="partner-direct-month" class="required">月柱</label>
+                                <select id="partner-direct-month"><option value="">月柱干支</option></select>
+                                <div class="error" id="partner-direct-month-error">请选择月柱</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="partner-direct-day" class="required">日柱</label>
+                                <select id="partner-direct-day"><option value="">日柱干支</option></select>
+                                <div class="error" id="partner-direct-day-error">请选择日柱</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="partner-direct-hour" class="required">时柱</label>
+                                <select id="partner-direct-hour"><option value="">时柱干支</option></select>
+                                <div class="error" id="partner-direct-hour-error">请选择时柱</div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="partner-dayun-start-age" class="required">起运岁数（虚岁）</label>
+                                <input type="number" id="partner-dayun-start-age" min="1" max="99" placeholder="如 5">
+                                <div class="error" id="partner-dayun-start-age-error">请输入起运岁数</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="partner-dayun-start-year" class="required">起运年份（公历）</label>
+                                <select id="partner-dayun-start-year"><option value="">第一步大运开始年份</option></select>
+                                <div class="error" id="partner-dayun-start-year-error">请选择起运年份</div>
                             </div>
                         </div>
                     </div>
@@ -422,8 +509,8 @@
     </section>
 
     <!-- 主入口文件 -->
-    <script src="js/core/main.js?v=21" type="module"></script>
-    <script src="js/core/home.js?v=21" type="module"></script>
+    <script src="js/core/main.js?v=22" type="module"></script>
+    <script src="js/core/home.js?v=22" type="module"></script>
 </body>
 </html>
 

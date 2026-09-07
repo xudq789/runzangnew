@@ -1473,6 +1473,67 @@ input:focus, select:focus {
   .pan-meta { font-size: 9px; margin-top: 3px; }
 }
 
+/* 农历闰月勾选 */
+.lunar-leap-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--primary-color);
+    cursor: pointer;
+    padding-top: 14px;
+    user-select: none;
+}
+.lunar-leap-label input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--secondary-color);
+    cursor: pointer;
+}
+
+/* 四柱反推结果 */
+.reverse-result {
+    margin: 10px auto 4px;
+    max-width: 460px;
+    text-align: center;
+}
+.reverse-result-title {
+    font-size: 14px;
+    color: #7d6e63;
+    margin-bottom: 10px;
+}
+.reverse-cand-btn {
+    display: block;
+    width: 100%;
+    margin: 6px 0;
+    padding: 10px 14px;
+    background: #fff;
+    border: 1px solid #e2d3b8;
+    border-radius: 10px;
+    color: #5c3d2e;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.reverse-cand-btn:hover {
+    border-color: var(--secondary-color);
+    background: #fff8e6;
+    box-shadow: 0 3px 10px rgba(212, 175, 55, 0.25);
+}
+.reverse-error {
+    margin: 8px auto;
+    max-width: 460px;
+    padding: 10px 12px;
+    background: #fdecec;
+    border: 1px solid #f3b7b7;
+    border-radius: 8px;
+    color: #c0392b;
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: center;
+}
+
 /* 录入方式切换（出生时间 / 已有八字） */
 .mode-switch {
     display: flex;

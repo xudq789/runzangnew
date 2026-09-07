@@ -1473,6 +1473,69 @@ input:focus, select:focus {
   .pan-meta { font-size: 9px; margin-top: 3px; }
 }
 
+/* 录入方式切换（出生时间 / 已有八字） */
+.mode-switch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 4px 0 18px;
+    padding: 10px 14px;
+    background: #faf5ea;
+    border: 1px solid #eadfcb;
+    border-radius: 12px;
+}
+.mode-switch-label {
+    font-size: 14px;
+    color: #7d6e63;
+    margin-right: 4px;
+}
+.mode-btn {
+    border: 1px solid #d8c6a6;
+    background: #fff;
+    color: #5c3d2e;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 7px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+.mode-btn:hover {
+    border-color: var(--secondary-color);
+}
+.mode-btn.active {
+    color: #fff;
+    background: linear-gradient(135deg, var(--secondary-color), #e6b800);
+    border-color: var(--secondary-color);
+    box-shadow: 0 3px 10px rgba(212, 175, 55, 0.35);
+}
+.direct-hint {
+    font-size: 13px;
+    color: #8a7a68;
+    background: #fff8ec;
+    border-left: 3px solid var(--secondary-color);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 2px 0 16px;
+    line-height: 1.6;
+}
+#user-direct-fields .form-grid,
+#partner-direct-fields .form-grid {
+    margin-bottom: 4px;
+}
+
+@media (max-width: 480px) {
+    .mode-btn {
+        padding: 6px 13px;
+        font-size: 13px;
+    }
+    .mode-switch {
+        gap: 8px;
+    }
+}
+
 /* 划线原价 / 优惠价（价格胶囊内兜底样式，胶囊内以 #unlock-price 规则为准） */
 .orig-price {
     color: #b0a08a;

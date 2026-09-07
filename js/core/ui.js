@@ -134,10 +134,11 @@ export function updateServiceDisplay(serviceName) {
 
 function _unlockPriceHtml(cfg) {
     const orig = cfg.originalPrice;
+    const sale = `<span class="sale-price">¥${cfg.price}</span>`;
     if (orig && orig > cfg.price) {
-        return `<del class="orig-price">¥${orig}</del> <span class="sale-price">首次优惠 ¥${cfg.price}</span>`;
+        return `<span class="promo-tag">首次优惠</span>${sale}<del class="orig-price">¥${orig}</del>`;
     }
-    return `<span class="sale-price">¥${cfg.price}</span>`;
+    return sale;
 }
 
 export function updateUnlockInfo() {
@@ -819,7 +820,7 @@ export function resetUnlockInterface() {
         const unlockPrice = unlockBtnContainer.querySelector('.unlock-price');
         const serviceConfig = SERVICES[STATE.currentService];
         if (serviceConfig && unlockBtn && unlockPrice) {
-            unlockBtn.innerHTML = `解锁完整报告 (<span id="unlock-price">${_unlockPriceHtml(serviceConfig)}</span>)`;
+            unlockBtn.innerHTML = `<span class="unlock-btn-text">解锁完整报告</span><span id="unlock-price" class="unlock-price-pill">${_unlockPriceHtml(serviceConfig)}</span>`;
             unlockBtn.style.background = 'linear-gradient(135deg, var(--secondary-color), #e6b800)';
             unlockBtn.style.cursor = 'pointer';
             unlockBtn.disabled = false;

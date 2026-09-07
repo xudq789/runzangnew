@@ -1,6 +1,7 @@
 // UI控制模块
 import { DOM, formatDate, hideElement, showElement } from './utils.js?v=20';
 import { SERVICES, STATE, API_CONFIG } from './config.js?v=20';
+import { reverseBaziFromPillars } from './api.js?v=22';
 
 // UI元素集合
 export const UI = {
@@ -17,11 +18,19 @@ export const UI = {
     directMonth: () => DOM.id('direct-month'),
     directDay: () => DOM.id('direct-day'),
     directHour: () => DOM.id('direct-hour'),
-    dayunStartAge: () => DOM.id('dayun-start-age'),
-    dayunStartYear: () => DOM.id('dayun-start-year'),
     userBirthCityGroup: () => DOM.id('user-birth-city-group'),
     userBirthTimeGroup: () => DOM.id('user-birth-time-group'),
-    userDirectFields: () => DOM.id('user-direct-fields'),
+    userLunarFields: () => DOM.id('user-lunar-fields'),
+    userBaziFields: () => DOM.id('user-bazi-fields'),
+    lunarYear: () => DOM.id('lunar-year'),
+    lunarMonth: () => DOM.id('lunar-month'),
+    lunarDay: () => DOM.id('lunar-day'),
+    lunarLeap: () => DOM.id('lunar-leap'),
+    lunarHour: () => DOM.id('lunar-hour'),
+    reverseBtn: () => DOM.id('reverse-btn'),
+    reverseResult: () => DOM.id('reverse-result'),
+    reverseError: () => DOM.id('reverse-error'),
+    solarFillNote: () => DOM.id('solar-fill-note'),
     
     partnerName: () => DOM.id('partner-name'),
     partnerGender: () => DOM.id('partner-gender'),
@@ -36,11 +45,19 @@ export const UI = {
     partnerDirectMonth: () => DOM.id('partner-direct-month'),
     partnerDirectDay: () => DOM.id('partner-direct-day'),
     partnerDirectHour: () => DOM.id('partner-direct-hour'),
-    partnerDayunStartAge: () => DOM.id('partner-dayun-start-age'),
-    partnerDayunStartYear: () => DOM.id('partner-dayun-start-year'),
     partnerBirthCityGroup: () => DOM.id('partner-birth-city-group'),
     partnerBirthTimeGroup: () => DOM.id('partner-birth-time-group'),
-    partnerDirectFields: () => DOM.id('partner-direct-fields'),
+    partnerLunarFields: () => DOM.id('partner-lunar-fields'),
+    partnerBaziFields: () => DOM.id('partner-bazi-fields'),
+    partnerLunarYear: () => DOM.id('partner-lunar-year'),
+    partnerLunarMonth: () => DOM.id('partner-lunar-month'),
+    partnerLunarDay: () => DOM.id('partner-lunar-day'),
+    partnerLunarLeap: () => DOM.id('partner-lunar-leap'),
+    partnerLunarHour: () => DOM.id('partner-lunar-hour'),
+    partnerReverseBtn: () => DOM.id('partner-reverse-btn'),
+    partnerReverseResult: () => DOM.id('partner-reverse-result'),
+    partnerReverseError: () => DOM.id('partner-reverse-error'),
+    partnerSolarFillNote: () => DOM.id('partner-solar-fill-note'),
     
     analyzeBtn: () => DOM.id('analyze-btn'),
     unlockBtn: () => DOM.id('unlock-btn'),
@@ -152,34 +169,65 @@ function _fillYearSelect(selectId, label, start, end, defValue) {
     if (defValue) select.value = String(defValue);
 }
 
+function _fillNumberSelect(selectId, label, start, end, suffix) {
+    const select = DOM.id(selectId);
+    if (!select) return;
+    select.innerHTML = `<option value="">${label}</option>`;
+    for (let i = start; i <= end; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = i + suffix;
+        select.appendChild(opt);
+    }
+}
+
+const _SHICHEN_OPTIONS = [
+    ['子', '子时(23-01)'], ['丑', '丑时(01-03)'], ['寅', '寅时(03-05)'], ['卯', '卯时(05-07)'],
+    ['辰', '辰时(07-09)'], ['巳', '巳时(09-11)'], ['午', '午时(11-13)'], ['未', '未时(13-15)'],
+    ['申', '申时(15-17)'], ['酉', '酉时(17-19)'], ['戌', '戌时(19-21)'], ['亥', '亥时(21-23)']
+];
+
 export function initDirectFormOptions() {
     const curYear = new Date().getFullYear();
-    const sets = [
-        ['direct-year', 'direct-month', 'direct-day', 'direct-hour', 'dayun-start-year', '年柱干支'],
-        ['partner-direct-year', 'partner-direct-month', 'partner-direct-day', 'partner-direct-hour', 'partner-dayun-start-year', '年柱干支']
-    ];
-    sets.forEach(([yId, mId, dId, hId, qyId]) => {
-        _fillGanzhiSelect(yId, '年柱干支');
-        _fillGanzhiSelect(mId, '月柱干支');
-        _fillGanzhiSelect(dId, '日柱干支');
-        _fillGanzhiSelect(hId, '时柱干支');
-        _fillYearSelect(qyId, '第一步大运开始年份', 1900, curYear + 60, curYear);
-    });
 
-    const ageEls = [DOM.id('dayun-start-age'), DOM.id('partner-dayun-start-age')];
-    ageEls.forEach(el => { if (el && !el.value) el.value = '5'; });
+    _fillGanzhiSelect('direct-year', '年柱干支');
+    _fillGanzhiSelect('direct-month', '月柱干支');
+    _fillGanzhiSelect('direct-day', '日柱干支');
+    _fillGanzhiSelect('direct-hour', '时柱干支');
+    _fillGanzhiSelect('partner-direct-year', '年柱干支');
+    _fillGanzhiSelect('partner-direct-month', '月柱干支');
+    _fillGanzhiSelect('partner-direct-day', '日柱干支');
+    _fillGanzhiSelect('partner-direct-hour', '时柱干支');
+
+    ['', 'partner-'].forEach(prefix => {
+        _fillYearSelect(prefix + 'lunar-year', '农历年份', 1900, 2050, curYear);
+        _fillNumberSelect(prefix + 'lunar-month', '农历月份', 1, 12, '月');
+        _fillNumberSelect(prefix + 'lunar-day', '农历日期', 1, 30, '日');
+        const hourSel = DOM.id(prefix + 'lunar-hour');
+        if (hourSel) {
+            hourSel.innerHTML = '<option value="">选择时辰</option>';
+            _SHICHEN_OPTIONS.forEach(([v, label]) => {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = label;
+                hourSel.appendChild(opt);
+            });
+        }
+    });
 
     bindModeSwitch('user');
     bindModeSwitch('partner');
-    applyFormMode('user', 'datetime');
-    applyFormMode('partner', 'datetime');
+    bindReverseButton('user');
+    bindReverseButton('partner');
+    applyFormMode('user', 'solar');
+    applyFormMode('partner', 'solar');
 }
 
 export function getFormMode(scope) {
     const sw = scope === 'partner' ? UI.partnerModeSwitch() : UI.userModeSwitch();
-    if (!sw) return 'datetime';
+    if (!sw) return 'solar';
     const active = sw.querySelector('.mode-btn.active');
-    return active ? active.dataset.mode : 'datetime';
+    return active ? active.dataset.mode : 'solar';
 }
 
 export function bindModeSwitch(scope) {
@@ -189,6 +237,7 @@ export function bindModeSwitch(scope) {
         btn.addEventListener('click', () => {
             sw.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            if (btn.dataset.mode === 'reverse') markReverseUnfilled(scope);
             applyFormMode(scope, btn.dataset.mode);
         });
     });
@@ -198,46 +247,151 @@ export function applyFormMode(scope, mode) {
     if (scope === 'partner') {
         const city = UI.partnerBirthCityGroup();
         const time = UI.partnerBirthTimeGroup();
-        const direct = UI.partnerDirectFields();
-        if (mode === 'direct') {
+        const lunar = UI.partnerLunarFields();
+        const bazi = UI.partnerBaziFields();
+        if (mode === 'lunar') {
+            if (city) showElement(city);
+            if (time) hideElement(time);
+            if (lunar) showElement(lunar);
+            if (bazi) hideElement(bazi);
+        } else if (mode === 'reverse') {
             if (city) hideElement(city);
             if (time) hideElement(time);
-            if (direct) showElement(direct);
+            if (lunar) hideElement(lunar);
+            if (bazi) showElement(bazi);
         } else {
             if (city) showElement(city);
             if (time) showElement(time);
-            if (direct) hideElement(direct);
+            if (lunar) hideElement(lunar);
+            if (bazi) hideElement(bazi);
         }
     } else {
         const city = UI.userBirthCityGroup();
         const time = UI.userBirthTimeGroup();
-        const direct = UI.userDirectFields();
-        if (mode === 'direct') {
+        const lunar = UI.userLunarFields();
+        const bazi = UI.userBaziFields();
+        if (mode === 'lunar') {
+            if (city) showElement(city);
+            if (time) hideElement(time);
+            if (lunar) showElement(lunar);
+            if (bazi) hideElement(bazi);
+        } else if (mode === 'reverse') {
             if (city) hideElement(city);
             if (time) hideElement(time);
-            if (direct) showElement(direct);
+            if (lunar) hideElement(lunar);
+            if (bazi) showElement(bazi);
         } else {
             if (city) showElement(city);
             if (time) showElement(time);
-            if (direct) hideElement(direct);
+            if (lunar) hideElement(lunar);
+            if (bazi) hideElement(bazi);
         }
     }
 }
 
 export function resetToDefaultModes() {
+    [UI.solarFillNote(), UI.partnerSolarFillNote()].forEach(el => { if (el) el.style.display = 'none'; });
+    [UI.reverseResult(), UI.reverseError(), UI.partnerReverseResult(), UI.partnerReverseError()].forEach(el => {
+        if (el) el.style.display = 'none';
+    });
+    _reverseFilled.user = false;
+    _reverseFilled.partner = false;
     const userSw = UI.userModeSwitch();
     if (userSw) {
         userSw.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-        const def = userSw.querySelector('.mode-btn[data-mode="datetime"]');
+        const def = userSw.querySelector('.mode-btn[data-mode="solar"]');
         if (def) def.classList.add('active');
-        applyFormMode('user', 'datetime');
+        applyFormMode('user', 'solar');
     }
     const partnerSw = UI.partnerModeSwitch();
     if (partnerSw) {
         partnerSw.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-        const def = partnerSw.querySelector('.mode-btn[data-mode="datetime"]');
+        const def = partnerSw.querySelector('.mode-btn[data-mode="solar"]');
         if (def) def.classList.add('active');
-        applyFormMode('partner', 'datetime');
+        applyFormMode('partner', 'solar');
+    }
+}
+
+function _scopePrefix(scope) {
+    return scope === 'partner' ? 'partner-' : '';
+}
+
+export function bindReverseButton(scope) {
+    const btn = scope === 'partner' ? UI.partnerReverseBtn() : UI.reverseBtn();
+    if (!btn) return;
+    btn.addEventListener('click', () => doReverse(scope));
+}
+
+export async function doReverse(scope) {
+    const prefix = _scopePrefix(scope);
+    const resultBox = scope === 'partner' ? UI.partnerReverseResult() : UI.reverseResult();
+    const errBox = scope === 'partner' ? UI.partnerReverseError() : UI.reverseError();
+    const gz = ['direct-year', 'direct-month', 'direct-day', 'direct-hour'].map(id => {
+        const el = DOM.id(prefix + id);
+        return el ? el.value : '';
+    });
+    if (errBox) errBox.style.display = 'none';
+    if (!gz.every(v => v)) {
+        if (errBox) { errBox.textContent = '请先选择完整的四柱干支（年/月/日/时柱）'; errBox.style.display = 'block'; }
+        if (resultBox) resultBox.style.display = 'none';
+        return;
+    }
+    if (resultBox) resultBox.style.display = 'none';
+    try {
+        const res = await reverseBaziFromPillars({ direct_year: gz[0], direct_month: gz[1], direct_day: gz[2], direct_hour: gz[3] });
+        if (!res.success) {
+            if (errBox) { errBox.textContent = res.error || '反推失败，请稍后再试'; errBox.style.display = 'block'; }
+            return;
+        }
+        const cands = res.candidates || [];
+        if (!cands.length) {
+            if (errBox) { errBox.textContent = '未找到匹配的公历日期：请核对四柱是否自洽（月柱需符合年柱五虎遁、时柱需符合日柱五鼠遁）。'; errBox.style.display = 'block'; }
+            return;
+        }
+        if (resultBox) {
+            resultBox.innerHTML = '<div class="reverse-result-title">反推出以下可能的公历出生时间，请点选一项：</div>';
+            cands.forEach(c => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'reverse-cand-btn';
+                const ageTxt = (c.age !== null && c.age !== undefined && c.age >= 0) ? `（约${c.age}岁）` : '（未来年份）';
+                b.textContent = c.label + ageTxt;
+                b.addEventListener('click', () => fillSolarFromCandidate(scope, c));
+                resultBox.appendChild(b);
+            });
+            resultBox.style.display = 'block';
+        }
+    } catch (e) {
+        if (errBox) { errBox.textContent = '反推请求失败：' + String(e && e.message || e); errBox.style.display = 'block'; }
+    }
+}
+
+export function fillSolarFromCandidate(scope, c) {
+    const prefix = _scopePrefix(scope);
+    const ids = { year: 'birth-year', month: 'birth-month', day: 'birth-day', hour: 'birth-hour', minute: 'birth-minute' };
+    if (scope === 'partner') {
+        Object.keys(ids).forEach(k => { ids[k] = 'partner-' + ids[k]; });
+    }
+    const setSel = (id, val) => {
+        const el = DOM.id(id);
+        if (el) { el.value = String(val); el.dispatchEvent(new Event('change', { bubbles: true })); }
+    };
+    setSel(ids.year, c.year);
+    setSel(ids.month, c.month);
+    setSel(ids.day, c.day);
+    setSel(ids.hour, c.hour);
+    setSel(ids.minute, (c.minute !== null && c.minute !== undefined) ? c.minute : 0);
+
+    const sw = scope === 'partner' ? UI.partnerModeSwitch() : UI.userModeSwitch();
+    if (sw) {
+        sw.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === 'solar'));
+    }
+    applyFormMode(scope, 'solar');
+    _reverseFilled[scope] = true;
+    const note = scope === 'partner' ? UI.partnerSolarFillNote() : UI.solarFillNote();
+    if (note) {
+        note.style.display = 'block';
+        note.textContent = `已由四柱反推得到公历 ${c.label}，请核对；如需调整可直接修改公历时间。`;
     }
 }
 
@@ -324,19 +478,19 @@ export function displayPredictorInfo() {
     predictorInfoGrid.innerHTML = '';
 
     const ud = STATE.userData || {};
-    const birthSummary = (u) => (u && u.input_mode === 'direct')
-        ? `${u.direct_year}年 ${u.direct_month}月 ${u.direct_day}日 ${u.direct_hour}时`
-        : (u && u.birthYear ? `${u.birthYear}年${u.birthMonth}月${u.birthDay}日 ${u.birthHour}时${u.birthMinute ? u.birthMinute + '分' : ''}` : '');
+    const solarText = (u) => (u && u.birthYear ? `${u.birthYear}年${u.birthMonth}月${u.birthDay}日 ${u.birthHour}时${u.birthMinute ? u.birthMinute + '分' : ''}` : '');
+    const lunarText = (u) => {
+        if (!u) return '';
+        const leap = u.lunarLeap ? '闰' : '';
+        return `农历${u.lunarYear}年${leap}${u.lunarMonth}月${u.lunarDay}日${u.lunarHour}时`;
+    };
+    const isLunar = ud.input_mode === 'lunar';
     const infoItems = [
         { label: '姓名', value: ud.name },
         { label: '性别', value: ud.gender },
-        { label: ud.input_mode === 'direct' ? '八字' : '出生时间', value: birthSummary(ud) }
+        { label: '出生时间', value: isLunar ? lunarText(ud) : solarText(ud) },
+        { label: '出生城市', value: ud.birthCity }
     ];
-    if (ud.input_mode === 'direct') {
-        infoItems.push({ label: '起运', value: `${ud.dayun_start_age}岁起运` + (ud.dayun_start_year ? `（${ud.dayun_start_year}年交运）` : '') });
-    } else {
-        infoItems.push({ label: '出生城市', value: ud.birthCity });
-    }
     infoItems.push(
         { label: '测算服务', value: STATE.currentService },
         { label: '测算时间', value: formatDate() }
@@ -344,19 +498,17 @@ export function displayPredictorInfo() {
 
     if (STATE.currentService === '八字合婚' && STATE.partnerData) {
         const pd = STATE.partnerData;
-        const pBirth = (pd.partnerInputMode === 'direct')
-            ? `${pd.partnerDirectYear}年 ${pd.partnerDirectMonth}月 ${pd.partnerDirectDay}日 ${pd.partnerDirectHour}时`
+        const pLunar = pd.partnerInputMode === 'lunar';
+        const pLeap = pd.partnerLunarLeap ? '闰' : '';
+        const pBirth = pLunar
+            ? `农历${pd.partnerLunarYear}年${pLeap}${pd.partnerLunarMonth}月${pd.partnerLunarDay}日${pd.partnerLunarHour}时`
             : `${pd.partnerBirthYear}年${pd.partnerBirthMonth}月${pd.partnerBirthDay}日 ${pd.partnerBirthHour}时${pd.partnerBirthMinute ? pd.partnerBirthMinute + '分' : ''}`;
         infoItems.push(
             { label: '伴侣姓名', value: pd.partnerName },
             { label: '伴侣性别', value: pd.partnerGender },
-            { label: pd.partnerInputMode === 'direct' ? '伴侣八字' : '伴侣出生时间', value: pBirth }
+            { label: '伴侣出生时间', value: pBirth },
+            { label: '伴侣出生城市', value: pd.partnerBirthCity }
         );
-        if (pd.partnerInputMode === 'direct') {
-            infoItems.push({ label: '伴侣起运', value: `${pd.partnerDayunStartAge}岁起运` + (pd.partnerDayunStartYear ? `（${pd.partnerDayunStartYear}年交运）` : '') });
-        } else {
-            infoItems.push({ label: '伴侣出生城市', value: pd.partnerBirthCity });
-        }
     }
     infoItems.forEach(item => {
         const div = document.createElement('div');
@@ -404,7 +556,10 @@ function _renderBaziPan(grid, bazi, genderText, showBirth, person) {
     const zodiac = bazi.year.zodiac ? (' · ' + bazi.year.zodiac + '年') : '';
     if (showBirth !== false) {
         let birthLine = '';
-        if (ud && ud.input_mode === 'direct') {
+        if (ud && ud.input_mode === 'lunar') {
+            const leap = ud.lunarLeap ? '闰' : '';
+            birthLine = `农历${ud.lunarYear}年${leap}${ud.lunarMonth}月${ud.lunarDay}日${ud.lunarHour}时`;
+        } else if (ud && ud.input_mode === 'direct') {
             birthLine = '直接录八字';
         } else if (ud && ud.birthYear) {
             birthLine = '公历 ' + ud.birthYear + '年' + (ud.birthMonth || '') + '月' + (ud.birthDay || '') + '日 '
@@ -510,7 +665,12 @@ export function displayBaziPan() {
     const pd = STATE.partnerData || {};
     const partnerGenderText = STATE.currentService === '八字合婚' && pd.partnerGender === '女' ? '坤造' : '乾造';
     const partnerPerson = {
-        input_mode: pd.partnerInputMode === 'direct' ? 'direct' : '',
+        input_mode: pd.partnerInputMode === 'lunar' ? 'lunar' : '',
+        lunarYear: pd.partnerLunarYear,
+        lunarMonth: pd.partnerLunarMonth,
+        lunarDay: pd.partnerLunarDay,
+        lunarLeap: pd.partnerLunarLeap,
+        lunarHour: pd.partnerLunarHour,
         birthYear: pd.partnerBirthYear,
         birthMonth: pd.partnerBirthMonth,
         birthDay: pd.partnerBirthDay,
@@ -1066,6 +1226,12 @@ export function resetFormErrors() {
     });
 }
 
+const _reverseFilled = { user: false, partner: false };
+
+export function markReverseUnfilled(scope) {
+    _reverseFilled[scope] = false;
+}
+
 export function validateForm() {
     let isValid = true;
     resetFormErrors();
@@ -1081,22 +1247,12 @@ export function validateForm() {
         return true;
     };
 
-    const validateDirect = (prefix) => {
+    const validatePillars = (prefix) => {
         let ok = true;
         if (!validateField(prefix + 'direct-year', prefix + 'direct-year-error')) ok = false;
         if (!validateField(prefix + 'direct-month', prefix + 'direct-month-error')) ok = false;
         if (!validateField(prefix + 'direct-day', prefix + 'direct-day-error')) ok = false;
         if (!validateField(prefix + 'direct-hour', prefix + 'direct-hour-error')) ok = false;
-        if (!validateField(prefix + 'dayun-start-year', prefix + 'dayun-start-year-error')) ok = false;
-        const ageEl = DOM.id(prefix + 'dayun-start-age');
-        const ageErr = DOM.id(prefix + 'dayun-start-age-error');
-        if (ageEl && ageErr) {
-            const age = parseInt(ageEl.value, 10);
-            if (!age || age <= 0 || age >= 100) {
-                ageErr.style.display = 'block';
-                ok = false;
-            }
-        }
         return ok;
     };
 
@@ -1104,8 +1260,19 @@ export function validateForm() {
     if (!validateField('gender', 'gender-error')) isValid = false;
 
     const userMode = getFormMode('user');
-    if (userMode === 'direct') {
-        if (!validateDirect('')) isValid = false;
+    if (userMode === 'lunar') {
+        if (!validateField('lunar-year', 'lunar-year-error')) isValid = false;
+        if (!validateField('lunar-month', 'lunar-month-error')) isValid = false;
+        if (!validateField('lunar-day', 'lunar-day-error')) isValid = false;
+        if (!validateField('lunar-hour', 'lunar-hour-error')) isValid = false;
+        if (!validateField('birth-city', 'birth-city-error')) isValid = false;
+    } else if (userMode === 'reverse') {
+        if (!validatePillars('')) isValid = false;
+        if (!_reverseFilled.user) {
+            const errBox = UI.reverseError();
+            if (errBox) { errBox.textContent = '请先点击"反推公历出生时间"并在结果中选一项公历日期后再测算。'; errBox.style.display = 'block'; }
+            isValid = false;
+        }
     } else {
         if (!validateField('birth-year', 'birth-year-error')) isValid = false;
         if (!validateField('birth-month', 'birth-month-error')) isValid = false;
@@ -1119,8 +1286,19 @@ export function validateForm() {
         if (!validateField('partner-name', 'partner-name-error')) isValid = false;
         if (!validateField('partner-gender', 'partner-gender-error')) isValid = false;
         const partnerMode = getFormMode('partner');
-        if (partnerMode === 'direct') {
-            if (!validateDirect('partner-')) isValid = false;
+        if (partnerMode === 'lunar') {
+            if (!validateField('partner-lunar-year', 'partner-lunar-year-error')) isValid = false;
+            if (!validateField('partner-lunar-month', 'partner-lunar-month-error')) isValid = false;
+            if (!validateField('partner-lunar-day', 'partner-lunar-day-error')) isValid = false;
+            if (!validateField('partner-lunar-hour', 'partner-lunar-hour-error')) isValid = false;
+            if (!validateField('partner-birth-city', 'partner-birth-city-error')) isValid = false;
+        } else if (partnerMode === 'reverse') {
+            if (!validatePillars('partner-')) isValid = false;
+            if (!_reverseFilled.partner) {
+                const errBox = UI.partnerReverseError();
+                if (errBox) { errBox.textContent = '请先为伴侣点击"反推公历出生时间"并在结果中选一项公历日期后再测算。'; errBox.style.display = 'block'; }
+                isValid = false;
+            }
         } else {
             if (!validateField('partner-birth-year', 'partner-birth-year-error')) isValid = false;
             if (!validateField('partner-birth-month', 'partner-birth-month-error')) isValid = false;
@@ -1136,22 +1314,25 @@ export function validateForm() {
 
 export function collectUserData() {
     const userMode = getFormMode('user');
-    if (userMode === 'direct') {
+    const genderText = () => UI.gender().value === 'male' ? '男' : '女';
+    const partnerGenderText = () => UI.partnerGender().value === 'male' ? '男' : '女';
+
+    if (userMode === 'lunar') {
         STATE.userData = {
             name: UI.name().value,
-            gender: UI.gender().value === 'male' ? '男' : '女',
-            input_mode: 'direct',
-            direct_year: UI.directYear().value,
-            direct_month: UI.directMonth().value,
-            direct_day: UI.directDay().value,
-            direct_hour: UI.directHour().value,
-            dayun_start_age: UI.dayunStartAge().value,
-            dayun_start_year: UI.dayunStartYear().value
+            gender: genderText(),
+            birthCity: UI.birthCity().value,
+            input_mode: 'lunar',
+            lunarYear: UI.lunarYear().value,
+            lunarMonth: UI.lunarMonth().value,
+            lunarDay: UI.lunarDay().value,
+            lunarLeap: !!(UI.lunarLeap() && UI.lunarLeap().checked),
+            lunarHour: UI.lunarHour().value
         };
     } else {
         STATE.userData = {
             name: UI.name().value,
-            gender: UI.gender().value === 'male' ? '男' : '女',
+            gender: genderText(),
             birthYear: UI.birthYear().value,
             birthMonth: UI.birthMonth().value,
             birthDay: UI.birthDay().value,
@@ -1162,22 +1343,22 @@ export function collectUserData() {
     }
     if (STATE.currentService === '八字合婚') {
         const partnerMode = getFormMode('partner');
-        if (partnerMode === 'direct') {
+        if (partnerMode === 'lunar') {
             STATE.partnerData = {
                 partnerName: UI.partnerName().value,
-                partnerGender: UI.partnerGender().value === 'male' ? '男' : '女',
-                partnerInputMode: 'direct',
-                partnerDirectYear: UI.partnerDirectYear().value,
-                partnerDirectMonth: UI.partnerDirectMonth().value,
-                partnerDirectDay: UI.partnerDirectDay().value,
-                partnerDirectHour: UI.partnerDirectHour().value,
-                partnerDayunStartAge: UI.partnerDayunStartAge().value,
-                partnerDayunStartYear: UI.partnerDayunStartYear().value
+                partnerGender: partnerGenderText(),
+                partnerBirthCity: UI.partnerBirthCity().value,
+                partnerInputMode: 'lunar',
+                partnerLunarYear: UI.partnerLunarYear().value,
+                partnerLunarMonth: UI.partnerLunarMonth().value,
+                partnerLunarDay: UI.partnerLunarDay().value,
+                partnerLunarLeap: !!(UI.partnerLunarLeap() && UI.partnerLunarLeap().checked),
+                partnerLunarHour: UI.partnerLunarHour().value
             };
         } else {
             STATE.partnerData = {
                 partnerName: UI.partnerName().value,
-                partnerGender: UI.partnerGender().value === 'male' ? '男' : '女',
+                partnerGender: partnerGenderText(),
                 partnerBirthYear: UI.partnerBirthYear().value,
                 partnerBirthMonth: UI.partnerBirthMonth().value,
                 partnerBirthDay: UI.partnerBirthDay().value,

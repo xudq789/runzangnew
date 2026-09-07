@@ -12,6 +12,16 @@ export const UI = {
     birthDay: () => DOM.id('birth-day'),
     birthHour: () => DOM.id('birth-hour'),
     birthMinute: () => DOM.id('birth-minute'),
+    userModeSwitch: () => DOM.id('user-mode-switch'),
+    directYear: () => DOM.id('direct-year'),
+    directMonth: () => DOM.id('direct-month'),
+    directDay: () => DOM.id('direct-day'),
+    directHour: () => DOM.id('direct-hour'),
+    dayunStartAge: () => DOM.id('dayun-start-age'),
+    dayunStartYear: () => DOM.id('dayun-start-year'),
+    userBirthCityGroup: () => DOM.id('user-birth-city-group'),
+    userBirthTimeGroup: () => DOM.id('user-birth-time-group'),
+    userDirectFields: () => DOM.id('user-direct-fields'),
     
     partnerName: () => DOM.id('partner-name'),
     partnerGender: () => DOM.id('partner-gender'),
@@ -21,6 +31,16 @@ export const UI = {
     partnerBirthDay: () => DOM.id('partner-birth-day'),
     partnerBirthHour: () => DOM.id('partner-birth-hour'),
     partnerBirthMinute: () => DOM.id('partner-birth-minute'),
+    partnerModeSwitch: () => DOM.id('partner-mode-switch'),
+    partnerDirectYear: () => DOM.id('partner-direct-year'),
+    partnerDirectMonth: () => DOM.id('partner-direct-month'),
+    partnerDirectDay: () => DOM.id('partner-direct-day'),
+    partnerDirectHour: () => DOM.id('partner-direct-hour'),
+    partnerDayunStartAge: () => DOM.id('partner-dayun-start-age'),
+    partnerDayunStartYear: () => DOM.id('partner-dayun-start-year'),
+    partnerBirthCityGroup: () => DOM.id('partner-birth-city-group'),
+    partnerBirthTimeGroup: () => DOM.id('partner-birth-time-group'),
+    partnerDirectFields: () => DOM.id('partner-direct-fields'),
     
     analyzeBtn: () => DOM.id('analyze-btn'),
     unlockBtn: () => DOM.id('unlock-btn'),
@@ -89,6 +109,136 @@ export function initFormOptions() {
     if (partnerBirthYearEl) partnerBirthYearEl.value = '1990';
     const birthCityEl = DOM.id('birth-city');
     if (birthCityEl) birthCityEl.value = '北京';
+
+    initDirectFormOptions();
+}
+
+const _GAN_A = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+const _ZHI_A = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+let _JIAZI_CACHE = null;
+
+function _jiazi60() {
+    if (_JIAZI_CACHE) return _JIAZI_CACHE;
+    const list = [];
+    for (let i = 0; i < 60; i++) {
+        list.push(_GAN_A[i % 10] + _ZHI_A[i % 12]);
+    }
+    _JIAZI_CACHE = list;
+    return list;
+}
+
+function _fillGanzhiSelect(selectId, label) {
+    const select = DOM.id(selectId);
+    if (!select) return;
+    select.innerHTML = `<option value="">${label}</option>`;
+    _jiazi60().forEach(gz => {
+        const opt = document.createElement('option');
+        opt.value = gz;
+        opt.textContent = gz;
+        select.appendChild(opt);
+    });
+}
+
+function _fillYearSelect(selectId, label, start, end, defValue) {
+    const select = DOM.id(selectId);
+    if (!select) return;
+    select.innerHTML = `<option value="">${label}</option>`;
+    for (let y = start; y <= end; y++) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y + '年';
+        select.appendChild(opt);
+    }
+    if (defValue) select.value = String(defValue);
+}
+
+export function initDirectFormOptions() {
+    const curYear = new Date().getFullYear();
+    const sets = [
+        ['direct-year', 'direct-month', 'direct-day', 'direct-hour', 'dayun-start-year', '年柱干支'],
+        ['partner-direct-year', 'partner-direct-month', 'partner-direct-day', 'partner-direct-hour', 'partner-dayun-start-year', '年柱干支']
+    ];
+    sets.forEach(([yId, mId, dId, hId, qyId]) => {
+        _fillGanzhiSelect(yId, '年柱干支');
+        _fillGanzhiSelect(mId, '月柱干支');
+        _fillGanzhiSelect(dId, '日柱干支');
+        _fillGanzhiSelect(hId, '时柱干支');
+        _fillYearSelect(qyId, '第一步大运开始年份', 1900, curYear + 60, curYear);
+    });
+
+    const ageEls = [DOM.id('dayun-start-age'), DOM.id('partner-dayun-start-age')];
+    ageEls.forEach(el => { if (el && !el.value) el.value = '5'; });
+
+    bindModeSwitch('user');
+    bindModeSwitch('partner');
+    applyFormMode('user', 'datetime');
+    applyFormMode('partner', 'datetime');
+}
+
+export function getFormMode(scope) {
+    const sw = scope === 'partner' ? UI.partnerModeSwitch() : UI.userModeSwitch();
+    if (!sw) return 'datetime';
+    const active = sw.querySelector('.mode-btn.active');
+    return active ? active.dataset.mode : 'datetime';
+}
+
+export function bindModeSwitch(scope) {
+    const sw = scope === 'partner' ? UI.partnerModeSwitch() : UI.userModeSwitch();
+    if (!sw) return;
+    sw.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            sw.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFormMode(scope, btn.dataset.mode);
+        });
+    });
+}
+
+export function applyFormMode(scope, mode) {
+    if (scope === 'partner') {
+        const city = UI.partnerBirthCityGroup();
+        const time = UI.partnerBirthTimeGroup();
+        const direct = UI.partnerDirectFields();
+        if (mode === 'direct') {
+            if (city) hideElement(city);
+            if (time) hideElement(time);
+            if (direct) showElement(direct);
+        } else {
+            if (city) showElement(city);
+            if (time) showElement(time);
+            if (direct) hideElement(direct);
+        }
+    } else {
+        const city = UI.userBirthCityGroup();
+        const time = UI.userBirthTimeGroup();
+        const direct = UI.userDirectFields();
+        if (mode === 'direct') {
+            if (city) hideElement(city);
+            if (time) hideElement(time);
+            if (direct) showElement(direct);
+        } else {
+            if (city) showElement(city);
+            if (time) showElement(time);
+            if (direct) hideElement(direct);
+        }
+    }
+}
+
+export function resetToDefaultModes() {
+    const userSw = UI.userModeSwitch();
+    if (userSw) {
+        userSw.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        const def = userSw.querySelector('.mode-btn[data-mode="datetime"]');
+        if (def) def.classList.add('active');
+        applyFormMode('user', 'datetime');
+    }
+    const partnerSw = UI.partnerModeSwitch();
+    if (partnerSw) {
+        partnerSw.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        const def = partnerSw.querySelector('.mode-btn[data-mode="datetime"]');
+        if (def) def.classList.add('active');
+        applyFormMode('partner', 'datetime');
+    }
 }
 
 export function updateServiceDisplay(serviceName) {
@@ -172,21 +322,41 @@ export function displayPredictorInfo() {
     const predictorInfoGrid = UI.predictorInfoGrid();
     if (!predictorInfoGrid || !STATE.userData) return;
     predictorInfoGrid.innerHTML = '';
+
+    const ud = STATE.userData || {};
+    const birthSummary = (u) => (u && u.input_mode === 'direct')
+        ? `${u.direct_year}年 ${u.direct_month}月 ${u.direct_day}日 ${u.direct_hour}时`
+        : (u && u.birthYear ? `${u.birthYear}年${u.birthMonth}月${u.birthDay}日 ${u.birthHour}时${u.birthMinute ? u.birthMinute + '分' : ''}` : '');
     const infoItems = [
-        { label: '姓名', value: STATE.userData.name },
-        { label: '性别', value: STATE.userData.gender },
-        { label: '出生时间', value: `${STATE.userData.birthYear}年${STATE.userData.birthMonth}月${STATE.userData.birthDay}日 ${STATE.userData.birthHour}时${STATE.userData.birthMinute}分` },
-        { label: '出生城市', value: STATE.userData.birthCity },
+        { label: '姓名', value: ud.name },
+        { label: '性别', value: ud.gender },
+        { label: ud.input_mode === 'direct' ? '八字' : '出生时间', value: birthSummary(ud) }
+    ];
+    if (ud.input_mode === 'direct') {
+        infoItems.push({ label: '起运', value: `${ud.dayun_start_age}岁起运` + (ud.dayun_start_year ? `（${ud.dayun_start_year}年交运）` : '') });
+    } else {
+        infoItems.push({ label: '出生城市', value: ud.birthCity });
+    }
+    infoItems.push(
         { label: '测算服务', value: STATE.currentService },
         { label: '测算时间', value: formatDate() }
-    ];
+    );
+
     if (STATE.currentService === '八字合婚' && STATE.partnerData) {
+        const pd = STATE.partnerData;
+        const pBirth = (pd.partnerInputMode === 'direct')
+            ? `${pd.partnerDirectYear}年 ${pd.partnerDirectMonth}月 ${pd.partnerDirectDay}日 ${pd.partnerDirectHour}时`
+            : `${pd.partnerBirthYear}年${pd.partnerBirthMonth}月${pd.partnerBirthDay}日 ${pd.partnerBirthHour}时${pd.partnerBirthMinute ? pd.partnerBirthMinute + '分' : ''}`;
         infoItems.push(
-            { label: '伴侣姓名', value: STATE.partnerData.partnerName },
-            { label: '伴侣性别', value: STATE.partnerData.partnerGender },
-            { label: '伴侣出生时间', value: `${STATE.partnerData.partnerBirthYear}年${STATE.partnerData.partnerBirthMonth}月${STATE.partnerData.partnerBirthDay}日 ${STATE.partnerData.partnerBirthHour}时${STATE.partnerData.partnerBirthMinute}分` },
-            { label: '伴侣出生城市', value: STATE.partnerData.partnerBirthCity }
+            { label: '伴侣姓名', value: pd.partnerName },
+            { label: '伴侣性别', value: pd.partnerGender },
+            { label: pd.partnerInputMode === 'direct' ? '伴侣八字' : '伴侣出生时间', value: pBirth }
         );
+        if (pd.partnerInputMode === 'direct') {
+            infoItems.push({ label: '伴侣起运', value: `${pd.partnerDayunStartAge}岁起运` + (pd.partnerDayunStartYear ? `（${pd.partnerDayunStartYear}年交运）` : '') });
+        } else {
+            infoItems.push({ label: '伴侣出生城市', value: pd.partnerBirthCity });
+        }
     }
     infoItems.forEach(item => {
         const div = document.createElement('div');
@@ -211,14 +381,14 @@ function _wxClass(wx) {
 const _GAN_WX = { '甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土', '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水' };
 const _ZHI_WX = { '子': '水', '丑': '土', '寅': '木', '卯': '木', '辰': '土', '巳': '火', '午': '火', '未': '土', '申': '金', '酉': '金', '戌': '土', '亥': '水' };
 
-function _renderBaziPan(grid, bazi, genderText, showBirth) {
+function _renderBaziPan(grid, bazi, genderText, showBirth, person) {
     if (!grid) return;
     grid.innerHTML = '';
     if (!bazi || !bazi.year || !bazi.month || !bazi.day || !bazi.hour) {
         grid.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">暂无排盘数据</div>';
         return;
     }
-    const ud = STATE.userData || {};
+    const ud = person || STATE.userData || {};
 
     const wrap = document.createElement('div');
     wrap.className = 'pan-wrap';
@@ -233,7 +403,14 @@ function _renderBaziPan(grid, bazi, genderText, showBirth) {
     info.className = 'pan-head-info';
     const zodiac = bazi.year.zodiac ? (' · ' + bazi.year.zodiac + '年') : '';
     if (showBirth !== false) {
-        info.textContent = (ud.birthYear ? ('公历 ' + ud.birthYear + '年' + ud.birthMonth + '月' + ud.birthDay + '日 ' + ud.birthHour + '时' + (ud.birthMinute ? ud.birthMinute + '分' : '')) : '') + zodiac;
+        let birthLine = '';
+        if (ud && ud.input_mode === 'direct') {
+            birthLine = '直接录八字';
+        } else if (ud && ud.birthYear) {
+            birthLine = '公历 ' + ud.birthYear + '年' + (ud.birthMonth || '') + '月' + (ud.birthDay || '') + '日 '
+                + (ud.birthHour || '') + '时' + (ud.birthMinute ? ud.birthMinute + '分' : '');
+        }
+        info.textContent = birthLine + zodiac;
     } else {
         info.textContent = bazi.year.zodiac ? (bazi.year.zodiac + '年生') : '';
     }
@@ -329,9 +506,18 @@ function _renderBaziPan(grid, bazi, genderText, showBirth) {
 
 export function displayBaziPan() {
     const genderText = (STATE.userData && STATE.userData.gender === '女') ? '坤造' : '乾造';
-    _renderBaziPan(document.getElementById('bazi-grid'), STATE.baziData, genderText);
-    _renderBaziPan(document.getElementById('partner-bazi-grid'), STATE.partnerBaziData,
-        STATE.currentService === '八字合婚' && STATE.partnerData && STATE.partnerData.partnerGender === '女' ? '坤造' : '乾造');
+    _renderBaziPan(document.getElementById('bazi-grid'), STATE.baziData, genderText, undefined, STATE.userData || {});
+    const pd = STATE.partnerData || {};
+    const partnerGenderText = STATE.currentService === '八字合婚' && pd.partnerGender === '女' ? '坤造' : '乾造';
+    const partnerPerson = {
+        input_mode: pd.partnerInputMode === 'direct' ? 'direct' : '',
+        birthYear: pd.partnerBirthYear,
+        birthMonth: pd.partnerBirthMonth,
+        birthDay: pd.partnerBirthDay,
+        birthHour: pd.partnerBirthHour,
+        birthMinute: pd.partnerBirthMinute
+    };
+    _renderBaziPan(document.getElementById('partner-bazi-grid'), STATE.partnerBaziData, partnerGenderText, undefined, partnerPerson);
 }
 
 // ============ 大运排盘（八步专业格） ============
@@ -894,52 +1080,112 @@ export function validateForm() {
         }
         return true;
     };
-    
+
+    const validateDirect = (prefix) => {
+        let ok = true;
+        if (!validateField(prefix + 'direct-year', prefix + 'direct-year-error')) ok = false;
+        if (!validateField(prefix + 'direct-month', prefix + 'direct-month-error')) ok = false;
+        if (!validateField(prefix + 'direct-day', prefix + 'direct-day-error')) ok = false;
+        if (!validateField(prefix + 'direct-hour', prefix + 'direct-hour-error')) ok = false;
+        if (!validateField(prefix + 'dayun-start-year', prefix + 'dayun-start-year-error')) ok = false;
+        const ageEl = DOM.id(prefix + 'dayun-start-age');
+        const ageErr = DOM.id(prefix + 'dayun-start-age-error');
+        if (ageEl && ageErr) {
+            const age = parseInt(ageEl.value, 10);
+            if (!age || age <= 0 || age >= 100) {
+                ageErr.style.display = 'block';
+                ok = false;
+            }
+        }
+        return ok;
+    };
+
     if (!validateField('name', 'name-error')) isValid = false;
     if (!validateField('gender', 'gender-error')) isValid = false;
-    if (!validateField('birth-year', 'birth-year-error')) isValid = false;
-    if (!validateField('birth-month', 'birth-month-error')) isValid = false;
-    if (!validateField('birth-day', 'birth-day-error')) isValid = false;
-    if (!validateField('birth-hour', 'birth-hour-error')) isValid = false;
-    if (!validateField('birth-minute', 'birth-minute-error')) isValid = false;
-    if (!validateField('birth-city', 'birth-city-error')) isValid = false;
-    
+
+    const userMode = getFormMode('user');
+    if (userMode === 'direct') {
+        if (!validateDirect('')) isValid = false;
+    } else {
+        if (!validateField('birth-year', 'birth-year-error')) isValid = false;
+        if (!validateField('birth-month', 'birth-month-error')) isValid = false;
+        if (!validateField('birth-day', 'birth-day-error')) isValid = false;
+        if (!validateField('birth-hour', 'birth-hour-error')) isValid = false;
+        if (!validateField('birth-minute', 'birth-minute-error')) isValid = false;
+        if (!validateField('birth-city', 'birth-city-error')) isValid = false;
+    }
+
     if (STATE.currentService === '八字合婚') {
         if (!validateField('partner-name', 'partner-name-error')) isValid = false;
         if (!validateField('partner-gender', 'partner-gender-error')) isValid = false;
-        if (!validateField('partner-birth-year', 'partner-birth-year-error')) isValid = false;
-        if (!validateField('partner-birth-month', 'partner-birth-month-error')) isValid = false;
-        if (!validateField('partner-birth-day', 'partner-birth-day-error')) isValid = false;
-        if (!validateField('partner-birth-hour', 'partner-birth-hour-error')) isValid = false;
-        if (!validateField('partner-birth-minute', 'partner-birth-minute-error')) isValid = false;
-        if (!validateField('partner-birth-city', 'partner-birth-city-error')) isValid = false;
+        const partnerMode = getFormMode('partner');
+        if (partnerMode === 'direct') {
+            if (!validateDirect('partner-')) isValid = false;
+        } else {
+            if (!validateField('partner-birth-year', 'partner-birth-year-error')) isValid = false;
+            if (!validateField('partner-birth-month', 'partner-birth-month-error')) isValid = false;
+            if (!validateField('partner-birth-day', 'partner-birth-day-error')) isValid = false;
+            if (!validateField('partner-birth-hour', 'partner-birth-hour-error')) isValid = false;
+            if (!validateField('partner-birth-minute', 'partner-birth-minute-error')) isValid = false;
+            if (!validateField('partner-birth-city', 'partner-birth-city-error')) isValid = false;
+        }
     }
     
     return isValid;
 }
 
 export function collectUserData() {
-    STATE.userData = {
-        name: UI.name().value,
-        gender: UI.gender().value === 'male' ? '男' : '女',
-        birthYear: UI.birthYear().value,
-        birthMonth: UI.birthMonth().value,
-        birthDay: UI.birthDay().value,
-        birthHour: UI.birthHour().value,
-        birthMinute: UI.birthMinute().value,
-        birthCity: UI.birthCity().value
-    };
-    if (STATE.currentService === '八字合婚') {
-        STATE.partnerData = {
-            partnerName: UI.partnerName().value,
-            partnerGender: UI.partnerGender().value === 'male' ? '男' : '女',
-            partnerBirthYear: UI.partnerBirthYear().value,
-            partnerBirthMonth: UI.partnerBirthMonth().value,
-            partnerBirthDay: UI.partnerBirthDay().value,
-            partnerBirthHour: UI.partnerBirthHour().value,
-            partnerBirthMinute: UI.partnerBirthMinute().value,
-            partnerBirthCity: UI.partnerBirthCity().value
+    const userMode = getFormMode('user');
+    if (userMode === 'direct') {
+        STATE.userData = {
+            name: UI.name().value,
+            gender: UI.gender().value === 'male' ? '男' : '女',
+            input_mode: 'direct',
+            direct_year: UI.directYear().value,
+            direct_month: UI.directMonth().value,
+            direct_day: UI.directDay().value,
+            direct_hour: UI.directHour().value,
+            dayun_start_age: UI.dayunStartAge().value,
+            dayun_start_year: UI.dayunStartYear().value
         };
+    } else {
+        STATE.userData = {
+            name: UI.name().value,
+            gender: UI.gender().value === 'male' ? '男' : '女',
+            birthYear: UI.birthYear().value,
+            birthMonth: UI.birthMonth().value,
+            birthDay: UI.birthDay().value,
+            birthHour: UI.birthHour().value,
+            birthMinute: UI.birthMinute().value,
+            birthCity: UI.birthCity().value
+        };
+    }
+    if (STATE.currentService === '八字合婚') {
+        const partnerMode = getFormMode('partner');
+        if (partnerMode === 'direct') {
+            STATE.partnerData = {
+                partnerName: UI.partnerName().value,
+                partnerGender: UI.partnerGender().value === 'male' ? '男' : '女',
+                partnerInputMode: 'direct',
+                partnerDirectYear: UI.partnerDirectYear().value,
+                partnerDirectMonth: UI.partnerDirectMonth().value,
+                partnerDirectDay: UI.partnerDirectDay().value,
+                partnerDirectHour: UI.partnerDirectHour().value,
+                partnerDayunStartAge: UI.partnerDayunStartAge().value,
+                partnerDayunStartYear: UI.partnerDayunStartYear().value
+            };
+        } else {
+            STATE.partnerData = {
+                partnerName: UI.partnerName().value,
+                partnerGender: UI.partnerGender().value === 'male' ? '男' : '女',
+                partnerBirthYear: UI.partnerBirthYear().value,
+                partnerBirthMonth: UI.partnerBirthMonth().value,
+                partnerBirthDay: UI.partnerBirthDay().value,
+                partnerBirthHour: UI.partnerBirthHour().value,
+                partnerBirthMinute: UI.partnerBirthMinute().value,
+                partnerBirthCity: UI.partnerBirthCity().value
+            };
+        }
         STATE.userData.partner_data = STATE.partnerData;
     }
 }

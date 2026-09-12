@@ -846,8 +846,62 @@ export function renderPublicBaziPan(grid, bazi, genderText) {
     _renderBaziPan(grid, bazi, genderText || '', false);
 }
 
+// 首页案例大运盘沿用旧版式（步骤标签 + 天干十神），公开案例数据无地支十神与流年
+function _renderPublicDayunPan(grid, dayunList) {
+    if (!grid) return;
+    const list = (dayunList || []).slice(0, 8);
+    if (list.length === 0) {
+        grid.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">⚠️ 大运排盘数据暂不可用</div>';
+        return;
+    }
+    const wrap = document.createElement('div');
+    wrap.className = 'dayun-wrap';
+
+    list.forEach((dy, i) => {
+        const gz = dy.ganzhi || '--';
+        const gan = gz[0] || '';
+        const zhi = gz[1] || '';
+        const cell = document.createElement('div');
+        cell.className = 'dayun-col' + (i === 0 ? ' dayun-col-first' : '');
+
+        const step = document.createElement('div');
+        step.className = 'dayun-step';
+        step.textContent = (i + 1) + '运';
+
+        const gzDiv = document.createElement('div');
+        gzDiv.className = 'dayun-ganzhi';
+        const gEl = document.createElement('span');
+        gEl.className = 'dayun-gan ' + _wxClass(_GAN_WX[gan] || '');
+        gEl.textContent = gan;
+        const zEl = document.createElement('span');
+        zEl.className = 'dayun-zhi ' + _wxClass(_ZHI_WX[zhi] || '');
+        zEl.textContent = zhi;
+        gzDiv.appendChild(gEl);
+        gzDiv.appendChild(zEl);
+
+        const ss = document.createElement('div');
+        ss.className = 'dayun-shishen';
+        ss.textContent = dy.gan_shishen || '';
+
+        const ageDiv = document.createElement('div');
+        ageDiv.className = 'dayun-age';
+        if (dy.age_start != null) {
+            ageDiv.textContent = dy.age_start + '-' + (dy.age_end != null ? dy.age_end : dy.age_start + 9) + '岁';
+        }
+
+        cell.appendChild(step);
+        cell.appendChild(gzDiv);
+        cell.appendChild(ss);
+        cell.appendChild(ageDiv);
+        wrap.appendChild(cell);
+    });
+
+    grid.innerHTML = '';
+    grid.appendChild(wrap);
+}
+
 export function renderPublicDayunPan(grid, dayunList) {
-    _renderDayunPan(grid, _normalizeDayunData(dayunList));
+    _renderPublicDayunPan(grid, _normalizeDayunData(dayunList));
 }
 
 

@@ -1418,11 +1418,20 @@ input:focus, select:focus {
   border: 1px solid #dfcaa2;
 }
 .dayun-col-first { border: 2px solid #c9a24b; background: linear-gradient(180deg, #fff6dd, #f5e2b4); }
-.dayun-step { font-size: 11px; color: #96783c; letter-spacing: 1px; }
+.dayun-col-clickable { cursor: pointer; transition: box-shadow .15s; }
+.dayun-col-clickable:hover { box-shadow: 0 3px 10px rgba(180,140,60,.32); }
+.dayun-col-active {
+  border: 2px solid #b3362d;
+  background: linear-gradient(180deg, #fff3ee, #f6ddd3);
+  box-shadow: 0 3px 12px rgba(179,54,45,.22);
+}
 .dayun-ganzhi { display: flex; justify-content: center; gap: 6px; margin: 4px 0; }
 .dayun-gan, .dayun-zhi { font-size: 26px; font-weight: 700; line-height: 1; }
 .dayun-shishen { font-size: 13px; color: #8a5a22; font-weight: 600; min-height: 16px; }
+.dayun-shishen-zhi { color: #6b5637; }
 .dayun-age { font-size: 11px; color: #9c8a6a; }
+
+.liunian-wrap { grid-template-columns: repeat(10, 1fr); }
 
 @media (max-width: 720px) {
   #bazi-grid, #partner-bazi-grid { overflow-x: auto; }

@@ -1425,6 +1425,7 @@ input:focus, select:focus {
   background: linear-gradient(180deg, #fff3ee, #f6ddd3);
   box-shadow: 0 3px 12px rgba(179,54,45,.22);
 }
+.dayun-step { font-size: 11px; color: #96783c; letter-spacing: 1px; }
 .dayun-ganzhi { display: flex; justify-content: center; gap: 6px; margin: 4px 0; }
 .dayun-gan, .dayun-zhi { font-size: 26px; font-weight: 700; line-height: 1; }
 .dayun-shishen { font-size: 13px; color: #8a5a22; font-weight: 600; min-height: 16px; }

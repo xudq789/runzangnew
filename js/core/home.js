@@ -1,6 +1,6 @@
 // ============ 【首页：往期案例展示】 ============
 import { API_CONFIG } from './config.js?v=20';
-import { renderPublicBaziPan, renderPublicDayunPan } from './ui.js?v=23';
+import { renderPublicBaziPan, renderPublicDayunPan } from './ui.js?v=24';
 
 const CASE_PAGE_SIZE = 10;
 

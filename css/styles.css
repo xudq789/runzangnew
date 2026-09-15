@@ -1434,6 +1434,10 @@ input:focus, select:focus {
 
 .liunian-wrap { grid-template-columns: repeat(10, 1fr); }
 
+/* 流年卡年份/年龄：桌面同行显示，手机换行 */
+.liu-year::after { content: '年'; }
+.liu-age::before { content: ' · '; }
+
 @media (max-width: 720px) {
   #bazi-grid, #partner-bazi-grid { overflow-x: auto; }
   .pan-table { grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; gap: 5px; }
@@ -1446,20 +1450,31 @@ input:focus, select:focus {
   .pan-cang-gan { font-size: 13px; }
   .pan-cang-ss { font-size: 8px; }
   .pan-meta { font-size: 10px; }
-  /* 大运：8 步单行不分行，可横向滑动 */
+  /* 大运/流年：全部塞进屏宽，8~10 步一行不换行、不横向滚动 */
+  .dayun-pan-card { padding: 12px 6px; }
+  .dayun-pan-card h4 { font-size: 16px; margin-bottom: 10px; padding-bottom: 6px; }
   .dayun-wrap {
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: 68px;
-    gap: 6px;
-    overflow-x: auto;
-    padding-bottom: 4px;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    gap: 3px;
+    overflow-x: visible;
+    padding-bottom: 0;
   }
-  .dayun-col { min-width: 68px; }
-  .dayun-gan, .dayun-zhi { font-size: 20px; }
-  .dayun-shishen { font-size: 12px; }
-  .dayun-age { font-size: 10px; }
-  .dayun-wrap::-webkit-scrollbar { height: 6px; }
+  .dayun-wrap.liunian-wrap { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+  .dayun-col { min-width: 0; padding: 6px 0 5px; border-radius: 7px; }
+  .dayun-col-first, .dayun-col-active { border-width: 1px; }
+  .dayun-ganzhi { flex-direction: column; align-items: center; gap: 0; margin: 3px 0; }
+  .dayun-gan, .dayun-zhi { font-size: 16px; }
+  .dayun-shishen { font-size: 10px; line-height: 1.2; min-height: 0; }
+  .dayun-age { font-size: 8px; line-height: 1.25; }
+  .dayun-age .liu-year, .dayun-age .liu-age { display: block; }
+  .dayun-age .liu-age::before { content: none; }
+  .liunian-wrap .dayun-gan, .liunian-wrap .dayun-zhi { font-size: 14px; }
+  .liunian-wrap .dayun-shishen { font-size: 8px; }
+  .liunian-wrap .dayun-age { font-size: 8px; }
+  .dayun-wrap::-webkit-scrollbar { height: 0; }
+  #dayun-grid, #partner-dayun-grid { overflow-x: visible; }
 }
 
 @media (max-width: 400px) {
@@ -1481,6 +1496,13 @@ input:focus, select:focus {
   .pan-cang-ss { font-size: 9px; margin-top: 0; }
   .pan-wxtxt { font-size: 9px; }
   .pan-meta { font-size: 9px; margin-top: 3px; }
+  .dayun-pan-card { padding: 10px 4px; }
+  .dayun-wrap { gap: 2px; }
+  .dayun-gan, .dayun-zhi { font-size: 15px; }
+  .dayun-shishen { font-size: 9px; }
+  .dayun-age { font-size: 7.5px; }
+  .liunian-wrap .dayun-gan, .liunian-wrap .dayun-zhi { font-size: 13px; }
+  .liunian-wrap .dayun-shishen, .liunian-wrap .dayun-age { font-size: 7.5px; }
 }
 
 /* 农历闰月勾选 */

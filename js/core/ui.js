@@ -742,9 +742,18 @@ function _makeGanzhiCol(item, i, mode) {
     const ageDiv = document.createElement('div');
     ageDiv.className = 'dayun-age';
     if (mode === 'liunian') {
-        ageDiv.textContent = item.year != null
-            ? item.year + '年' + (item.age != null ? ' · ' + item.age + '岁' : '')
-            : '';
+        if (item.year != null) {
+            const yEl = document.createElement('span');
+            yEl.className = 'liu-year';
+            yEl.textContent = String(item.year);
+            ageDiv.appendChild(yEl);
+            if (item.age != null) {
+                const aEl = document.createElement('span');
+                aEl.className = 'liu-age';
+                aEl.textContent = item.age + '岁';
+                ageDiv.appendChild(aEl);
+            }
+        }
     } else if (item.age_start != null) {
         ageDiv.textContent = item.age_start + '-' + (item.age_end != null ? item.age_end : item.age_start + 9) + '岁';
     }
@@ -822,7 +831,14 @@ function _displayPanSection(ids, list) {
     };
 
     cols = _renderDayunPan(grid, list, hasYears ? (i) => select(i) : null);
-    if (hasYears && cols.length) select(0);
+    if (hasYears && cols.length) select(_currentDayunIndex(list));
+}
+
+// 默认选中覆盖今年那一步大运；流年数据不全时退回第一步
+function _currentDayunIndex(list) {
+    const y = new Date().getFullYear();
+    const i = list.findIndex(dy => (dy.years || []).some(x => x.year === y));
+    return i >= 0 ? i : 0;
 }
 
 export function displayDayunPan(dayunData) {

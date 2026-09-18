@@ -1,6 +1,6 @@
 // ============ 【首页：往期案例展示】 ============
 import { API_CONFIG } from './config.js?v=20';
-import { renderPublicBaziPan, renderPublicDayunPan } from './ui.js?v=24';
+import { renderPublicBaziPan, renderPublicDayunPan } from './ui.js?v=27';
 
 const CASE_PAGE_SIZE = 10;
 
@@ -29,20 +29,27 @@ function buildCaseCard(c) {
     const card = document.createElement('div');
     card.className = 'case-card';
 
+    const caseUrl = '/cases/case-' + c.id + '.html';
+
     // 卡头：八字 + 服务/性别/预测时间（隐藏姓名与出生信息）
     const head = document.createElement('div');
     head.className = 'case-head';
 
     const title = document.createElement('h3');
     title.className = 'case-title';
+    const titleLink = document.createElement('a');
+    titleLink.className = 'case-title-link';
+    titleLink.href = caseUrl;
+    titleLink.title = '查看该命例的独立案例页';
     const seal = document.createElement('span');
     seal.className = 'case-seal';
     seal.textContent = genderText(c.gender);
     const baziTxt = document.createElement('span');
     baziTxt.className = 'case-bazi';
     baziTxt.textContent = c.bazi_text || '八字未知';
-    title.appendChild(seal);
-    title.appendChild(baziTxt);
+    titleLink.appendChild(seal);
+    titleLink.appendChild(baziTxt);
+    title.appendChild(titleLink);
     head.appendChild(title);
 
     const meta = document.createElement('div');
@@ -102,6 +109,16 @@ function buildCaseCard(c) {
     }
 
     card.appendChild(body);
+
+    const foot = document.createElement('div');
+    foot.className = 'case-foot';
+    const openLink = document.createElement('a');
+    openLink.className = 'case-open-link';
+    openLink.href = caseUrl;
+    openLink.textContent = '查看完整案例页 →';
+    foot.appendChild(openLink);
+    card.appendChild(foot);
+
     return card;
 }
 

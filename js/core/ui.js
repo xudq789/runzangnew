@@ -79,7 +79,6 @@ export const UI = {
     freeAnalysisText: () => DOM.id('free-analysis-text'),
     lockedAnalysisText: () => DOM.id('locked-analysis-text'),
     unlockItemsList: () => DOM.id('unlock-items-list'),
-    unlockPrice: () => DOM.id('unlock-price'),
     unlockCount: () => DOM.id('unlock-count'),
     resultServiceName: () => DOM.id('result-service-name'),
     analysisTime: () => DOM.id('analysis-time'),
@@ -436,23 +435,13 @@ export function updateServiceDisplay(serviceName) {
     updateUnlockInfo();
 }
 
-function _unlockPriceHtml(cfg) {
-    const orig = cfg.originalPrice;
-    const sale = `<span class="sale-price">¥${cfg.price}</span>`;
-    if (orig && orig > cfg.price) {
-        return `<span class="promo-tag">首次优惠</span>${sale}<del class="orig-price">¥${orig}</del>`;
-    }
-    return sale;
+function _unlockBtnHtml() {
+    return '<span class="unlock-btn-text">解锁完整报告</span>';
 }
 
 export function updateUnlockInfo() {
     const serviceConfig = SERVICES[STATE.currentService];
     if (!serviceConfig) return;
-    
-    const unlockPriceElement = UI.unlockPrice();
-    if (unlockPriceElement) {
-        unlockPriceElement.innerHTML = _unlockPriceHtml(serviceConfig);
-    }
     
     const unlockItemsList = UI.unlockItemsList();
     const unlockCountElement = UI.unlockCount();
@@ -1034,6 +1023,7 @@ export async function showPaymentModal() {
         
         const paymentMethods = document.querySelector('.payment-methods');
         if (paymentMethods) {
+            const alipayIcon = `<svg viewBox="0 0 24 24" width="20" height="20" fill="#1677FF" aria-hidden="true" style="display: block;"><path d="M19.695 15.07c3.426 1.158 4.203 1.22 4.203 1.22V3.846c0-2.124-1.705-3.845-3.81-3.845H3.914C1.808.001.102 1.722.102 3.846v16.31c0 2.123 1.706 3.845 3.813 3.845h16.173c2.105 0 3.81-1.722 3.81-3.845v-.157s-6.19-2.602-9.315-4.119c-2.096 2.602-4.8 4.181-7.607 4.181-4.75 0-6.361-4.19-4.112-6.949.49-.602 1.324-1.175 2.617-1.497 2.025-.502 5.247.313 8.266 1.317a16.796 16.796 0 0 0 1.341-3.302H5.781v-.952h4.799V6.975H4.77v-.953h5.81V3.591s0-.409.411-.409h2.347v2.84h5.744v.951h-5.744v1.704h4.69a19.453 19.453 0 0 1-1.986 5.06c1.424.52 2.702 1.011 3.654 1.333m-13.81-2.032c-.596.06-1.71.325-2.321.869-1.83 1.608-.735 4.55 2.968 4.55 2.151 0 4.301-1.388 5.99-3.61-2.403-1.182-4.438-2.028-6.637-1.809"/></svg>`;
             const buttonHtml = `
                 <div style="margin: 20px 0;">
                     <button id="alipay-redirect-btn" class="dynamic-pulse-btn" style="
@@ -1042,8 +1032,8 @@ export async function showPaymentModal() {
                         padding: ${isMobile ? '16px 35px' : '15px 30px'}; border-radius: 25px;
                         font-size: ${isMobile ? '18px' : '16px'}; font-weight: bold; cursor: pointer; transition: all 0.3s; width: 100%;
                     ">
-                        <span style="display: flex; align-items: center; justify-content: center;">
-                            <span style="margin-right: 10px;">${isMobile ? '📱' : '💻'}</span>
+                        <span style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #fff; border-radius: 8px; flex: 0 0 auto;">${alipayIcon}</span>
                             ${isMobile ? '去支付宝支付' : '电脑支付'}
                         </span>
                     </button>
@@ -1292,7 +1282,7 @@ export function resetUnlockInterface() {
         const unlockPrice = unlockBtnContainer.querySelector('.unlock-price');
         const serviceConfig = SERVICES[STATE.currentService];
         if (serviceConfig && unlockBtn && unlockPrice) {
-            unlockBtn.innerHTML = `<span class="unlock-btn-text">解锁完整报告</span><span id="unlock-price" class="unlock-price-pill">${_unlockPriceHtml(serviceConfig)}</span>`;
+            unlockBtn.innerHTML = _unlockBtnHtml();
             unlockBtn.style.background = 'linear-gradient(135deg, var(--secondary-color), #e6b800)';
             unlockBtn.style.cursor = 'pointer';
             unlockBtn.disabled = false;

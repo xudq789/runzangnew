@@ -20,12 +20,24 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "润藏八字",
-      "alternateName": "润藏八字算命排盘",
-      "url": "https://new.runzang.top/",
-      "description": "在线八字排盘与命理分析服务平台，提供八字算命、流年运程、人生详批、八字合婚等服务。",
-      "inLanguage": "zh-CN"
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://new.runzang.top/#org",
+          "name": "润藏八字",
+          "url": "https://new.runzang.top/",
+          "description": "在线八字排盘与命理分析服务平台"
+        },
+        {
+          "@type": "WebSite",
+          "name": "润藏八字",
+          "alternateName": "润藏八字算命排盘",
+          "url": "https://new.runzang.top/",
+          "description": "在线八字排盘与命理分析服务平台，提供八字算命、流年运程、人生详批、八字合婚等服务。",
+          "inLanguage": "zh-CN",
+          "publisher": { "@id": "https://new.runzang.top/#org" }
+        }
+      ]
     }
     </script>
     
@@ -35,7 +47,7 @@
     <!-- 预连接图片CDN -->
     <link rel="preconnect" href="https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com" crossorigin>
     
-    <link rel="stylesheet" href="css/styles.css?v=29">
+    <link rel="stylesheet" href="css/styles.css?v=30">
     <script>
         (function(){
             var bp = document.createElement('script');
@@ -72,19 +84,6 @@
         </ul>
     </header>
 
-    <section id="home-section" class="home-section" style="display: none;">
-        <div class="home-container">
-            <div class="section-title">
-                <h2>润藏八字 · 往期案例分析</h2>
-                <p>仅供娱乐参考，请理性对待分析结果，切勿迷信</p>
-            </div>
-            <div id="home-case-list" class="home-case-list"></div>
-            <div id="home-status" class="home-status"></div>
-            <div id="home-load-more-wrap" style="display: none; text-align: center; margin: 20px 0;">
-                <button id="home-load-more" class="dynamic-pulse-btn" style="max-width: 220px;"><span>加载更多案例</span></button>
-            </div>
-        </div>
-    </section>
 
     <div class="seamless-container">
         <section class="seamless-section hero-section">
@@ -450,6 +449,39 @@
         </div>
     </section>
 
+    <section id="home-section" class="home-section">
+        <div class="home-container">
+            <!-- TODAY_CASES_START -->
+            <div class="section-title">
+                <h2>润藏八字 · 今日命例</h2>
+                <p>每日取一个时辰为样本，展示该命例的排盘、喜用分析与综合结论</p>
+            </div>
+            <div class="today-card">
+                <h3><a href="https://new.runzang.top/today/2026-09-22.html">2026年9月22日 未时（13:00–14:59）</a></h3>
+                <div class="today-meta">乾造 · 丙午 丁酉 己亥 辛未 · 阴土日主 · 月令食神格 · 生肖马</div>
+                <p>您为己（阴土）日主，酉月令属食神格。四柱另见正印、偏印。格局、日主之外，正印、偏印最为真切（火，透干而根气充足），故取为用神。成格类型虽命中，然本命结构无契合之格局组合，只就食神格一格的成败通则论之，故不成格。所喜者为食伤（即格局本体）、财（耗日主之气）；所忌者为印（生身而助其偏胜）、比劫（帮身）。忌神中比劫于原局无制，为本命病处。</p>
+                <p>余氏调候另有一路：己日酉月(仲秋)，用神【丙、癸】，丙透干得力，癸不见需运引。用神之落位看：丙在年柱。按四柱宫位，少年一路六亲助力与福报较厚；其余阶段须行运引来调候之气，方见其力。</p>
+                <p><a class="today-more" href="https://new.runzang.top/today/2026-09-22.html">查看完整喜用分析与综合结论 →</a></p>
+            </div>
+            <h3 class="today-sub">近期命例</h3>
+            <ul class="cases today-recent">
+<li><a href="https://new.runzang.top/today/2026-09-22.html">2026年9月22日未时</a><span class="cs">丙午 丁酉 己亥 辛未 · 食神格</span></li>
+<li><a href="https://new.runzang.top/today/2026-09-21.html">2026年9月21日卯时</a><span class="cs">丙午 丁酉 戊戌 乙卯 · 伤官格</span></li>
+<li><a href="https://new.runzang.top/today/2026-09-20.html">2026年9月20日卯时</a><span class="cs">丙午 丁酉 丁酉 癸卯 · 偏财格</span></li>
+<li><a href="https://new.runzang.top/today/2026-09-19.html">2026年9月19日酉时</a><span class="cs">丙午 丁酉 丙申 丁酉 · 正财格</span></li>
+<li><a href="https://new.runzang.top/today/2026-09-18.html">2026年9月18日申时</a><span class="cs">丙午 丁酉 乙未 甲申 · 七杀格</span></li>
+<li><a href="https://new.runzang.top/today/2026-09-17.html">2026年9月17日戌时</a><span class="cs">丙午 丁酉 甲午 甲戌 · 正官格</span></li>
+<li><a href="https://new.runzang.top/today/2026-09-16.html">2026年9月16日戌时</a><span class="cs">丙午 丁酉 癸巳 壬戌 · 偏印格</span></li>
+<li><a href="https://new.runzang.top/today/2026-09-15.html">2026年9月15日卯时</a><span class="cs">丙午 丁酉 壬辰 癸卯 · 正印格</span></li>
+            </ul>
+            <div style="text-align:center;margin:18px 0 4px;">
+                <a class="dynamic-pulse-btn" href="https://new.runzang.top/today/" style="display:inline-block;max-width:220px;text-decoration:none;"><span>查看全部今日命例</span></a>
+            </div>
+            <!-- TODAY_CASES_END -->
+        </div>
+    </section>
+
+
     <!-- 支付弹窗 -->
     <div id="payment-modal" class="modal">
         <div class="modal-content">
@@ -560,7 +592,7 @@
 
     <!-- 主入口文件 -->
     <script src="js/core/main.js?v=27" type="module"></script>
-    <script src="js/core/home.js?v=26" type="module"></script>
+    <script src="js/core/home.js?v=27" type="module"></script>
 </body>
 </html>
 

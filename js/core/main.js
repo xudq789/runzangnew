@@ -454,8 +454,8 @@ const PaymentManager = {
 };
 
 // ============ 【导入所有依赖】 ============
-import { SERVICES, STATE, API_CONFIG } from './config.js?v=20';
-import { checkAPIStatus, parseBaziData, analyzeBazi, startAnalysisTask, pollAnalysisResult } from './api.js?v=20';
+import { SERVICES, STATE, API_CONFIG } from './config.js?v=21';
+import { checkAPIStatus, parseBaziData, analyzeBazi, startAnalysisTask, pollAnalysisResult } from './api.js?v=21';
 import {
     UI, initFormOptions, updateServiceDisplay,
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,
@@ -465,7 +465,7 @@ import {
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData
-} from './ui.js?v=27';
+} from './ui.js?v=28';
 
 var _pollState = {
     active: false,
@@ -536,7 +536,6 @@ async function initApp() {
         }
         setupEventListeners();
         STATE.apiStatus = await checkAPIStatus();
-        preloadImages();
         console.log('✅ 应用初始化完成');
     } catch (error) {
         console.error('❌ 应用初始化失败:', error);
@@ -665,16 +664,6 @@ function switchService(serviceName) {
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     console.log('服务切换完成，解锁状态:', STATE.isPaymentUnlocked);
-}
-
-function preloadImages() {
-    console.log('预加载图片...');
-    Object.values(SERVICES).forEach(function(service) {
-        var heroImg = new Image();
-        heroImg.src = service.heroImage;
-        var detailImg = new Image();
-        detailImg.src = service.detailImage;
-    });
 }
 
 function sleep(ms) {

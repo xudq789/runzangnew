@@ -1,6 +1,6 @@
 // UI控制模块
 import { DOM, formatDate, hideElement, showElement } from './utils.js?v=20';
-import { SERVICES, STATE, API_CONFIG } from './config.js?v=20';
+import { SERVICES, STATE, API_CONFIG } from './config.js?v=21';
 import { reverseBaziFromPillars } from './api.js?v=22';
 
 // UI元素集合

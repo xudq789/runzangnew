@@ -1,8 +1,8 @@
 // 服务配置数据
 export const SERVICES = {
     '流年运程': {
-        heroImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/2-1.jpg',
-        detailImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/2-2.jpg',
+        heroImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/2-1.webp',
+        detailImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/2-2.webp',
         price: 10,
         originalPrice: 28,
         lockedItems: [
@@ -30,8 +30,8 @@ export const SERVICES = {
         ]
     },
     '人生详批': {
-        heroImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/3-1.jpg',
-        detailImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/3-2.jpg',
+        heroImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/3-1.webp',
+        detailImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/3-2.webp',
         price: 15,
         originalPrice: 38,
         lockedItems: [
@@ -61,8 +61,8 @@ export const SERVICES = {
         ]
     },
     '八字合婚': {
-        heroImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/4-1.jpg',
-        detailImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/4-2.jpg',
+        heroImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/4-1.webp',
+        detailImage: 'https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com/images/4-2.webp',
         price: 15,
         originalPrice: 38,
         lockedItems: [

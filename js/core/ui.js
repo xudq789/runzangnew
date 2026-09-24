@@ -14,10 +14,6 @@ export const UI = {
     birthHour: () => DOM.id('birth-hour'),
     birthMinute: () => DOM.id('birth-minute'),
     userModeSwitch: () => DOM.id('user-mode-switch'),
-    directYear: () => DOM.id('direct-year'),
-    directMonth: () => DOM.id('direct-month'),
-    directDay: () => DOM.id('direct-day'),
-    directHour: () => DOM.id('direct-hour'),
     userBirthCityGroup: () => DOM.id('user-birth-city-group'),
     userBirthTimeGroup: () => DOM.id('user-birth-time-group'),
     userLunarFields: () => DOM.id('user-lunar-fields'),
@@ -41,10 +37,6 @@ export const UI = {
     partnerBirthHour: () => DOM.id('partner-birth-hour'),
     partnerBirthMinute: () => DOM.id('partner-birth-minute'),
     partnerModeSwitch: () => DOM.id('partner-mode-switch'),
-    partnerDirectYear: () => DOM.id('partner-direct-year'),
-    partnerDirectMonth: () => DOM.id('partner-direct-month'),
-    partnerDirectDay: () => DOM.id('partner-direct-day'),
-    partnerDirectHour: () => DOM.id('partner-direct-hour'),
     partnerBirthCityGroup: () => DOM.id('partner-birth-city-group'),
     partnerBirthTimeGroup: () => DOM.id('partner-birth-time-group'),
     partnerLunarFields: () => DOM.id('partner-lunar-fields'),
@@ -131,27 +123,59 @@ export function initFormOptions() {
 
 const _GAN_A = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
 const _ZHI_A = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-let _JIAZI_CACHE = null;
 
-function _jiazi60() {
-    if (_JIAZI_CACHE) return _JIAZI_CACHE;
-    const list = [];
-    for (let i = 0; i < 60; i++) {
-        list.push(_GAN_A[i % 10] + _ZHI_A[i % 12]);
-    }
-    _JIAZI_CACHE = list;
-    return list;
-}
+const _GAN_YANG = new Set(['甲', '丙', '戊', '庚', '壬']);
+const _YANG_ZHI = ['子', '寅', '辰', '午', '申', '戌'];
+const _YIN_ZHI = ['丑', '卯', '巳', '未', '酉', '亥'];
 
-function _fillGanzhiSelect(selectId, label) {
+function _fillGanSelect(selectId, label) {
     const select = DOM.id(selectId);
     if (!select) return;
     select.innerHTML = `<option value="">${label}</option>`;
-    _jiazi60().forEach(gz => {
+    _GAN_A.forEach(g => {
         const opt = document.createElement('option');
-        opt.value = gz;
-        opt.textContent = gz;
+        opt.value = g;
+        opt.textContent = g;
         select.appendChild(opt);
+    });
+}
+
+function _fillZhiSelect(selectId, label, ganValue) {
+    const select = DOM.id(selectId);
+    if (!select) return;
+    const isYang = _GAN_YANG.has(ganValue);
+    const zhiList = ganValue ? (isYang ? _YANG_ZHI : _YIN_ZHI) : _ZHI_A;
+    const placeholder = ganValue ? label : '请先选天干';
+    select.innerHTML = `<option value="">${placeholder}</option>`;
+    zhiList.forEach(z => {
+        const opt = document.createElement('option');
+        opt.value = z;
+        opt.textContent = z;
+        select.appendChild(opt);
+    });
+}
+
+function _onGanChange(scope) {
+    const prefix = _scopePrefix(scope);
+    ['year', 'month', 'day', 'hour'].forEach(pillar => {
+        const ganEl = DOM.id(prefix + 'direct-' + pillar + '-gan');
+        const zhiEl = DOM.id(prefix + 'direct-' + pillar + '-zhi');
+        if (!ganEl || !zhiEl) return;
+        const ganVal = ganEl.value;
+        const prevZhi = zhiEl.value;
+        const isYang = _GAN_YANG.has(ganVal);
+        const zhiList = ganVal ? (isYang ? _YANG_ZHI : _YIN_ZHI) : _ZHI_A;
+        const placeholder = ganVal ? '地支' : '请先选天干';
+        zhiEl.innerHTML = `<option value="">${placeholder}</option>`;
+        zhiList.forEach(z => {
+            const opt = document.createElement('option');
+            opt.value = z;
+            opt.textContent = z;
+            zhiEl.appendChild(opt);
+        });
+        if (ganVal && zhiList.includes(prevZhi)) {
+            zhiEl.value = prevZhi;
+        }
     });
 }
 
@@ -189,14 +213,17 @@ const _SHICHEN_OPTIONS = [
 export function initDirectFormOptions() {
     const curYear = new Date().getFullYear();
 
-    _fillGanzhiSelect('direct-year', '年柱干支');
-    _fillGanzhiSelect('direct-month', '月柱干支');
-    _fillGanzhiSelect('direct-day', '日柱干支');
-    _fillGanzhiSelect('direct-hour', '时柱干支');
-    _fillGanzhiSelect('partner-direct-year', '年柱干支');
-    _fillGanzhiSelect('partner-direct-month', '月柱干支');
-    _fillGanzhiSelect('partner-direct-day', '日柱干支');
-    _fillGanzhiSelect('partner-direct-hour', '时柱干支');
+    ['', 'partner-'].forEach(prefix => {
+        ['year', 'month', 'day', 'hour'].forEach(pillar => {
+            _fillGanSelect(prefix + 'direct-' + pillar + '-gan', '天干');
+            _fillZhiSelect(prefix + 'direct-' + pillar + '-zhi', '地支', '');
+        });
+        const scope = prefix ? 'partner' : 'user';
+        ['year', 'month', 'day', 'hour'].forEach(pillar => {
+            const ganEl = DOM.id(prefix + 'direct-' + pillar + '-gan');
+            if (ganEl) ganEl.addEventListener('change', () => _onGanChange(scope));
+        });
+    });
 
     ['', 'partner-'].forEach(prefix => {
         _fillYearSelect(prefix + 'lunar-year', '农历年份', 1900, 2050, curYear);
@@ -325,9 +352,12 @@ export async function doReverse(scope) {
     const prefix = _scopePrefix(scope);
     const resultBox = scope === 'partner' ? UI.partnerReverseResult() : UI.reverseResult();
     const errBox = scope === 'partner' ? UI.partnerReverseError() : UI.reverseError();
-    const gz = ['direct-year', 'direct-month', 'direct-day', 'direct-hour'].map(id => {
-        const el = DOM.id(prefix + id);
-        return el ? el.value : '';
+    const gz = ['year', 'month', 'day', 'hour'].map(pillar => {
+        const ganEl = DOM.id(prefix + 'direct-' + pillar + '-gan');
+        const zhiEl = DOM.id(prefix + 'direct-' + pillar + '-zhi');
+        const g = ganEl ? ganEl.value : '';
+        const z = zhiEl ? zhiEl.value : '';
+        return g && z ? g + z : '';
     });
     if (errBox) errBox.style.display = 'none';
     if (!gz.every(v => v)) {
@@ -1365,10 +1395,20 @@ export function validateForm() {
 
     const validatePillars = (prefix) => {
         let ok = true;
-        if (!validateField(prefix + 'direct-year', prefix + 'direct-year-error')) ok = false;
-        if (!validateField(prefix + 'direct-month', prefix + 'direct-month-error')) ok = false;
-        if (!validateField(prefix + 'direct-day', prefix + 'direct-day-error')) ok = false;
-        if (!validateField(prefix + 'direct-hour', prefix + 'direct-hour-error')) ok = false;
+        ['year', 'month', 'day', 'hour'].forEach(pillar => {
+            const ganId = prefix + 'direct-' + pillar + '-gan';
+            const zhiId = prefix + 'direct-' + pillar + '-zhi';
+            const errId = prefix + 'direct-' + pillar + '-error';
+            const ganEl = DOM.id(ganId);
+            const zhiEl = DOM.id(zhiId);
+            const errEl = DOM.id(errId);
+            if (!ganEl || !ganEl.value || !zhiEl || !zhiEl.value) {
+                if (errEl) { errEl.style.display = 'block'; }
+                ok = false;
+            } else {
+                if (errEl) { errEl.style.display = 'none'; }
+            }
+        });
         return ok;
     };
 

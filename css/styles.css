@@ -212,6 +212,16 @@ header {
     margin-bottom: 15px;
 }
 
+.gan-zhi-row {
+    display: flex;
+    gap: 8px;
+}
+
+.gan-zhi-row select {
+    flex: 1;
+    min-width: 0;
+}
+
 .form-group {
     margin-bottom: 15px;
 }

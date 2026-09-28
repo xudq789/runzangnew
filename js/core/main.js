@@ -463,12 +463,13 @@ import {
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,
     displayDayunPan, displayPartnerDayunPan,
     displayLiunianPan, displayPartnerLiunianPan,
+    bindServiceImage,
     updateProgress, showPaymentModal, closePaymentModal,
     updateUnlockInterface, showFullAnalysisContent, lockDownloadButton,
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData
-} from './ui.js?v=32';
+} from './ui.js?v=33';
 
 var _pollState = {
     active: false,
@@ -577,22 +578,8 @@ function setupEventListeners() {
         if (event.target === paymentModal) closePaymentModal();
     });
     
-    var heroImage = UI.heroImage();
-    var detailImage = UI.detailImage();
-    if (heroImage) {
-        heroImage.addEventListener('load', function() {
-            this.classList.add('loaded');
-            var placeholder = this.previousElementSibling;
-            if (placeholder) placeholder.style.display = 'none';
-        });
-    }
-    if (detailImage) {
-        detailImage.addEventListener('load', function() {
-            this.classList.add('loaded');
-            var placeholder = this.previousElementSibling;
-            if (placeholder) placeholder.style.display = 'none';
-        });
-    }
+    bindServiceImage(UI.heroImage());
+    bindServiceImage(UI.detailImage());
 }
 
 function switchService(serviceName) {

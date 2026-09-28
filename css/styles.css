@@ -541,6 +541,25 @@ input:focus, select:focus {
     font-size: 12px;
 }
 
+.bazi-shishen {
+    color: var(--primary-color);
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.bazi-canggan {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    min-height: 18px;
+}
+
+.bazi-cg-item {
+    font-size: 14px;
+    font-weight: 600;
+}
+
 .wx-mu  { color: #1e7a34; }
 .wx-huo { color: #c0392b; }
 .wx-tu  { color: #8a6a3f; }
@@ -560,6 +579,28 @@ input:focus, select:focus {
 .pan-layout-right {
     flex: 1;
     min-width: 0;
+}
+
+/* 桌面端左右两栏等高：左栏卡片撑满行高，四柱框内内容均分 */
+@media (min-width: 769px) {
+    .pan-layout-left {
+        display: flex;
+        flex-direction: column;
+    }
+    .pan-layout-left .bazi-pan-card {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0;
+    }
+    .pan-layout-left .bazi-grid {
+        flex: 1;
+    }
+    .pan-layout-left .bazi-column {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+    }
 }
 
 /* 大运/流年排盘卡片 */
@@ -597,17 +638,13 @@ input:focus, select:focus {
     min-width: 50px;
 }
 .pan-table-cont {
-    margin-top: -1px;
+    margin-top: 8px;
 }
 .pan-gz-gan, .pan-gz-zhi {
     display: block;
     font-size: 16px;
     font-weight: 700;
     line-height: 1.3;
-}
-.pan-td-ss {
-    font-size: 12px;
-    color: #666;
 }
 
 @media (max-width: 768px) {
@@ -625,6 +662,14 @@ input:focus, select:focus {
     }
     .pan-table thead th {
         font-size: 10px;
+    }
+    /* 10 列流年表要压进手机屏宽，标签列让位 */
+    .pan-th-label, .pan-td-label {
+        width: 34px;
+        min-width: 34px;
+    }
+    .pan-table th, .pan-table td {
+        padding: 4px 2px;
     }
 }
 

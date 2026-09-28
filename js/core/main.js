@@ -465,7 +465,7 @@ import {
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData
-} from './ui.js?v=29';
+} from './ui.js?v=30';
 
 var _pollState = {
     active: false,
@@ -914,13 +914,14 @@ async function _handleAnalysisResult(result) {
         STATE.partnerBaziData = result.partner_bazi_pan;
         console.log('✅ 伴侣八字数据已保存:', STATE.partnerBaziData);
         
+        displayBaziPan();
+
         if (result.partner_dayun_pan && result.partner_dayun_pan.length > 0) {
             STATE.partnerDayunData = result.partner_dayun_pan;
             console.log('✅ 伴侣大运数据已保存:', STATE.partnerDayunData);
             displayPartnerDayunPan(result.partner_dayun_pan);
             console.log('✅ 伴侣大运排盘已显示');
         }
-        displayBaziPan();
     }
     
     STATE.freeSummary = result.free_summary || '';

@@ -449,6 +449,8 @@ input:focus, select:focus {
 
 /* 卡片样式 */
 .predictor-info-card,
+.bazi-pan-card,
+.dayun-pan-card,
 .free-content,
 .locked-content {
     background: #fff;
@@ -459,11 +461,9 @@ input:focus, select:focus {
     border: 1px solid var(--border-color);
 }
 
-.bazi-pan-card {
-    margin-bottom: 20px;
-}
-
 .predictor-info-card h4,
+.bazi-pan-card h4,
+.dayun-pan-card h4,
 .free-content h4,
 .locked-content h4 {
     color: var(--primary-color);
@@ -500,193 +500,297 @@ input:focus, select:focus {
     text-align: right;
 }
 
-/* 八字排盘 */
-.bazi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-}
-
-.bazi-column {
-    text-align: center;
-    padding: 15px;
-    background: linear-gradient(135deg, #f9f5f0, #f0e6d6);
-    border-radius: 8px;
-    border: 2px solid var(--secondary-color);
-}
-
-.bazi-label {
-    color: var(--primary-color);
-    font-weight: 600;
-    margin-bottom: 8px;
-    font-size: 14px;
-}
-
-.bazi-ganzhi {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    margin-bottom: 5px;
-}
-
-.bazi-gan, .bazi-zhi {
-    font-size: 22px;
-    font-weight: bold;
-    line-height: 1.3;
-}
-
-.bazi-element {
-    color: #7d6e63;
-    font-size: 12px;
-}
-
-.bazi-shishen {
-    color: var(--primary-color);
-    font-size: 12px;
-    margin-bottom: 4px;
-}
-
-.bazi-canggan {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    margin-bottom: 6px;
-    min-height: 18px;
-}
-
-.bazi-cg-item {
-    font-size: 14px;
-    font-weight: 600;
-}
-
 .wx-mu  { color: #1e7a34; }
 .wx-huo { color: #c0392b; }
 .wx-tu  { color: #8a6a3f; }
 .wx-jin { color: #9c7c1c; }
 .wx-shui{ color: #1769aa; }
 
-/* 排盘布局：桌面左右分栏，手机上下堆叠 */
-.pan-layout-wrap {
-    display: flex;
-    gap: 20px;
+/* ============ 排盘区（问真/知易风格：整宽分段 + 行对齐网格） ============ */
+.pan-stack {
     margin-bottom: 20px;
 }
-.pan-layout-left {
-    flex: 1;
-    min-width: 0;
-}
-.pan-layout-right {
-    flex: 1;
-    min-width: 0;
+
+/* 八字四柱：第一列是行标签，后四列永远是年/月/日/时 */
+.bazi-grid {
+    display: grid;
+    grid-template-columns: 52px repeat(4, 1fr);
+    border: 1px solid #e6dac6;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
 }
 
-/* 桌面端左右两栏等高：左栏卡片撑满行高，四柱框内内容均分 */
-@media (min-width: 769px) {
-    .pan-layout-left {
-        display: flex;
-        flex-direction: column;
-    }
-    .pan-layout-left .bazi-pan-card {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 0;
-    }
-    .pan-layout-left .bazi-grid {
-        flex: 1;
-    }
-    .pan-layout-left .bazi-column {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-evenly;
-    }
+.pz-corner,
+.pz-hd {
+    padding: 9px 4px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: #fff;
+    background: var(--primary-color);
 }
 
-/* 大运/流年排盘卡片 */
+.pz-corner {
+    background: #6d3a17;
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+.pz-lb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 2px;
+    text-align: center;
+    font-size: 12px;
+    color: #8a7358;
+    background: var(--light-color);
+    border-top: 1px solid #eee3d2;
+}
+
+.pz-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    min-height: 34px;
+    padding: 6px 3px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--dark-color);
+    border-top: 1px solid #eee3d2;
+    border-left: 1px solid #eee3d2;
+}
+
+.pz-gzrow {
+    background: #fffaef;
+}
+
+/* 藏干与副星横向铺开，两行同列数才能上下对齐 */
+.pz-cgrow,
+.pz-fxrow {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    justify-items: center;
+    align-items: center;
+    gap: 2px;
+    width: 100%;
+}
+
+.pz-big {
+    font-size: 27px;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.pz-ss {
+    color: var(--primary-color);
+    font-size: 12px;
+}
+
+.pz-cg {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.pz-fx {
+    font-style: normal;
+    font-size: 10px;
+    color: #9b8770;
+}
+
+.pz-ny,
+.pz-kw,
+.pz-cs {
+    font-size: 12px;
+    color: #6b5b4d;
+    white-space: nowrap;
+}
+
+.pan-empty {
+    grid-column: 1 / -1;
+    padding: 15px;
+    text-align: center;
+    color: #999;
+    font-size: 13px;
+}
+
+/* 大运 · 流年合并卡 */
 .dayun-pan-card {
     display: none;
 }
 
-.pan-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    margin-bottom: 0;
-}
-.pan-table th, .pan-table td {
-    padding: 6px 4px;
-    text-align: center;
-    border: 1px solid #ddd;
-}
-.pan-table thead th {
-    background: var(--primary-color);
-    color: #fff;
-    font-weight: 600;
-    font-size: 12px;
-}
-.pan-table thead th small {
-    font-weight: 400;
-    font-size: 10px;
-    opacity: 0.85;
-}
-.pan-th-label, .pan-td-label {
-    background: #f5f1e8;
-    color: var(--dark-color);
-    font-weight: 600;
-    width: 50px;
-    min-width: 50px;
-}
-.pan-table th.pan-th-pick {
-    cursor: pointer;
-    user-select: none;
-}
-.pan-table th.pan-th-pick:hover {
-    background: #a0551d;
-}
-.pan-table .pan-col-active {
-    background: #fdf3d8 !important;
-    color: var(--dark-color);
-}
-.pan-table thead th.pan-col-active {
-    background: var(--secondary-color) !important;
-    color: #3a2c1e;
-}
-.pan-liunian-hint {
-    font-size: 12px;
-    color: #8a7358;
-    margin: 8px 0 5px;
-}
-.pan-gz-gan, .pan-gz-zhi {
-    display: block;
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1.3;
+.dy-strip {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
 }
 
+.dy-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 8px 2px;
+    border: 1px solid #e6dac6;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #fbf7f1, #f2e9db);
+    color: var(--dark-color);
+    font: inherit;
+}
+
+button.dy-cell {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+button.dy-cell:hover {
+    border-color: var(--secondary-color);
+    background: #fdf3d8;
+}
+
+.dy-cell.is-active {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(139, 69, 19, 0.25);
+}
+
+.dy-age,
+.dy-yr {
+    font-size: 11px;
+    color: #8a7358;
+    white-space: nowrap;
+}
+
+.dy-yr {
+    color: #a08d76;
+}
+
+.dy-gz {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.dy-gz b {
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.dy-cell.is-active .dy-age,
+.dy-cell.is-active .dy-yr {
+    color: #ecd9bd;
+}
+
+.dy-cell.is-active .dy-gz b {
+    color: #fff !important;
+}
+
+.ln-box {
+    margin-top: 14px;
+}
+
+.ln-hint {
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #8a7358;
+}
+
+.ln-strip {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 5px;
+}
+
+.ln-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 7px 2px;
+    border: 1px solid #ece1cf;
+    border-radius: 7px;
+    background: #fdfbf7;
+}
+
+.ln-yr {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.ln-gz {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.ln-gz b {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.ln-age {
+    font-size: 10px;
+    color: #a08d76;
+}
+
+.ln-cell.is-now {
+    border-color: var(--secondary-color);
+    background: #fdf3d8;
+    box-shadow: inset 0 0 0 1px var(--secondary-color);
+}
+
+/* 手机端：四柱仍并排4列，大运 2行×4、流年 2行×5，杜绝横向滚动 */
 @media (max-width: 768px) {
-    .pan-layout-wrap {
-        flex-direction: column;
+    .bazi-grid {
+        grid-template-columns: 38px repeat(4, 1fr);
     }
-    .bazi-gan, .bazi-zhi {
+    .pz-corner,
+    .pz-hd {
+        padding: 7px 2px;
+        font-size: 12px;
+    }
+    .pz-lb {
+        font-size: 11px;
+        padding: 5px 1px;
+    }
+    .pz-cell {
+        padding: 5px 2px;
+        font-size: 12px;
+        min-height: 30px;
+    }
+    .pz-big {
         font-size: 20px;
     }
-    .pan-gz-gan, .pan-gz-zhi {
-        font-size: 14px;
+    .pz-cg {
+        font-size: 12px;
     }
-    .pan-table {
+    .pz-ny,
+    .pz-kw,
+    .pz-cs {
         font-size: 11px;
     }
-    .pan-table thead th {
-        font-size: 10px;
+    .dy-strip {
+        grid-template-columns: repeat(4, 1fr);
     }
-    /* 10 列流年表要压进手机屏宽，标签列让位 */
-    .pan-th-label, .pan-td-label {
-        width: 34px;
-        min-width: 34px;
+    .dy-gz b {
+        font-size: 18px;
     }
-    .pan-table th, .pan-table td {
-        padding: 4px 2px;
+    .ln-strip {
+        grid-template-columns: repeat(5, 1fr);
+    }
+    .ln-gz b {
+        font-size: 14px;
+    }
+    .dayun-pan-card,
+    .bazi-pan-card {
+        padding: 15px 12px;
     }
 }
 
@@ -1125,18 +1229,7 @@ input:focus, select:focus {
         font-size: 16px;
     }
     
-    .bazi-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-    }
-    
-    .bazi-column {
-        padding: 10px;
-    }
-    
-    .bazi-value {
-        font-size: 18px;
-    }
+
     
     /* 移动端锁定内容优化 */
     .locked-content {
@@ -1177,10 +1270,6 @@ input:focus, select:focus {
 }
 
 @media (max-width: 480px) {
-    .bazi-grid {
-        grid-template-columns: 1fr;
-    }
-    
     .predictor-info-grid {
         grid-template-columns: 1fr;
     }
@@ -1272,82 +1361,7 @@ input:focus, select:focus {
     50% { opacity: 0.5; }
 }
 
-/* ============ 大运排盘卡片样式 ============ */
-#dayun-pan-card,
-#partner-dayun-pan-card {
-    display: none;
-    margin-top: 20px;
-}
-
-#dayun-grid,
-#partner-dayun-grid {
-    width: 100%;
-    overflow-x: auto;
-}
-
-#dayun-grid table,
-#partner-dayun-grid table {
-    width: 100%;
-    border-collapse: collapse;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    font-size: 13px;
-}
-
-#dayun-grid th,
-#dayun-grid td,
-#partner-dayun-grid th,
-#partner-dayun-grid td {
-    padding: 8px 10px;
-    text-align: center;
-}
-
-#dayun-grid th,
-#partner-dayun-grid th {
-    background: var(--primary-color);
-    color: white;
-    font-weight: 600;
-}
-
-#dayun-grid td,
-#partner-dayun-grid td {
-    background: #faf8f5;
-}
-
-#dayun-grid tr:nth-child(2) td,
-#partner-dayun-grid tr:nth-child(2) td {
-    background: #fff;
-    font-weight: 500;
-    color: var(--primary-color);
-}
-
-/* 响应式大运表格 */
-@media (max-width: 768px) {
-    #dayun-grid table,
-    #partner-dayun-grid table {
-        font-size: 12px;
-    }
-    #dayun-grid th,
-    #dayun-grid td,
-    #partner-dayun-grid th,
-    #partner-dayun-grid td {
-        padding: 6px 8px;
-    }
-}
-
-@media (max-width: 480px) {
-    #dayun-grid table,
-    #partner-dayun-grid table {
-        font-size: 11px;
-    }
-    #dayun-grid th,
-    #dayun-grid td,
-    #partner-dayun-grid th,
-    #partner-dayun-grid td {
-        padding: 4px 6px;
-    }
-}
+/* ============ 大运 · 流年排盘卡片：样式已并入上方 .dayun-pan-card / .dy-strip / .ln-strip ============ */
 
 /* 进度项目容器滚动 */
 #progress-items-container {

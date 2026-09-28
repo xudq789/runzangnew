@@ -637,8 +637,25 @@ input:focus, select:focus {
     width: 50px;
     min-width: 50px;
 }
-.pan-table-cont {
-    margin-top: 8px;
+.pan-table th.pan-th-pick {
+    cursor: pointer;
+    user-select: none;
+}
+.pan-table th.pan-th-pick:hover {
+    background: #a0551d;
+}
+.pan-table .pan-col-active {
+    background: #fdf3d8 !important;
+    color: var(--dark-color);
+}
+.pan-table thead th.pan-col-active {
+    background: var(--secondary-color) !important;
+    color: #3a2c1e;
+}
+.pan-liunian-hint {
+    font-size: 12px;
+    color: #8a7358;
+    margin: 8px 0 5px;
 }
 .pan-gz-gan, .pan-gz-zhi {
     display: block;

@@ -47,7 +47,7 @@
     <!-- 预连接图片CDN -->
     <link rel="preconnect" href="https://runzang-1388534671.cos.ap-guangzhou.myqcloud.com" crossorigin>
     
-    <link rel="stylesheet" href="css/styles.css?v=35">
+    <link rel="stylesheet" href="css/styles.css?v=36">
     <script>
         (function(){
             var bp = document.createElement('script');
@@ -420,14 +420,23 @@
                     <div class="predictor-info-grid" id="predictor-info-grid"></div>
                 </div>
                 
-                <!-- 用户八字排盘（统一框架：四柱+大运+流年） -->
-                <div class="bazi-pan-card" id="bazi-pan">
-                    <div class="bazi-grid" id="bazi-grid"></div>
-                </div>
-                
-                <!-- 伴侣八字排盘（仅八字合婚时显示） -->
-                <div class="bazi-pan-card" id="partner-bazi-pan" style="display: none;">
-                    <div class="bazi-grid" id="partner-bazi-grid"></div>
+                <div class="pan-layout-wrap">
+                    <div class="pan-layout-left">
+                        <!-- 用户八字排盘 -->
+                        <div class="bazi-pan-card" id="bazi-pan">
+                            <h4>八字排盘</h4>
+                            <div class="bazi-grid" id="bazi-grid"></div>
+                        </div>
+                        
+                        <!-- 伴侣八字排盘（仅八字合婚时显示） -->
+                        <div class="bazi-pan-card" id="partner-bazi-pan" style="display: none;">
+                            <h4>伴侣八字排盘</h4>
+                            <div class="bazi-grid" id="partner-bazi-grid"></div>
+                        </div>
+                    </div>
+                    <div class="pan-layout-right" id="pan-right-col">
+                        <!-- 大运/流年排盘卡片由JS动态插入 -->
+                    </div>
                 </div>
                 
                 <div class="free-content" id="free-content">
@@ -612,7 +621,7 @@
     </section>
 
     <!-- 主入口文件 -->
-    <script src="js/core/main.js?v=33" type="module"></script>
+    <script src="js/core/main.js?v=34" type="module"></script>
     <script src="js/core/home.js?v=28" type="module"></script>
 </body>
 </html>

@@ -1333,12 +1333,88 @@ input:focus, select:focus {
 
 .pan-frame-body {
   display: flex;
-  gap: 0;
-  align-items: flex-start;
+  flex-direction: column;
 }
 
-.pan-bazi-section { flex: 0 0 auto; min-width: 0; border-right: 1px solid #ccc; }
-.pan-dayun-section { flex: 1 1 auto; min-width: 0; }
+.pan-table {
+  display: table;
+  border-collapse: collapse;
+  width: 100%;
+}
+.pan-row { display: table-row; }
+.pan-cell {
+  display: table-cell;
+  text-align: center;
+  vertical-align: middle;
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+}
+.pan-cell-day {
+  background: #fffbe6;
+}
+
+.pan-row-header .pan-cell {
+  font-size: 12px;
+  color: #666;
+  font-weight: 600;
+  background: #f5f5f5;
+}
+.pan-row-header-cell {
+  width: 50px;
+  min-width: 50px;
+}
+
+.pan-row-label-cell {
+  font-size: 13px;
+  color: #333;
+  font-weight: 700;
+  background: #fafafa;
+  width: 50px;
+  min-width: 50px;
+  letter-spacing: 2px;
+}
+
+.pan-row-shishen-cell {
+  font-size: 13px;
+  color: #555;
+  font-weight: 600;
+}
+.pan-shishen-day { color: #b3362d; font-weight: 700; }
+
+.pan-row-ganzhi-cell { padding: 8px 10px; }
+.pan-row-ganzhi-cell .pan-gan,
+.pan-row-ganzhi-cell .pan-zhi {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.4;
+  display: block;
+}
+
+.pan-row-canggan-cell {
+  padding: 4px 6px;
+}
+.pan-canggan { display: flex; justify-content: center; gap: 8px; }
+.pan-cang-item { min-width: 20px; }
+.pan-cang-gan { font-size: 15px; font-weight: 600; color: #333; }
+.pan-cang-ss { font-size: 9px; color: #888; margin-top: 1px; }
+
+.pan-row-nayin-cell {
+  font-size: 11px;
+  color: #888;
+  padding: 3px 6px;
+}
+
+.pan-row-day .pan-row-label-cell {
+  background: #fffbe6;
+}
+
+.wx-mu  { color: #1e7a34; }
+.wx-huo { color: #c0392b; }
+.wx-tu  { color: #8a6a3f; }
+.wx-jin { color: #9c7c1c; }
+.wx-shui{ color: #1769aa; }
+
+.pan-dayun-section { border-top: 1px solid #ccc; }
 .pan-liunian-section { border-top: 1px solid #ccc; }
 
 .pan-section-title {
@@ -1349,60 +1425,6 @@ input:focus, select:focus {
   background: #f5f5f5;
   border-bottom: 1px solid #ccc;
 }
-
-.pan-table {
-  display: table;
-  border-collapse: collapse;
-}
-.pan-row { display: table-row; }
-.pan-cell {
-  display: table-cell;
-  text-align: center;
-  vertical-align: middle;
-  padding: 5px 8px;
-  border: 1px solid #ccc;
-  min-width: 56px;
-}
-.pan-cell-day {
-  background: #fffbe6;
-}
-
-.pan-row-label .pan-cell {
-  font-size: 12px;
-  color: #666;
-  font-weight: 600;
-  background: #fafafa;
-}
-.pan-row-shishen .pan-cell {
-  font-size: 13px;
-  color: #555;
-  font-weight: 600;
-}
-.pan-row-shishen .pan-shishen-day { color: #b3362d; font-weight: 700; }
-
-.pan-row-ganzhi .pan-cell { padding: 6px 8px; }
-.pan-row-ganzhi .pan-gan,
-.pan-row-ganzhi .pan-zhi { font-size: 24px; font-weight: 700; line-height: 1.2; }
-
-.pan-row-canggan .pan-cell {
-  padding: 4px 4px;
-}
-.pan-canggan { display: flex; justify-content: center; gap: 6px; }
-.pan-cang-item { min-width: 20px; }
-.pan-cang-gan { font-size: 15px; font-weight: 600; color: #333; }
-.pan-cang-ss { font-size: 9px; color: #888; margin-top: 1px; }
-
-.pan-row-nayin .pan-cell {
-  font-size: 11px;
-  color: #888;
-  padding: 3px 4px;
-}
-
-.wx-mu  { color: #1e7a34; }
-.wx-huo { color: #c0392b; }
-.wx-tu  { color: #8a6a3f; }
-.wx-jin { color: #9c7c1c; }
-.wx-shui{ color: #1769aa; }
 
 .dayun-wrap { display: grid; grid-template-columns: repeat(8, 1fr); gap: 0; }
 .dayun-col {
@@ -1419,8 +1441,8 @@ input:focus, select:focus {
   background: #fff5f5;
 }
 .dayun-step { font-size: 11px; color: #888; }
-.dayun-ganzhi { display: flex; justify-content: center; gap: 4px; margin: 2px 0; }
-.dayun-gan, .dayun-zhi { font-size: 20px; font-weight: 700; line-height: 1; }
+.dayun-ganzhi { display: flex; flex-direction: column; align-items: center; gap: 0; margin: 2px 0; }
+.dayun-gan, .dayun-zhi { font-size: 20px; font-weight: 700; line-height: 1.2; }
 .dayun-shishen { font-size: 11px; color: #555; min-height: 14px; }
 .dayun-shishen-zhi { color: #666; }
 .dayun-age { font-size: 11px; color: #888; }
@@ -1430,50 +1452,50 @@ input:focus, select:focus {
 .liu-age::before { content: ' · '; }
 
 @media (max-width: 720px) {
-  .pan-frame-body { flex-direction: column; }
-  .pan-bazi-section { width: 100%; overflow-x: auto; border-right: none; border-bottom: 1px solid #ccc; }
-  .pan-dayun-section { width: 100%; }
-  .pan-cell { min-width: 48px; padding: 4px 4px; }
-  .pan-row-ganzhi .pan-gan,
-  .pan-row-ganzhi .pan-zhi { font-size: 20px; }
-  .pan-row-label .pan-cell { font-size: 11px; }
-  .pan-row-shishen .pan-cell { font-size: 12px; }
-  .pan-canggan { gap: 3px; }
+  .pan-cell { padding: 4px 6px; }
+  .pan-row-header-cell,
+  .pan-row-label-cell { width: 42px; min-width: 42px; font-size: 12px; }
+  .pan-row-ganzhi-cell .pan-gan,
+  .pan-row-ganzhi-cell .pan-zhi { font-size: 20px; }
+  .pan-row-shishen-cell { font-size: 12px; }
+  .pan-canggan { gap: 4px; }
   .pan-cang-item { min-width: 0; padding: 0 1px; }
   .pan-cang-gan { font-size: 13px; }
   .pan-cang-ss { font-size: 8px; }
-  .pan-row-nayin .pan-cell { font-size: 10px; }
+  .pan-row-nayin-cell { font-size: 10px; }
   .dayun-wrap {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
-  .dayun-wrap.liunian-wrap { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+  .dayun-wrap.liunian-wrap { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .dayun-col { padding: 4px 2px; }
   .dayun-col-first, .dayun-col-active { border-width: 1px; }
-  .dayun-ganzhi { flex-direction: column; align-items: center; gap: 0; margin: 2px 0; }
-  .dayun-gan, .dayun-zhi { font-size: 16px; }
+  .dayun-gan, .dayun-zhi { font-size: 18px; }
   .dayun-shishen { font-size: 10px; line-height: 1.2; min-height: 0; }
   .dayun-age { font-size: 9px; line-height: 1.25; }
   .dayun-age .liu-year, .dayun-age .liu-age { display: block; }
   .dayun-age .liu-age::before { content: none; }
-  .liunian-wrap .dayun-gan, .liunian-wrap .dayun-zhi { font-size: 14px; }
-  .liunian-wrap .dayun-shishen { font-size: 8px; }
+  .liunian-wrap .dayun-gan, .liunian-wrap .dayun-zhi { font-size: 16px; }
+  .liunian-wrap .dayun-shishen { font-size: 9px; }
   .liunian-wrap .dayun-age { font-size: 8px; }
 }
 
 @media (max-width: 400px) {
-  .pan-cell { min-width: 40px; padding: 3px 2px; }
-  .pan-row-ganzhi .pan-gan,
-  .pan-row-ganzhi .pan-zhi { font-size: 18px; }
-  .pan-row-label .pan-cell { font-size: 10px; }
-  .pan-row-shishen .pan-cell { font-size: 11px; }
+  .pan-cell { padding: 3px 4px; }
+  .pan-row-header-cell,
+  .pan-row-label-cell { width: 36px; min-width: 36px; font-size: 11px; }
+  .pan-row-ganzhi-cell .pan-gan,
+  .pan-row-ganzhi-cell .pan-zhi { font-size: 18px; }
+  .pan-row-shishen-cell { font-size: 11px; }
   .pan-canggan { flex-direction: column; align-items: center; gap: 2px; }
   .pan-cang-item { min-height: 14px; }
   .pan-cang-gan { font-size: 13px; }
-  .pan-row-nayin .pan-cell { font-size: 9px; }
-  .dayun-gan, .dayun-zhi { font-size: 15px; }
+  .pan-row-nayin-cell { font-size: 9px; }
+  .dayun-wrap { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .dayun-wrap.liunian-wrap { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .dayun-gan, .dayun-zhi { font-size: 16px; }
   .dayun-shishen { font-size: 9px; }
   .dayun-age { font-size: 8px; }
-  .liunian-wrap .dayun-gan, .liunian-wrap .dayun-zhi { font-size: 13px; }
+  .liunian-wrap .dayun-gan, .liunian-wrap .dayun-zhi { font-size: 14px; }
   .liunian-wrap .dayun-shishen, .liunian-wrap .dayun-age { font-size: 7.5px; }
 }
 

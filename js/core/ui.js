@@ -668,54 +668,86 @@ export function displayBaziPan() {
 }
 
 // ============ 大运排盘显示 ============
-function _buildDayunTableHtml(dayunList, startAge) {
-    const displayList = dayunList.slice(0, 8);
-    const numColumns = displayList.length;
+// activeIndex 为 null 时输出纯展示表（首页公开案例用，其数据无 years）
+function _buildDayunTableHtml(displayList, startAge, activeIndex) {
+    const clickable = activeIndex != null;
     let html = '<table class="pan-table"><thead><tr><th class="pan-th-label">大运</th>';
     displayList.forEach((dy, index) => {
         const ageLabel = (dy.age_start != null) ? dy.age_start + '岁' : (startAge + index * 10) + '岁';
-        html += '<th>' + ageLabel + '</th>';
+        const attrs = clickable ? ' class="pan-th-pick' + (index === activeIndex ? ' pan-col-active' : '') + '" data-pan-idx="' + index + '"'
+                                : (index === activeIndex ? ' class="pan-col-active"' : '');
+        html += '<th' + attrs + '>' + ageLabel + '</th>';
     });
     html += '</tr></thead><tbody>';
     html += '<tr><td class="pan-td-label">干支</td>';
-    displayList.forEach(dy => {
+    displayList.forEach((dy, index) => {
         const gz = dy.ganzhi || '--';
         const gan = gz[0] || '';
         const zhi = gz[1] || '';
-        html += '<td><span class="pan-gz-gan ' + _wxClass(_GAN_WX[gan] || '') + '">' + gan + '</span>'
+        html += '<td' + (index === activeIndex ? ' class="pan-col-active"' : '')
+            + '><span class="pan-gz-gan ' + _wxClass(_GAN_WX[gan] || '') + '">' + gan + '</span>'
             + '<span class="pan-gz-zhi ' + _wxClass(_ZHI_WX[zhi] || '') + '">' + zhi + '</span></td>';
     });
     html += '</tr></tbody></table>';
     return html;
 }
 
-function _buildLiunianTableHtml(dayunList) {
-    const allYears = [];
-    dayunList.forEach(dy => {
-        if (dy.years && Array.isArray(dy.years)) {
-            dy.years.forEach(y => allYears.push(y));
-        }
+// 只渲染所选大运的那十年；今年所在流年高亮
+function _buildLiunianTableHtml(dayunList, activeIndex) {
+    const dy = dayunList[activeIndex];
+    const years = (dy && Array.isArray(dy.years)) ? dy.years : [];
+    if (years.length === 0) return '';
+    const thisYear = new Date().getFullYear();
+    const ageSpan = (dy.age_start != null) ? '（' + dy.age_start + '—' + (dy.age_start + years.length - 1) + '岁）' : '';
+    let html = '<div class="pan-liunian-hint">' + (dy.ganzhi || '') + '大运' + ageSpan + ' · 点击上方大运切换</div>';
+    html += '<table class="pan-table"><thead><tr><th class="pan-th-label">流年</th>';
+    years.forEach(y => {
+        html += '<th' + (y.year === thisYear ? ' class="pan-col-active"' : '') + '>'
+            + (y.year || '') + (y.age != null ? '<br><small>' + y.age + '岁</small>' : '') + '</th>';
     });
-    if (allYears.length === 0) return '';
-    const cols = 10;
-    let html = '';
-    for (let start = 0; start < allYears.length; start += cols) {
-        const chunk = allYears.slice(start, start + cols);
-        html += '<table class="pan-table' + (start > 0 ? ' pan-table-cont' : '') + '"><thead><tr><th class="pan-th-label">流年</th>';
-        chunk.forEach(y => {
-            html += '<th>' + (y.year || '') + (y.age != null ? '<br><small>' + y.age + '岁</small>' : '') + '</th>';
-        });
-        html += '</tr></thead><tbody><tr><td class="pan-td-label">干支</td>';
-        chunk.forEach(y => {
-            const gz = y.ganzhi || '--';
-            const gan = gz[0] || '';
-            const zhi = gz[1] || '';
-            html += '<td><span class="pan-gz-gan ' + _wxClass(_GAN_WX[gan] || '') + '">' + gan + '</span>'
-                + '<span class="pan-gz-zhi ' + _wxClass(_ZHI_WX[zhi] || '') + '">' + zhi + '</span></td>';
-        });
-        html += '</tr></tbody></table>';
-    }
+    html += '</tr></thead><tbody><tr><td class="pan-td-label">干支</td>';
+    years.forEach(y => {
+        const gz = y.ganzhi || '--';
+        const gan = gz[0] || '';
+        const zhi = gz[1] || '';
+        html += '<td' + (y.year === thisYear ? ' class="pan-col-active"' : '') + '>'
+            + '<span class="pan-gz-gan ' + _wxClass(_GAN_WX[gan] || '') + '">' + gan + '</span>'
+            + '<span class="pan-gz-zhi ' + _wxClass(_ZHI_WX[zhi] || '') + '">' + zhi + '</span></td>';
+    });
+    html += '</tr></tbody></table>';
     return html;
+}
+
+function _defaultDayunIndex(dayunList) {
+    const thisYear = new Date().getFullYear();
+    for (let i = 0; i < dayunList.length; i++) {
+        const years = dayunList[i].years || [];
+        if (years.length && thisYear >= years[0].year && thisYear <= years[years.length - 1].year) return i;
+    }
+    return 0;
+}
+
+// 大运表与流年表联动：点大运列头切换该步十年流年。卡片每次由 _ensureDayunCard 重建，监听器不会累积。
+function _bindDayunSelection(dayunGrid, liunianGridId, displayList, startAge) {
+    const state = { active: _defaultDayunIndex(displayList) };
+    const draw = () => {
+        dayunGrid.innerHTML = _buildDayunTableHtml(displayList, startAge, state.active);
+        const liunianGrid = document.getElementById(liunianGridId);
+        if (liunianGrid) {
+            const html = _buildLiunianTableHtml(displayList, state.active);
+            liunianGrid.innerHTML = html || '<div style="padding:15px;text-align:center;color:#999;">该步流年数据暂不可用</div>';
+        }
+    };
+    dayunGrid.addEventListener('click', e => {
+        const th = e.target.closest ? e.target.closest('th[data-pan-idx]') : null;
+        if (!th) return;
+        const idx = parseInt(th.getAttribute('data-pan-idx'), 10);
+        if (isNaN(idx) || idx === state.active) return;
+        state.active = idx;
+        draw();
+    });
+    draw();
+    return state;
 }
 
 function _normalizeDayunData(dayunData) {
@@ -760,74 +792,62 @@ function _ensureDayunCard(cardId, gridId, title, anchorId) {
     return card;
 }
 
-export function displayDayunPan(dayunData) {
-    const card = _ensureDayunCard('dayun-pan-card', 'dayun-grid', '大运排盘', 'bazi-pan');
+const _PAN_EMPTY = '<div style="padding:15px;text-align:center;color:#999;">__MSG__</div>';
+
+function _panEmpty(grid, msg) {
+    grid.innerHTML = _PAN_EMPTY.replace('__MSG__', msg);
+}
+
+// 大运卡与流年卡共用一份选中状态（点大运列头 → 换该步十年流年）
+const _panLinks = {};
+
+function _showDayunPan(key, cardId, gridId, title, anchorId, liunianGridId, dayunData, emptyMsg) {
+    const card = _ensureDayunCard(cardId, gridId, title, anchorId);
     if (!card) return;
-    const grid = document.getElementById('dayun-grid');
+    const grid = document.getElementById(gridId);
     if (!grid) return;
     const { dayunList, startAge } = _normalizeDayunData(dayunData);
     if (dayunList.length === 0) {
-        grid.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">大运排盘数据暂不可用</div>';
+        _panEmpty(grid, emptyMsg);
         card.style.display = 'block';
         return;
     }
-    grid.innerHTML = _buildDayunTableHtml(dayunList, startAge);
+    const displayList = dayunList.slice(0, 8);
+    _panLinks[key] = { displayList, state: _bindDayunSelection(grid, liunianGridId, displayList, startAge) };
     card.style.display = 'block';
+}
+
+function _showLiunianPan(key, cardId, gridId, title, anchorId, dayunData, emptyMsg) {
+    const card = _ensureDayunCard(cardId, gridId, title, anchorId);
+    if (!card) return;
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+    const link = _panLinks[key];
+    const displayList = link ? link.displayList : _normalizeDayunData(dayunData).dayunList.slice(0, 8);
+    const active = link ? link.state.active : _defaultDayunIndex(displayList);
+    const html = _buildLiunianTableHtml(displayList, active);
+    if (html) {
+        grid.innerHTML = html;
+    } else {
+        _panEmpty(grid, emptyMsg);
+    }
+    card.style.display = 'block';
+}
+
+export function displayDayunPan(dayunData) {
+    _showDayunPan('self', 'dayun-pan-card', 'dayun-grid', '大运排盘', 'bazi-pan', 'liunian-grid', dayunData, '大运排盘数据暂不可用');
 }
 
 export function displayPartnerDayunPan(dayunData) {
-    const card = _ensureDayunCard('partner-dayun-pan-card', 'partner-dayun-grid', '伴侣大运排盘', 'partner-bazi-pan');
-    if (!card) return;
-    const grid = document.getElementById('partner-dayun-grid');
-    if (!grid) return;
-    const { dayunList, startAge } = _normalizeDayunData(dayunData);
-    if (dayunList.length === 0) {
-        grid.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">伴侣大运排盘数据暂不可用</div>';
-        card.style.display = 'block';
-        return;
-    }
-    grid.innerHTML = _buildDayunTableHtml(dayunList, startAge);
-    card.style.display = 'block';
+    _showDayunPan('partner', 'partner-dayun-pan-card', 'partner-dayun-grid', '伴侣大运排盘', 'partner-bazi-pan', 'partner-liunian-grid', dayunData, '伴侣大运排盘数据暂不可用');
 }
 
 export function displayLiunianPan(dayunData) {
-    const card = _ensureDayunCard('liunian-pan-card', 'liunian-grid', '流年排盘', 'bazi-pan');
-    if (!card) return;
-    const grid = document.getElementById('liunian-grid');
-    if (!grid) return;
-    const { dayunList } = _normalizeDayunData(dayunData);
-    if (dayunList.length === 0) {
-        grid.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">流年排盘数据暂不可用</div>';
-        card.style.display = 'block';
-        return;
-    }
-    const html = _buildLiunianTableHtml(dayunList);
-    if (!html) {
-        grid.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">流年数据暂不可用</div>';
-    } else {
-        grid.innerHTML = html;
-    }
-    card.style.display = 'block';
+    _showLiunianPan('self', 'liunian-pan-card', 'liunian-grid', '流年排盘', 'bazi-pan', dayunData, '流年排盘数据暂不可用');
 }
 
 export function displayPartnerLiunianPan(dayunData) {
-    const card = _ensureDayunCard('partner-liunian-pan-card', 'partner-liunian-grid', '伴侣流年排盘', 'partner-bazi-pan');
-    if (!card) return;
-    const grid = document.getElementById('partner-liunian-grid');
-    if (!grid) return;
-    const { dayunList } = _normalizeDayunData(dayunData);
-    if (dayunList.length === 0) {
-        grid.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">伴侣流年排盘数据暂不可用</div>';
-        card.style.display = 'block';
-        return;
-    }
-    const html = _buildLiunianTableHtml(dayunList);
-    if (!html) {
-        grid.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">伴侣流年数据暂不可用</div>';
-    } else {
-        grid.innerHTML = html;
-    }
-    card.style.display = 'block';
+    _showLiunianPan('partner', 'partner-liunian-pan-card', 'partner-liunian-grid', '伴侣流年排盘', 'partner-bazi-pan', dayunData, '伴侣流年排盘数据暂不可用');
 }
 
 // ============ 首页公开案例渲染 ============

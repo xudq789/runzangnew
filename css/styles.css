@@ -449,8 +449,6 @@ input:focus, select:focus {
 
 /* 卡片样式 */
 .predictor-info-card,
-.bazi-pan-card,
-.dayun-pan-card,
 .free-content,
 .locked-content {
     background: #fff;
@@ -461,9 +459,11 @@ input:focus, select:focus {
     border: 1px solid var(--border-color);
 }
 
+.bazi-pan-card {
+    margin-bottom: 20px;
+}
+
 .predictor-info-card h4,
-.bazi-pan-card h4,
-.dayun-pan-card h4,
 .free-content h4,
 .locked-content h4 {
     color: var(--primary-color);
@@ -968,8 +968,6 @@ input:focus, select:focus {
     }
     
     .predictor-info-card h4,
-    .bazi-pan-card h4,
-    .dayun-pan-card h4,
     .free-content h4,
     .locked-content h4 {
         font-size: 16px;
@@ -1295,10 +1293,18 @@ input:focus, select:focus {
     }
 }
 
-/* ============ 专业排盘（八字四柱表 / 八步大运） ============ */
+/* ============ 专业排盘统一框架 ============ */
 #bazi-grid, #partner-bazi-grid { display: block; }
 
-.pan-wrap { font-family: 'STKaiti','KaiTi','楷体','Noto Serif SC','SimSun',serif; }
+.pan-frame {
+  font-family: 'STKaiti','KaiTi','楷体','Noto Serif SC','SimSun',serif;
+  background: linear-gradient(180deg, #fff, #fdf9f0);
+  border: 1px solid #e2d2b4;
+  border-radius: 14px;
+  box-shadow: 0 5px 18px rgba(90,60,30,.08);
+  padding: 18px;
+  margin-bottom: 10px;
+}
 
 .pan-head {
   display: flex;
@@ -1322,29 +1328,85 @@ input:focus, select:focus {
 }
 .pan-head-info { color: #6b5637; font-size: 13px; letter-spacing: 1px; }
 
-.pan-table { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; gap: 10px; }
+.pan-frame-body {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
 
-.pan-col {
-  min-width: 0;
+.pan-bazi-section { flex: 0 0 auto; min-width: 0; }
+.pan-dayun-section { flex: 1 1 auto; min-width: 0; }
+.pan-liunian-section { margin-top: 16px; }
+
+.pan-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #8b4513;
+  letter-spacing: 2px;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #f0e2c8;
+}
+
+.pan-table {
+  display: table;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 4px;
+}
+.pan-row { display: table-row; }
+.pan-cell {
+  display: table-cell;
   text-align: center;
-  padding: 10px 4px 12px;
+  vertical-align: middle;
+  padding: 6px 4px;
   background: linear-gradient(180deg, #fbf6ec, #f2e6cf);
   border: 1px solid #ddc79c;
-  border-radius: 12px;
-  position: relative;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.5);
+  border-radius: 8px;
+  min-width: 58px;
 }
-.pan-col-day {
+.pan-cell-day {
   background: linear-gradient(180deg, #fff7e0, #f6e4b8);
   border: 2px solid #c9a24b;
-  box-shadow: 0 3px 10px rgba(180,140,60,.25);
+  box-shadow: 0 2px 8px rgba(180,140,60,.2);
 }
-.pan-label { font-size: 12px; color: #96783c; letter-spacing: 2px; }
-.pan-shishen { font-size: 14px; color: #8a5a22; font-weight: 600; margin: 6px 0 2px; }
-.pan-shishen-day { color: #b3362d; font-weight: 700; }
 
-.pan-ganzhi { display: flex; flex-direction: column; align-items: center; line-height: 1.06; margin: 2px 0; }
-.pan-gan, .pan-zhi { font-size: 34px; font-weight: 700; }
+.pan-row-label .pan-cell {
+  font-size: 12px;
+  color: #96783c;
+  letter-spacing: 2px;
+  font-weight: 600;
+}
+.pan-row-shishen .pan-cell {
+  font-size: 14px;
+  color: #8a5a22;
+  font-weight: 600;
+}
+.pan-row-shishen .pan-shishen-day { color: #b3362d; font-weight: 700; }
+
+.pan-row-ganzhi .pan-cell { padding: 8px 4px; }
+.pan-row-ganzhi .pan-gan,
+.pan-row-ganzhi .pan-zhi { font-size: 30px; font-weight: 700; line-height: 1.1; }
+
+.pan-row-wuxing .pan-cell { padding: 4px; }
+.pan-wxdot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.pan-wxtxt { font-size: 11px; opacity: .85; }
+
+.pan-row-canggan .pan-cell {
+  padding: 6px 2px;
+  border-top: 1px solid rgba(150,120,60,.15);
+}
+.pan-canggan { display: flex; justify-content: center; gap: 6px; }
+.pan-cang-item { min-width: 22px; }
+.pan-cang-gan { font-size: 17px; font-weight: 600; color: #5c4630; }
+.pan-cang-ss { font-size: 9px; color: #a08a68; margin-top: 1px; }
+
+.pan-row-nayin .pan-cell {
+  font-size: 11px;
+  color: #a08a68;
+  letter-spacing: 1px;
+  padding: 4px;
+}
 
 .wx-mu  { color: #1e7a34; }
 .wx-huo { color: #c0392b; }
@@ -1352,33 +1414,10 @@ input:focus, select:focus {
 .wx-jin { color: #9c7c1c; }
 .wx-shui{ color: #1769aa; }
 
-.pan-wxline { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 3px 0; }
-.pan-wxdot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-.pan-wxtxt { font-size: 11px; opacity: .85; }
-
-.pan-canggan { display: flex; justify-content: center; gap: 6px; margin-top: 7px; padding-top: 7px; border-top: 1px solid rgba(150,120,60,.25); }
-.pan-cang-item { min-width: 22px; }
-.pan-cang-gan { font-size: 17px; font-weight: 600; color: #5c4630; }
-.pan-cang-ss { font-size: 9px; color: #a08a68; margin-top: 1px; }
-
-.pan-meta { margin-top: 6px; font-size: 11px; color: #a08a68; letter-spacing: 1px; }
-
-/* 大运排盘 */
-.dayun-pan-card {
-  display: none;
-  margin-top: 20px;
-  padding: 18px;
-  background: linear-gradient(180deg, #fff, #fdf9f0);
-  border-radius: 12px;
-  box-shadow: 0 5px 18px rgba(90,60,30,.08);
-  border: 1px solid #e2d2b4;
-}
-.dayun-pan-card h4 { color: #8b4513; font-size: 18px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #f0e2c8; }
-
-.dayun-wrap { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+.dayun-wrap { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
 .dayun-col {
   text-align: center;
-  padding: 10px 2px 8px;
+  padding: 8px 2px 6px;
   border-radius: 10px;
   background: linear-gradient(180deg, #fdf6ea, #f1e2c8);
   border: 1px solid #dfcaa2;
@@ -1392,45 +1431,40 @@ input:focus, select:focus {
   box-shadow: 0 3px 12px rgba(179,54,45,.22);
 }
 .dayun-step { font-size: 11px; color: #96783c; letter-spacing: 1px; }
-.dayun-ganzhi { display: flex; justify-content: center; gap: 6px; margin: 4px 0; }
-.dayun-gan, .dayun-zhi { font-size: 26px; font-weight: 700; line-height: 1; }
-.dayun-shishen { font-size: 13px; color: #8a5a22; font-weight: 600; min-height: 16px; }
+.dayun-ganzhi { display: flex; justify-content: center; gap: 4px; margin: 3px 0; }
+.dayun-gan, .dayun-zhi { font-size: 22px; font-weight: 700; line-height: 1; }
+.dayun-shishen { font-size: 12px; color: #8a5a22; font-weight: 600; min-height: 14px; }
 .dayun-shishen-zhi { color: #6b5637; }
 .dayun-age { font-size: 11px; color: #9c8a6a; }
 
 .liunian-wrap { grid-template-columns: repeat(10, 1fr); }
-
-/* 流年卡年份/年龄：桌面同行显示，手机换行 */
 .liu-year::after { content: '年'; }
 .liu-age::before { content: ' · '; }
 
 @media (max-width: 720px) {
-  #bazi-grid, #partner-bazi-grid { overflow-x: auto; }
-  .pan-table { grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; gap: 5px; }
-  .pan-col { min-width: 0; padding: 8px 2px 10px; }
-  .pan-gan, .pan-zhi { font-size: 22px; }
-  .pan-label { font-size: 11px; }
-  .pan-shishen { font-size: 13px; }
+  .pan-frame { padding: 12px 8px; }
+  .pan-frame-body { flex-direction: column; gap: 14px; }
+  .pan-bazi-section { width: 100%; overflow-x: auto; }
+  .pan-dayun-section { width: 100%; }
+  .pan-table { border-spacing: 2px; }
+  .pan-cell { min-width: 48px; padding: 4px 2px; }
+  .pan-row-ganzhi .pan-gan,
+  .pan-row-ganzhi .pan-zhi { font-size: 22px; }
+  .pan-row-label .pan-cell { font-size: 11px; }
+  .pan-row-shishen .pan-cell { font-size: 13px; }
   .pan-canggan { gap: 3px; }
   .pan-cang-item { min-width: 0; padding: 0 1px; }
   .pan-cang-gan { font-size: 13px; }
   .pan-cang-ss { font-size: 8px; }
-  .pan-meta { font-size: 10px; }
-  /* 大运/流年：全部塞进屏宽，8~10 步一行不换行、不横向滚动 */
-  .dayun-pan-card { padding: 12px 6px; }
-  .dayun-pan-card h4 { font-size: 16px; margin-bottom: 10px; padding-bottom: 6px; }
+  .pan-row-nayin .pan-cell { font-size: 10px; }
   .dayun-wrap {
     grid-template-columns: repeat(8, minmax(0, 1fr));
-    grid-auto-flow: row;
-    grid-auto-columns: auto;
     gap: 3px;
-    overflow-x: visible;
-    padding-bottom: 0;
   }
   .dayun-wrap.liunian-wrap { grid-template-columns: repeat(10, minmax(0, 1fr)); }
-  .dayun-col { min-width: 0; padding: 6px 0 5px; border-radius: 7px; }
+  .dayun-col { min-width: 0; padding: 5px 0 4px; border-radius: 7px; }
   .dayun-col-first, .dayun-col-active { border-width: 1px; }
-  .dayun-ganzhi { flex-direction: column; align-items: center; gap: 0; margin: 3px 0; }
+  .dayun-ganzhi { flex-direction: column; align-items: center; gap: 0; margin: 2px 0; }
   .dayun-gan, .dayun-zhi { font-size: 16px; }
   .dayun-shishen { font-size: 10px; line-height: 1.2; min-height: 0; }
   .dayun-age { font-size: 8px; line-height: 1.25; }
@@ -1439,30 +1473,19 @@ input:focus, select:focus {
   .liunian-wrap .dayun-gan, .liunian-wrap .dayun-zhi { font-size: 14px; }
   .liunian-wrap .dayun-shishen { font-size: 8px; }
   .liunian-wrap .dayun-age { font-size: 8px; }
-  .dayun-wrap::-webkit-scrollbar { height: 0; }
-  #dayun-grid, #partner-dayun-grid { overflow-x: visible; }
 }
 
 @media (max-width: 400px) {
-  .bazi-pan-card { padding: 12px 10px; }
-  .pan-table { gap: 3px; }
-  .pan-col { padding: 6px 1px 8px; }
-  .pan-label { font-size: 10px; letter-spacing: 1px; }
-  .pan-shishen { font-size: 12px; margin: 4px 0 1px; }
-  .pan-gan, .pan-zhi { font-size: 19px; }
-  .pan-canggan {
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    margin-top: 4px;
-    padding-top: 4px;
-  }
-  .pan-cang-item { display: flex; align-items: center; gap: 3px; min-height: 14px; }
-  .pan-cang-gan { font-size: 13px; line-height: 1; }
-  .pan-cang-ss { font-size: 9px; margin-top: 0; }
-  .pan-wxtxt { font-size: 9px; }
-  .pan-meta { font-size: 9px; margin-top: 3px; }
-  .dayun-pan-card { padding: 10px 4px; }
+  .pan-frame { padding: 10px 4px; }
+  .pan-cell { min-width: 40px; padding: 3px 1px; }
+  .pan-row-ganzhi .pan-gan,
+  .pan-row-ganzhi .pan-zhi { font-size: 19px; }
+  .pan-row-label .pan-cell { font-size: 10px; letter-spacing: 1px; }
+  .pan-row-shishen .pan-cell { font-size: 12px; }
+  .pan-canggan { flex-direction: column; align-items: center; gap: 2px; }
+  .pan-cang-item { min-height: 14px; }
+  .pan-cang-gan { font-size: 13px; }
+  .pan-row-nayin .pan-cell { font-size: 9px; }
   .dayun-wrap { gap: 2px; }
   .dayun-gan, .dayun-zhi { font-size: 15px; }
   .dayun-shishen { font-size: 9px; }

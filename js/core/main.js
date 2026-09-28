@@ -358,12 +358,14 @@ const PaymentManager = {
             
             if (STATE.dayunData) {
                 try { displayDayunPan(STATE.dayunData); } catch(e) { console.warn('displayDayunPan失败:', e); }
+                try { displayLiunianPan(STATE.dayunData); } catch(e) { console.warn('displayLiunianPan失败:', e); }
             }
             
             if (savedService === '八字合婚' && STATE.partnerBaziData) {
                 try {
                     if (STATE.partnerDayunData) {
                         displayPartnerDayunPan(STATE.partnerDayunData);
+                        displayPartnerLiunianPan(STATE.partnerDayunData);
                     }
                 } catch(e) { console.warn('displayPartnerDayunPan失败:', e); }
             }
@@ -460,12 +462,13 @@ import {
     UI, initFormOptions, updateServiceDisplay,
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,
     displayDayunPan, displayPartnerDayunPan,
+    displayLiunianPan, displayPartnerLiunianPan,
     updateProgress, showPaymentModal, closePaymentModal,
     updateUnlockInterface, showFullAnalysisContent, lockDownloadButton,
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData
-} from './ui.js?v=31';
+} from './ui.js?v=32';
 
 var _pollState = {
     active: false,
@@ -641,10 +644,18 @@ function switchService(serviceName) {
         dayunCards.forEach(card => {
             if (card.parentNode) card.parentNode.removeChild(card);
         });
+        const liunianCards = document.querySelectorAll('.liunian-pan-card');
+        liunianCards.forEach(card => {
+            if (card.parentNode) card.parentNode.removeChild(card);
+        });
         const dayunGrid = document.getElementById('dayun-grid');
         if (dayunGrid) dayunGrid.innerHTML = '';
         const partnerDayunGrid = document.getElementById('partner-dayun-grid');
         if (partnerDayunGrid) partnerDayunGrid.innerHTML = '';
+        const liunianGrid = document.getElementById('liunian-grid');
+        if (liunianGrid) liunianGrid.innerHTML = '';
+        const partnerLiunianGrid = document.getElementById('partner-liunian-grid');
+        if (partnerLiunianGrid) partnerLiunianGrid.innerHTML = '';
 
         var lockedAnalysisText = document.getElementById('locked-analysis-text');
         if (lockedAnalysisText) lockedAnalysisText.innerHTML = '';
@@ -907,6 +918,7 @@ async function _handleAnalysisResult(result) {
     
     if (result.dayun_pan && result.dayun_pan.length > 0) {
         displayDayunPan(result.dayun_pan);
+        displayLiunianPan(result.dayun_pan);
         console.log('✅ 大运排盘已显示');
     }
     
@@ -920,6 +932,7 @@ async function _handleAnalysisResult(result) {
             STATE.partnerDayunData = result.partner_dayun_pan;
             console.log('✅ 伴侣大运数据已保存:', STATE.partnerDayunData);
             displayPartnerDayunPan(result.partner_dayun_pan);
+            displayPartnerLiunianPan(result.partner_dayun_pan);
             console.log('✅ 伴侣大运排盘已显示');
         }
     }

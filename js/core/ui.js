@@ -594,6 +594,13 @@ function _wxClass(wx) {
 const _GAN_WX = { '甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土', '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水' };
 const _ZHI_WX = { '子': '水', '丑': '土', '寅': '木', '卯': '木', '辰': '土', '巳': '火', '午': '火', '未': '土', '申': '金', '酉': '金', '戌': '土', '亥': '水' };
 
+function _panLine(cls, text) {
+    const div = document.createElement('div');
+    div.className = cls;
+    div.textContent = text;
+    return div;
+}
+
 function _renderBaziColumns(grid, bazi) {
     if (!grid) return;
     grid.innerHTML = '';
@@ -601,34 +608,47 @@ function _renderBaziColumns(grid, bazi) {
         grid.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">暂无排盘数据</div>';
         return;
     }
-    const columns = [
-        { label: '年柱', ganzhi: bazi.year.ganzhi || '', nayin: bazi.year.nayin || '' },
-        { label: '月柱', ganzhi: bazi.month.ganzhi || '', nayin: bazi.month.nayin || '' },
-        { label: '日柱', ganzhi: bazi.day.ganzhi || '', nayin: bazi.day.nayin || '' },
-        { label: '时柱', ganzhi: bazi.hour.ganzhi || '', nayin: bazi.hour.nayin || '' }
-    ];
-    columns.forEach(col => {
+    const keys = ['year', 'month', 'day', 'hour'];
+    const labels = { year: '年柱', month: '月柱', day: '日柱', hour: '时柱' };
+    const pillars = keys.map(k => bazi[k]);
+    // 早期入库的排盘缺这些补充字段，整行缺位时不渲染，避免留一排空框
+    const hasShishen = pillars.some(p => p && p.gan_shishen);
+    const hasCanggan = pillars.some(p => p && Array.isArray(p.zhi_canggan) && p.zhi_canggan.length);
+
+    keys.forEach(key => {
+        const col = bazi[key];
+        const ganzhi = col.ganzhi || '';
+        const gan = col.gan || ganzhi[0] || '';
+        const zhi = col.zhi || ganzhi[1] || '';
         const div = document.createElement('div');
         div.className = 'bazi-column';
-        const labelDiv = document.createElement('div');
-        labelDiv.className = 'bazi-label';
-        labelDiv.textContent = col.label;
+        div.appendChild(_panLine('bazi-label', labels[key]));
+        if (hasShishen) div.appendChild(_panLine('bazi-shishen', col.gan_shishen || '—'));
+
         const gzDiv = document.createElement('div');
         gzDiv.className = 'bazi-ganzhi';
         const ganSpan = document.createElement('span');
-        ganSpan.className = 'bazi-gan ' + _wxClass(_GAN_WX[col.ganzhi[0]] || '');
-        ganSpan.textContent = col.ganzhi[0] || '';
+        ganSpan.className = 'bazi-gan ' + _wxClass(col.gan_wuxing || _GAN_WX[gan] || '');
+        ganSpan.textContent = gan;
         const zhiSpan = document.createElement('span');
-        zhiSpan.className = 'bazi-zhi ' + _wxClass(_ZHI_WX[col.ganzhi[1]] || '');
-        zhiSpan.textContent = col.ganzhi[1] || '';
+        zhiSpan.className = 'bazi-zhi ' + _wxClass(col.zhi_wuxing || _ZHI_WX[zhi] || '');
+        zhiSpan.textContent = zhi;
         gzDiv.appendChild(ganSpan);
         gzDiv.appendChild(zhiSpan);
-        const elementDiv = document.createElement('div');
-        elementDiv.className = 'bazi-element';
-        elementDiv.textContent = col.nayin;
-        div.appendChild(labelDiv);
         div.appendChild(gzDiv);
-        div.appendChild(elementDiv);
+
+        if (hasCanggan) {
+            const cgDiv = document.createElement('div');
+            cgDiv.className = 'bazi-canggan';
+            (col.zhi_canggan || []).forEach(cg => {
+                const s = document.createElement('span');
+                s.className = 'bazi-cg-item ' + _wxClass(_GAN_WX[cg] || '');
+                s.textContent = cg;
+                cgDiv.appendChild(s);
+            });
+            div.appendChild(cgDiv);
+        }
+        div.appendChild(_panLine('bazi-element', col.nayin || ''));
         grid.appendChild(div);
     });
 }
@@ -665,11 +685,6 @@ function _buildDayunTableHtml(dayunList, startAge) {
         html += '<td><span class="pan-gz-gan ' + _wxClass(_GAN_WX[gan] || '') + '">' + gan + '</span>'
             + '<span class="pan-gz-zhi ' + _wxClass(_ZHI_WX[zhi] || '') + '">' + zhi + '</span></td>';
     });
-    html += '</tr>';
-    html += '<tr><td class="pan-td-label">十神</td>';
-    displayList.forEach(dy => {
-        html += '<td class="pan-td-ss">' + (dy.gan_shishen || '—') + '</td>';
-    });
     html += '</tr></tbody></table>';
     return html;
 }
@@ -683,48 +698,21 @@ function _buildLiunianTableHtml(dayunList) {
     });
     if (allYears.length === 0) return '';
     const cols = 10;
-    let html = '<table class="pan-table"><thead><tr><th class="pan-th-label">流年</th>';
-    for (let i = 0; i < Math.min(cols, allYears.length); i++) {
-        const y = allYears[i];
-        html += '<th>' + (y.year || '') + (y.age != null ? '<br><small>' + y.age + '岁</small>' : '') + '</th>';
-    }
-    html += '</tr></thead><tbody>';
-    html += '<tr><td class="pan-td-label">干支</td>';
-    for (let i = 0; i < Math.min(cols, allYears.length); i++) {
-        const gz = allYears[i].ganzhi || '--';
-        const gan = gz[0] || '';
-        const zhi = gz[1] || '';
-        html += '<td><span class="pan-gz-gan ' + _wxClass(_GAN_WX[gan] || '') + '">' + gan + '</span>'
-            + '<span class="pan-gz-zhi ' + _wxClass(_ZHI_WX[zhi] || '') + '">' + zhi + '</span></td>';
-    }
-    html += '</tr>';
-    html += '<tr><td class="pan-td-label">十神</td>';
-    for (let i = 0; i < Math.min(cols, allYears.length); i++) {
-        const y = allYears[i];
-        html += '<td class="pan-td-ss">' + (y.gan_shishen || '—') + '</td>';
-    }
-    html += '</tr></tbody></table>';
-    if (allYears.length > cols) {
-        html += '<table class="pan-table pan-table-cont"><thead><tr><th class="pan-th-label">流年</th>';
-        for (let i = cols; i < allYears.length; i++) {
-            const y = allYears[i];
+    let html = '';
+    for (let start = 0; start < allYears.length; start += cols) {
+        const chunk = allYears.slice(start, start + cols);
+        html += '<table class="pan-table' + (start > 0 ? ' pan-table-cont' : '') + '"><thead><tr><th class="pan-th-label">流年</th>';
+        chunk.forEach(y => {
             html += '<th>' + (y.year || '') + (y.age != null ? '<br><small>' + y.age + '岁</small>' : '') + '</th>';
-        }
-        html += '</tr></thead><tbody>';
-        html += '<tr><td class="pan-td-label">干支</td>';
-        for (let i = cols; i < allYears.length; i++) {
-            const gz = allYears[i].ganzhi || '--';
+        });
+        html += '</tr></thead><tbody><tr><td class="pan-td-label">干支</td>';
+        chunk.forEach(y => {
+            const gz = y.ganzhi || '--';
             const gan = gz[0] || '';
             const zhi = gz[1] || '';
             html += '<td><span class="pan-gz-gan ' + _wxClass(_GAN_WX[gan] || '') + '">' + gan + '</span>'
                 + '<span class="pan-gz-zhi ' + _wxClass(_ZHI_WX[zhi] || '') + '">' + zhi + '</span></td>';
-        }
-        html += '</tr>';
-        html += '<tr><td class="pan-td-label">十神</td>';
-        for (let i = cols; i < allYears.length; i++) {
-            const y = allYears[i];
-            html += '<td class="pan-td-ss">' + (y.gan_shishen || '—') + '</td>';
-        }
+        });
         html += '</tr></tbody></table>';
     }
     return html;

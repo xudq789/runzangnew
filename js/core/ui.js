@@ -596,72 +596,94 @@ function _renderBaziPan(grid, bazi, genderText, showBirth, person) {
     const body = document.createElement('div');
     body.className = 'pan-frame-body';
 
-    const baziSec = document.createElement('div');
-    baziSec.className = 'pan-bazi-section';
     const table = document.createElement('div');
     table.className = 'pan-table';
 
-    const cols = [
+    const pillars = [
         { name: '年柱', p: bazi.year },
         { name: '月柱', p: bazi.month },
         { name: '日柱', p: bazi.day, day: true },
         { name: '时柱', p: bazi.hour }
     ];
 
-    const rowLabels = ['柱', '十神', '干支', '藏干', '纳音'];
-    const rowClasses = ['pan-row-label', 'pan-row-shishen', 'pan-row-ganzhi', 'pan-row-canggan', 'pan-row-nayin'];
+    const headerRow = document.createElement('div');
+    headerRow.className = 'pan-row pan-row-header';
+    const cornerCell = document.createElement('div');
+    cornerCell.className = 'pan-cell pan-row-header-cell';
+    cornerCell.textContent = '四柱';
+    headerRow.appendChild(cornerCell);
+    ['十神', '干支', '藏干', '纳音'].forEach(label => {
+        const cell = document.createElement('div');
+        cell.className = 'pan-cell pan-row-header-cell';
+        cell.textContent = label;
+        headerRow.appendChild(cell);
+    });
+    table.appendChild(headerRow);
 
-    rowLabels.forEach((_, ri) => {
+    pillars.forEach(col => {
         const row = document.createElement('div');
-        row.className = 'pan-row ' + rowClasses[ri];
-        cols.forEach(col => {
-            const p = col.p;
-            const gan = p.gan || (p.ganzhi || '')[0] || '';
-            const zhi = p.zhi || (p.ganzhi || '')[1] || '';
-            const colWx = p.zhi_wuxing || '';
-            const cell = document.createElement('div');
-            cell.className = 'pan-cell' + (col.day ? ' pan-cell-day' : '');
+        row.className = 'pan-row' + (col.day ? ' pan-row-day' : '');
+        const p = col.p;
+        const gan = p.gan || (p.ganzhi || '')[0] || '';
+        const zhi = p.zhi || (p.ganzhi || '')[1] || '';
+        const colWx = p.zhi_wuxing || '';
 
-            if (ri === 0) {
-                cell.textContent = col.name;
-            } else if (ri === 1) {
-                cell.textContent = p.gan_shishen || (col.day ? '日主' : '');
-                if (col.day) cell.classList.add('pan-shishen-day');
-            } else if (ri === 2) {
-                const ganEl = document.createElement('span');
-                ganEl.className = 'pan-gan ' + _wxClass(p.gan_wuxing || _GAN_WX[gan] || '');
-                ganEl.textContent = gan;
-                const zhiEl = document.createElement('span');
-                zhiEl.className = 'pan-zhi ' + _wxClass(colWx);
-                zhiEl.textContent = zhi;
-                cell.appendChild(ganEl);
-                cell.appendChild(zhiEl);
-            } else if (ri === 3) {
-                const canggan = p.zhi_canggan || [];
-                const cangSs = p.zhi_canggan_shishen || [];
-                canggan.forEach((cg, i) => {
-                    const item = document.createElement('span');
-                    item.className = 'pan-cang-item';
-                    const g = document.createElement('span');
-                    g.className = 'pan-cang-gan ' + _wxClass(_GAN_WX[cg] || '');
-                    g.textContent = cg;
-                    const s = document.createElement('span');
-                    s.className = 'pan-cang-ss';
-                    s.textContent = cangSs[i] || '';
-                    item.appendChild(g);
-                    item.appendChild(s);
-                    cell.appendChild(item);
-                });
-            } else if (ri === 4) {
-                cell.textContent = p.nayin || '';
-            }
-            row.appendChild(cell);
+        const nameCell = document.createElement('div');
+        nameCell.className = 'pan-cell pan-row-label-cell';
+        if (col.day) nameCell.classList.add('pan-cell-day');
+        nameCell.textContent = col.name;
+        row.appendChild(nameCell);
+
+        const ssCell = document.createElement('div');
+        ssCell.className = 'pan-cell pan-row-shishen-cell';
+        if (col.day) ssCell.classList.add('pan-cell-day');
+        ssCell.textContent = p.gan_shishen || (col.day ? '日主' : '');
+        if (col.day) ssCell.classList.add('pan-shishen-day');
+        row.appendChild(ssCell);
+
+        const gzCell = document.createElement('div');
+        gzCell.className = 'pan-cell pan-row-ganzhi-cell';
+        if (col.day) gzCell.classList.add('pan-cell-day');
+        const ganEl = document.createElement('span');
+        ganEl.className = 'pan-gan ' + _wxClass(p.gan_wuxing || _GAN_WX[gan] || '');
+        ganEl.textContent = gan;
+        const zhiEl = document.createElement('span');
+        zhiEl.className = 'pan-zhi ' + _wxClass(colWx);
+        zhiEl.textContent = zhi;
+        gzCell.appendChild(ganEl);
+        gzCell.appendChild(zhiEl);
+        row.appendChild(gzCell);
+
+        const cangCell = document.createElement('div');
+        cangCell.className = 'pan-cell pan-row-canggan-cell';
+        if (col.day) cangCell.classList.add('pan-cell-day');
+        const canggan = p.zhi_canggan || [];
+        const cangSs = p.zhi_canggan_shishen || [];
+        canggan.forEach((cg, i) => {
+            const item = document.createElement('span');
+            item.className = 'pan-cang-item';
+            const g = document.createElement('span');
+            g.className = 'pan-cang-gan ' + _wxClass(_GAN_WX[cg] || '');
+            g.textContent = cg;
+            const s = document.createElement('span');
+            s.className = 'pan-cang-ss';
+            s.textContent = cangSs[i] || '';
+            item.appendChild(g);
+            item.appendChild(s);
+            cangCell.appendChild(item);
         });
+        row.appendChild(cangCell);
+
+        const nyCell = document.createElement('div');
+        nyCell.className = 'pan-cell pan-row-nayin-cell';
+        if (col.day) nyCell.classList.add('pan-cell-day');
+        nyCell.textContent = p.nayin || '';
+        row.appendChild(nyCell);
+
         table.appendChild(row);
     });
 
-    baziSec.appendChild(table);
-    body.appendChild(baziSec);
+    body.appendChild(table);
 
     const dayunSec = document.createElement('div');
     dayunSec.className = 'pan-dayun-section';
@@ -674,6 +696,7 @@ function _renderBaziPan(grid, bazi, genderText, showBirth, person) {
     const dayunInner = document.createElement('div');
     dayunInner.id = pfx + 'dayun-inner';
     dayunSec.appendChild(dayunInner);
+
     const liunianSec = document.createElement('div');
     liunianSec.className = 'pan-liunian-section';
     liunianSec.id = pfx + 'liunian-section';
@@ -685,6 +708,7 @@ function _renderBaziPan(grid, bazi, genderText, showBirth, person) {
     const liunianInner = document.createElement('div');
     liunianInner.id = pfx + 'liunian-inner';
     liunianSec.appendChild(liunianInner);
+
     dayunSec.appendChild(liunianSec);
     body.appendChild(dayunSec);
 

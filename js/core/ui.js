@@ -608,8 +608,8 @@ function _renderBaziPan(grid, bazi, genderText, showBirth, person) {
         { name: '时柱', p: bazi.hour }
     ];
 
-    const rowLabels = ['柱', '十神', '干支', '五行', '藏干', '纳音'];
-    const rowClasses = ['pan-row-label', 'pan-row-shishen', 'pan-row-ganzhi', 'pan-row-wuxing', 'pan-row-canggan', 'pan-row-nayin'];
+    const rowLabels = ['柱', '十神', '干支', '藏干', '纳音'];
+    const rowClasses = ['pan-row-label', 'pan-row-shishen', 'pan-row-ganzhi', 'pan-row-canggan', 'pan-row-nayin'];
 
     rowLabels.forEach((_, ri) => {
         const row = document.createElement('div');
@@ -637,14 +637,6 @@ function _renderBaziPan(grid, bazi, genderText, showBirth, person) {
                 cell.appendChild(ganEl);
                 cell.appendChild(zhiEl);
             } else if (ri === 3) {
-                const dot = document.createElement('span');
-                dot.className = 'pan-wxdot ' + _wxClass(colWx);
-                const wxTxt = document.createElement('span');
-                wxTxt.className = 'pan-wxtxt ' + _wxClass(colWx);
-                wxTxt.textContent = colWx;
-                cell.appendChild(dot);
-                cell.appendChild(wxTxt);
-            } else if (ri === 4) {
                 const canggan = p.zhi_canggan || [];
                 const cangSs = p.zhi_canggan_shishen || [];
                 canggan.forEach((cg, i) => {
@@ -660,7 +652,7 @@ function _renderBaziPan(grid, bazi, genderText, showBirth, person) {
                     item.appendChild(s);
                     cell.appendChild(item);
                 });
-            } else if (ri === 5) {
+            } else if (ri === 4) {
                 cell.textContent = p.nayin || '';
             }
             row.appendChild(cell);

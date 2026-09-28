@@ -424,6 +424,54 @@ export function fillSolarFromCandidate(scope, c) {
     }
 }
 
+// 英雄区/明细区大图：CSS 里 opacity:0，须由 JS 加 .loaded 才可见。
+// load 事件可能早于监听器挂载就已触发（图片命中缓存 + initApp 先 await 支付检查），
+// 因此挂载后必须用 complete 补判一次，否则永久停在"正在加载图片..."。
+function _imagePlaceholder(img) {
+    return img ? img.previousElementSibling : null;
+}
+
+export function bindServiceImage(img) {
+    if (!img || img.dataset.imgBound === '1') return;
+    img.dataset.imgBound = '1';
+    const placeholder = _imagePlaceholder(img);
+    const show = function () {
+        img.classList.add('loaded');
+        if (placeholder) placeholder.style.display = 'none';
+    };
+    const fail = function () {
+        img.classList.remove('loaded');
+        if (placeholder) {
+            placeholder.textContent = '图片加载失败';
+            placeholder.style.display = '';
+        }
+    };
+    img.addEventListener('load', show);
+    img.addEventListener('error', fail);
+    if (img.complete) {
+        if (img.naturalWidth > 0) show();
+        else fail();
+    }
+}
+
+export function setServiceImage(img, src) {
+    if (!img || !src) return;
+    bindServiceImage(img);
+    if (img.getAttribute('src') === src) return;
+    const placeholder = _imagePlaceholder(img);
+    img.classList.remove('loaded');
+    if (placeholder) {
+        placeholder.textContent = '正在加载图片...';
+        placeholder.style.display = '';
+    }
+    img.src = src;
+    // 同源图片被浏览器瞬时命中时 complete 已为 true，load 事件不会再补发
+    if (img.complete && img.naturalWidth > 0) {
+        img.classList.add('loaded');
+        if (placeholder) placeholder.style.display = 'none';
+    }
+}
+
 export function updateServiceDisplay(serviceName) {
     DOM.getAll('.service-nav a').forEach(link => {
         link.classList.remove('active');
@@ -452,14 +500,8 @@ export function updateServiceDisplay(serviceName) {
     
     const serviceConfig = SERVICES[serviceName];
     if (serviceConfig) {
-        const heroImage = UI.heroImage();
-        const detailImage = UI.detailImage();
-        const heroPlaceholder = heroImage?.previousElementSibling;
-        const detailPlaceholder = detailImage?.previousElementSibling;
-        if (heroPlaceholder) showElement(heroPlaceholder);
-        if (detailPlaceholder) showElement(detailPlaceholder);
-        if (heroImage) { heroImage.classList.remove('loaded'); heroImage.src = serviceConfig.heroImage; }
-        if (detailImage) { detailImage.classList.remove('loaded'); detailImage.src = serviceConfig.detailImage; }
+        setServiceImage(UI.heroImage(), serviceConfig.heroImage);
+        setServiceImage(UI.detailImage(), serviceConfig.detailImage);
     }
     
     updateUnlockInfo();

@@ -857,8 +857,8 @@ function _renderPublicDayunPan(grid, dayunList) {
     grid.innerHTML = _buildDayunTableHtml(list, list[0].age_start || 8);
 }
 
-export function renderPublicDayunPan(grid, dayunList) {
-    const { dayunList } = _normalizeDayunData(dayunList);
+export function renderPublicDayunPan(grid, rawDayunData) {
+    const { dayunList } = _normalizeDayunData(rawDayunData);
     _renderPublicDayunPan(grid, dayunList);
 }
 

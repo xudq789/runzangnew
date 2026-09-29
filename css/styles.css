@@ -741,13 +741,13 @@ button.dy-cell.is-active:hover {
 }
 
 .dy-gz b {
-    font-size: 42px;
+    font-size: 26px;
     font-weight: 700;
     line-height: 1.08;
 }
 
 .ln-gz b {
-    font-size: 24px;
+    font-size: 19px;
     font-weight: 700;
     line-height: 1.1;
 }
@@ -852,7 +852,7 @@ button.dy-cell.is-active:hover {
         gap: 1px;
     }
     .dy-gz b {
-        font-size: 24px;
+        font-size: 19px;
     }
     .ln-gz b {
         font-size: 17px;
@@ -895,10 +895,10 @@ button.dy-cell.is-active:hover {
         padding: 3px 1px;
     }
     .dy-gz b {
-        font-size: 21px;
+        font-size: 17px;
     }
     .ln-gz b {
-        font-size: 15px;
+        font-size: 14px;
     }
     .dy-age {
         font-size: 9px;

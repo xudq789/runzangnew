@@ -450,7 +450,6 @@ input:focus, select:focus {
 /* 卡片样式 */
 .predictor-info-card,
 .bazi-pan-card,
-.dayun-pan-card,
 .free-content,
 .locked-content {
     background: #fff;
@@ -463,7 +462,6 @@ input:focus, select:focus {
 
 .predictor-info-card h4,
 .bazi-pan-card h4,
-.dayun-pan-card h4,
 .free-content h4,
 .locked-content h4 {
     color: var(--primary-color);
@@ -506,15 +504,25 @@ input:focus, select:focus {
 .wx-jin { color: #9c7c1c; }
 .wx-shui{ color: #1769aa; }
 
-/* ============ 排盘区（问真/知易风格：整宽分段 + 行对齐网格） ============ */
+/* ============ 排盘区（问真/知易风格：每块按合适比例收窄 + 居中，不铺满拉长） ============ */
 .pan-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
     margin-bottom: 20px;
+}
+
+.bazi-pan-card {
+    width: 100%;
+    max-width: 600px;
+    margin-bottom: 0;
 }
 
 /* 八字四柱：第一列是行标签，后四列永远是年/月/日/时 */
 .bazi-grid {
     display: grid;
-    grid-template-columns: 52px repeat(4, 1fr);
+    grid-template-columns: 56px repeat(4, 1fr);
     border: 1px solid #e6dac6;
     border-radius: 10px;
     overflow: hidden;
@@ -543,8 +551,8 @@ input:focus, select:focus {
     justify-content: center;
     padding: 6px 2px;
     text-align: center;
-    font-size: 12px;
-    color: #8a7358;
+    font-size: 13px;
+    color: #5a4a38;
     background: var(--light-color);
     border-top: 1px solid #eee3d2;
 }
@@ -555,11 +563,11 @@ input:focus, select:focus {
     align-items: center;
     justify-content: center;
     gap: 1px;
-    min-height: 34px;
+    min-height: 36px;
     padding: 6px 3px;
     text-align: center;
-    font-size: 13px;
-    color: var(--dark-color);
+    font-size: 14px;
+    color: #241d15;
     border-top: 1px solid #eee3d2;
     border-left: 1px solid #eee3d2;
 }
@@ -581,32 +589,32 @@ input:focus, select:focus {
 }
 
 .pz-big {
-    font-size: 27px;
+    font-size: 30px;
     font-weight: 700;
     line-height: 1.15;
 }
 
 .pz-ss {
-    color: var(--primary-color);
-    font-size: 12px;
+    color: #6d3a17;
+    font-size: 13px;
 }
 
 .pz-cg {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
 }
 
 .pz-fx {
     font-style: normal;
-    font-size: 10px;
-    color: #9b8770;
+    font-size: 12px;
+    color: #5a4a38;
 }
 
 .pz-ny,
 .pz-kw,
 .pz-cs {
-    font-size: 12px;
-    color: #6b5b4d;
+    font-size: 13px;
+    color: #33291d;
     white-space: nowrap;
 }
 
@@ -614,32 +622,87 @@ input:focus, select:focus {
     grid-column: 1 / -1;
     padding: 15px;
     text-align: center;
-    color: #999;
-    font-size: 13px;
+    color: #6b5b4d;
+    font-size: 14px;
 }
 
-/* 大运 · 流年合并卡 */
-.dayun-pan-card {
+/* 大运 · 流年：行块不套卡片，行首竖排标签，格子用分隔线连成一条列表 */
+.pan-yun {
     display: none;
+    width: 100%;
+    max-width: 900px;
+}
+
+.yun-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.yun-row + .yun-row {
+    margin-top: 10px;
+}
+
+.yun-lb {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: 24px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #33291d;
+}
+
+.dy-strip,
+.ln-box {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ln-box {
+    display: flex;
 }
 
 .dy-strip {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 6px;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    border: 1px solid #e6dac6;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
 }
 
-.dy-cell {
+.ln-strip {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    width: 100%;
+    border: 1px solid #e6dac6;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.dy-cell,
+.ln-cell {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3px;
-    padding: 8px 2px;
-    border: 1px solid #e6dac6;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #fbf7f1, #f2e9db);
-    color: var(--dark-color);
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+    padding: 9px 2px;
+    border-left: 1px solid #ece1cf;
+    color: #241d15;
     font: inherit;
+    background: #fff;
+}
+
+.dy-cell:first-child,
+.ln-cell:first-child {
+    border-left: 0;
 }
 
 button.dy-cell {
@@ -648,106 +711,81 @@ button.dy-cell {
 }
 
 button.dy-cell:hover {
-    border-color: var(--secondary-color);
-    background: #fdf3d8;
+    background: #f7f0e2;
 }
 
+/* 选中态用浅底 + 内描边，不再反色成棕底白字 */
 .dy-cell.is-active {
-    border-color: var(--primary-color);
-    background: var(--primary-color);
-    box-shadow: 0 2px 8px rgba(139, 69, 19, 0.25);
-}
-
-.dy-age,
-.dy-yr {
-    font-size: 11px;
-    color: #8a7358;
-    white-space: nowrap;
-}
-
-.dy-yr {
-    color: #a08d76;
-}
-
-.dy-gz {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.dy-gz b {
-    font-size: 21px;
-    font-weight: 700;
-    line-height: 1.15;
-}
-
-.dy-cell.is-active .dy-age,
-.dy-cell.is-active .dy-yr {
-    color: #ecd9bd;
-}
-
-.dy-cell.is-active .dy-gz b {
-    color: #fff !important;
-}
-
-.ln-box {
-    margin-top: 14px;
-}
-
-.ln-hint {
-    margin-bottom: 8px;
-    font-size: 13px;
-    color: #8a7358;
-}
-
-.ln-strip {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 5px;
-}
-
-.ln-cell {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    padding: 7px 2px;
-    border: 1px solid #ece1cf;
-    border-radius: 7px;
-    background: #fdfbf7;
-}
-
-.ln-yr {
-    font-size: 12px;
+    background: #fdf3d8;
+    box-shadow: inset 0 0 0 2px var(--primary-color);
     font-weight: 600;
-    color: var(--dark-color);
 }
 
+.dy-gz,
 .ln-gz {
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.ln-gz b {
-    font-size: 16px;
+.dy-gz b {
+    font-size: 42px;
     font-weight: 700;
-    line-height: 1.15;
+    line-height: 1.08;
+}
+
+.ln-gz b {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.dy-age {
+    font-size: 16px;
+    color: #33291d;
+    white-space: nowrap;
+}
+
+.dy-age i,
+.ln-age i {
+    font-style: normal;
+}
+
+.dy-yr {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    font-size: 15px;
+    color: #4a3b2b;
+    white-space: nowrap;
+}
+
+.ln-yr {
+    font-size: 15px;
+    font-weight: 600;
+    color: #241d15;
 }
 
 .ln-age {
-    font-size: 10px;
-    color: #a08d76;
+    font-size: 13px;
+    color: #4a3b2b;
 }
 
 .ln-cell.is-now {
-    border-color: var(--secondary-color);
     background: #fdf3d8;
-    box-shadow: inset 0 0 0 1px var(--secondary-color);
+    box-shadow: inset 0 0 0 2px var(--secondary-color);
+    font-weight: 600;
 }
 
-/* 手机端：四柱仍并排4列，大运 2行×4、流年 2行×5，杜绝横向滚动 */
+/* 手机端：八字铺满，大运 8 个一行、流年 10 个一行，都压在屏宽内不出横滚 */
 @media (max-width: 768px) {
+    .bazi-pan-card {
+        max-width: 100%;
+        padding: 15px 10px;
+    }
+    .pan-yun {
+        max-width: 100%;
+    }
     .bazi-grid {
         grid-template-columns: 38px repeat(4, 1fr);
     }
@@ -757,6 +795,7 @@ button.dy-cell:hover {
         font-size: 12px;
     }
     .pz-lb {
+        width: 38px;
         font-size: 11px;
         padding: 5px 1px;
     }
@@ -766,31 +805,95 @@ button.dy-cell:hover {
         min-height: 30px;
     }
     .pz-big {
-        font-size: 20px;
+        font-size: 22px;
     }
     .pz-cg {
         font-size: 12px;
+    }
+    .pz-fx {
+        font-size: 10px;
     }
     .pz-ny,
     .pz-kw,
     .pz-cs {
         font-size: 11px;
     }
-    .dy-strip {
-        grid-template-columns: repeat(4, 1fr);
+    .yun-lb {
+        width: 16px;
+        font-size: 12px;
+        gap: 2px;
+    }
+    .yun-row {
+        gap: 5px;
+    }
+    .dy-cell {
+        padding: 5px 1px;
+        gap: 1px;
+    }
+    .ln-cell {
+        padding: 4px 1px;
+        gap: 1px;
     }
     .dy-gz b {
-        font-size: 18px;
-    }
-    .ln-strip {
-        grid-template-columns: repeat(5, 1fr);
+        font-size: 24px;
     }
     .ln-gz b {
-        font-size: 14px;
+        font-size: 17px;
     }
-    .dayun-pan-card,
-    .bazi-pan-card {
-        padding: 15px 12px;
+    .dy-age {
+        font-size: 10px;
+        letter-spacing: -.2px;
+    }
+    .dy-yr {
+        font-size: 9px;
+        flex-direction: column;
+        line-height: 1.1;
+        letter-spacing: -.2px;
+    }
+    .dy-yr .dy-dash {
+        display: none;
+    }
+    .dy-age i,
+    .ln-age i {
+        display: none;
+    }
+    .ln-yr {
+        font-size: 10px;
+    }
+    .ln-age {
+        font-size: 9px;
+    }
+}
+
+/* 小屏手机再收一档：大运 8 格、流年 10 格仍必须压在一行内 */
+@media (max-width: 420px) {
+    .yun-lb {
+        width: 14px;
+        font-size: 11px;
+    }
+    .dy-cell {
+        padding: 4px 1px;
+    }
+    .ln-cell {
+        padding: 3px 1px;
+    }
+    .dy-gz b {
+        font-size: 21px;
+    }
+    .ln-gz b {
+        font-size: 15px;
+    }
+    .dy-age {
+        font-size: 9px;
+    }
+    .dy-yr {
+        font-size: 8px;
+    }
+    .ln-yr {
+        font-size: 8.5px;
+    }
+    .ln-age {
+        font-size: 8px;
     }
 }
 
@@ -1361,7 +1464,7 @@ button.dy-cell:hover {
     50% { opacity: 0.5; }
 }
 
-/* ============ 大运 · 流年排盘卡片：样式已并入上方 .dayun-pan-card / .dy-strip / .ln-strip ============ */
+/* ============ 大运 · 流年：样式见上方 .pan-yun / .dy-strip / .ln-strip ============ */
 
 /* 进度项目容器滚动 */
 #progress-items-container {

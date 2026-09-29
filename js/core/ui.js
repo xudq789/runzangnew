@@ -686,10 +686,13 @@ export function displayBaziPan() {
     }
 }
 
-// ============ 大运 · 流年（合并卡：点大运切该步十年） ============
-function _dyYearRange(dy) {
+// ============ 大运 · 流年（一行一块，行首竖排标签；点大运切该步十年） ============
+// 起讫年拆成三段：手机端把连接符隐掉、两年上下排，才压得进一行
+function _dyYearHtml(dy) {
     const ys = (dy && dy.years) || [];
-    return ys.length ? ys[0].year + '—' + ys[ys.length - 1].year : '';
+    if (ys.length === 0) return '<span class="dy-yr">　</span>';
+    return '<span class="dy-yr"><span>' + ys[0].year + '</span>'
+        + '<span class="dy-dash">—</span><span>' + ys[ys.length - 1].year + '</span></span>';
 }
 
 // activeIndex 为 null 时输出纯展示条（首页公开案例用，其数据无 years）
@@ -699,11 +702,10 @@ function _buildDayunStrip(displayList, startAge, activeIndex) {
     displayList.forEach((dy, index) => {
         const gz = dy.ganzhi || '--';
         const age = (dy.age_start != null) ? dy.age_start : (startAge + index * 10);
-        const yr = _dyYearRange(dy);
         const cls = 'dy-cell' + (index === activeIndex ? ' is-active' : '');
-        const inner = '<span class="dy-age">' + age + '—' + (age + 9) + '岁</span>'
+        const inner = '<span class="dy-age">' + age + '—' + (age + 9) + '<i>岁</i></span>'
             + '<span class="dy-gz">' + _gzPair(gz, _GAN_WX, _ZHI_WX) + '</span>'
-            + '<span class="dy-yr">' + (yr || '　') + '</span>';
+            + _dyYearHtml(dy);
         html += clickable
             ? '<button type="button" class="' + cls + '" data-pan-idx="' + index + '">' + inner + '</button>'
             : '<div class="' + cls + '">' + inner + '</div>';
@@ -723,16 +725,12 @@ function _buildLiunianStrip(dayunList, activeIndex) {
     const years = (dy && Array.isArray(dy.years)) ? dy.years : [];
     if (years.length === 0) return '';
     const thisYear = new Date().getFullYear();
-    const age = dy.age_start;
-    let html = '<div class="ln-hint">' + (dy.ganzhi || '') + '大运 · '
-        + (age != null ? age + '—' + (age + years.length - 1) + '岁 · ' : '')
-        + _dyYearRange(dy) + '年 · 点击上方大运切换</div>';
-    html += '<div class="ln-strip">';
+    let html = '<div class="ln-strip">';
     years.forEach(y => {
         html += '<div class="ln-cell' + (y.year === thisYear ? ' is-now' : '') + '">'
             + '<span class="ln-yr">' + (y.year || '') + '</span>'
             + '<span class="ln-gz">' + _gzPair(y.ganzhi || '--', _GAN_WX, _ZHI_WX) + '</span>'
-            + '<span class="ln-age">' + (y.age != null ? y.age + '岁' : '') + '</span>'
+            + '<span class="ln-age">' + (y.age != null ? y.age : '') + '<i>岁</i></span>'
             + '</div>';
     });
     return html + '</div>';
@@ -774,17 +772,21 @@ const _PAN_EMPTY_HTML = '<div class="pan-empty">__MSG__</div>';
 const _PAN_CFG = {
     self: {
         cardId: 'dayun-pan-card', gridId: 'dayun-grid', liunianGridId: 'liunian-grid',
-        anchorId: 'bazi-pan', title: '大运 · 流年',
+        anchorId: 'bazi-pan', dyLabel: '大运', lnLabel: '流年',
         empty: '大运排盘数据暂不可用', lnEmpty: '流年排盘数据暂不可用'
     },
     partner: {
         cardId: 'partner-dayun-pan-card', gridId: 'partner-dayun-grid', liunianGridId: 'partner-liunian-grid',
-        anchorId: 'partner-bazi-pan', title: '伴侣大运 · 流年',
+        anchorId: 'partner-bazi-pan', dyLabel: '大运', lnLabel: '流年',
         empty: '伴侣大运排盘数据暂不可用', lnEmpty: '伴侣流年排盘数据暂不可用'
     }
 };
 
-// 合并卡紧跟在对应的八字卡之后；每次重建，监听器不会累积
+function _vLabel(text) {
+    return '<span class="yun-lb">' + text.split('').map(c => '<i>' + c + '</i>').join('') + '</span>';
+}
+
+// 行块紧跟在对应的八字卡之后；每次重建，监听器不会累积
 function _ensurePanCard(cfg) {
     let card = document.getElementById(cfg.cardId);
     if (card && card.parentNode) card.parentNode.removeChild(card);
@@ -792,10 +794,11 @@ function _ensurePanCard(cfg) {
     if (!anchor || (anchor.style && anchor.style.display === 'none')) return null;
     card = document.createElement('div');
     card.id = cfg.cardId;
-    card.className = 'dayun-pan-card';
-    card.innerHTML = '<h4>' + cfg.title + '</h4>'
-        + '<div class="dy-strip" id="' + cfg.gridId + '"></div>'
-        + '<div class="ln-box" id="' + cfg.liunianGridId + '"></div>';
+    card.className = 'pan-yun';
+    card.innerHTML = '<div class="yun-row">' + _vLabel(cfg.dyLabel)
+        + '<div class="dy-strip" id="' + cfg.gridId + '"></div></div>'
+        + '<div class="yun-row">' + _vLabel(cfg.lnLabel)
+        + '<div class="ln-box" id="' + cfg.liunianGridId + '"></div></div>';
     if (anchor.nextSibling) anchor.parentNode.insertBefore(card, anchor.nextSibling);
     else anchor.parentNode.appendChild(card);
     return card;

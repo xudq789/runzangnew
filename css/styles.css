@@ -430,6 +430,14 @@ input:focus, select:focus {
     margin: 0 auto;
 }
 
+/* 网页端（桌面）：整个布局压到屏幕一半宽，手机端不受影响 */
+@media (min-width: 769px) {
+    .seamless-container,
+    .result-container {
+        max-width: 50vw;
+    }
+}
+
 .result-header {
     text-align: center;
     margin-bottom: 30px;
@@ -634,6 +642,7 @@ input:focus, select:focus {
 .pan-yun {
     display: none;
     width: 100%;
+    background: #fff;
     border-top: 1px solid #e6dac6;
 }
 
@@ -680,9 +689,6 @@ input:focus, select:focus {
     grid-template-columns: repeat(10, minmax(0, 1fr));
     width: 100%;
 }
-    background: #fff;
-    overflow: hidden;
-}
 
 .dy-cell,
 .ln-cell {
@@ -697,7 +703,7 @@ input:focus, select:focus {
     border-left: 1px solid #e6dac6;
     color: #241d15;
     font: inherit;
-    background: transparent;
+    background: #fff;
 }
 
 .dy-cell:first-child,

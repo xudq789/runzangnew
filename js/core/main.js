@@ -468,8 +468,8 @@ import {
     updateUnlockInterface, showFullAnalysisContent, lockDownloadButton,
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
-    hideAnalysisResult, validateForm, collectUserData
-} from './ui.js?v=39';
+    hideAnalysisResult, validateForm, collectUserData, prefillFromToolSite
+} from './ui.js?v=40';
 
 var _pollState = {
     active: false,
@@ -533,6 +533,7 @@ async function initApp() {
         await PaymentManager.initPaymentCheck();
         console.log('2. 常规初始化...');
         initFormOptions();
+        prefillFromToolSite();
         updateServiceDisplay(STATE.currentService);
         updateUnlockInfo();
         if (!STATE.isPaymentUnlocked) {

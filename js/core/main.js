@@ -469,7 +469,7 @@ import {
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData
-} from './ui.js?v=37';
+} from './ui.js?v=38';
 
 var _pollState = {
     active: false,
@@ -627,12 +627,8 @@ function switchService(serviceName) {
         var baziGrid = UI.baziGrid();
         if (baziGrid) baziGrid.innerHTML = '';
         
-        const dayunCards = document.querySelectorAll('.dayun-pan-card');
+        const dayunCards = document.querySelectorAll('.pan-yun');
         dayunCards.forEach(card => {
-            if (card.parentNode) card.parentNode.removeChild(card);
-        });
-        const liunianCards = document.querySelectorAll('.liunian-pan-card');
-        liunianCards.forEach(card => {
             if (card.parentNode) card.parentNode.removeChild(card);
         });
         const dayunGrid = document.getElementById('dayun-grid');

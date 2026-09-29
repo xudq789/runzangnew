@@ -515,18 +515,22 @@ input:focus, select:focus {
 
 .bazi-pan-card {
     width: 100%;
-    max-width: 600px;
+    max-width: 700px;
+    margin-bottom: 0;
+    padding: 0;
+    border-color: #e6dac6;
+    overflow: hidden;
+}
+
+.bazi-pan-card h4 {
+    padding: 16px 18px 12px;
     margin-bottom: 0;
 }
 
-/* 八字四柱：第一列是行标签，后四列永远是年/月/日/时 */
+/* 八字四柱：第一列是行标签，后四列永远是年/月/日/时；外框由卡片提供 */
 .bazi-grid {
     display: grid;
     grid-template-columns: 56px repeat(4, 1fr);
-    border: 1px solid #e6dac6;
-    border-radius: 10px;
-    overflow: hidden;
-    background: #fff;
 }
 
 .pz-corner,
@@ -554,7 +558,7 @@ input:focus, select:focus {
     font-size: 13px;
     color: #5a4a38;
     background: var(--light-color);
-    border-top: 1px solid #eee3d2;
+    border-top: 1px solid #e6dac6;
 }
 
 .pz-cell {
@@ -568,8 +572,8 @@ input:focus, select:focus {
     text-align: center;
     font-size: 14px;
     color: #241d15;
-    border-top: 1px solid #eee3d2;
-    border-left: 1px solid #eee3d2;
+    border-top: 1px solid #e6dac6;
+    border-left: 1px solid #e6dac6;
 }
 
 .pz-gzrow {
@@ -626,11 +630,11 @@ input:focus, select:focus {
     font-size: 14px;
 }
 
-/* 大运 · 流年：行块不套卡片，行首竖排标签，格子用分隔线连成一条列表 */
+/* 排盘框线只用一种颜色：外框 #e6dac6，内部所有分隔线也是 #e6dac6 */
 .pan-yun {
     display: none;
     width: 100%;
-    max-width: 900px;
+    border-top: 1px solid #e6dac6;
 }
 
 .yun-row {
@@ -640,7 +644,7 @@ input:focus, select:focus {
 }
 
 .yun-row + .yun-row {
-    margin-top: 10px;
+    border-top: 1px solid #e6dac6;
 }
 
 .yun-lb {
@@ -669,18 +673,13 @@ input:focus, select:focus {
 .dy-strip {
     display: grid;
     grid-template-columns: repeat(8, minmax(0, 1fr));
-    border: 1px solid #e6dac6;
-    border-radius: 8px;
-    background: #fff;
-    overflow: hidden;
 }
 
 .ln-strip {
     display: grid;
     grid-template-columns: repeat(10, minmax(0, 1fr));
     width: 100%;
-    border: 1px solid #e6dac6;
-    border-radius: 8px;
+}
     background: #fff;
     overflow: hidden;
 }
@@ -694,10 +693,11 @@ input:focus, select:focus {
     gap: 2px;
     min-width: 0;
     padding: 9px 2px;
-    border-left: 1px solid #ece1cf;
+    border: 0;
+    border-left: 1px solid #e6dac6;
     color: #241d15;
     font: inherit;
-    background: #fff;
+    background: transparent;
 }
 
 .dy-cell:first-child,
@@ -706,6 +706,8 @@ input:focus, select:focus {
 }
 
 button.dy-cell {
+    appearance: none;
+    -webkit-appearance: none;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 }
@@ -714,11 +716,15 @@ button.dy-cell:hover {
     background: #f7f0e2;
 }
 
-/* 选中态用浅底 + 内描边，不再反色成棕底白字 */
+/* 选中态：浅底 + 下划金条，不给格子描任何深色边框 */
 .dy-cell.is-active {
     background: #fdf3d8;
-    box-shadow: inset 0 0 0 2px var(--primary-color);
+    box-shadow: inset 0 -3px 0 var(--primary-color);
     font-weight: 600;
+}
+
+button.dy-cell.is-active:hover {
+    background: #fdf3d8;
 }
 
 .dy-gz,
@@ -755,7 +761,7 @@ button.dy-cell:hover {
     display: flex;
     align-items: baseline;
     justify-content: center;
-    font-size: 15px;
+    font-size: 13px;
     color: #4a3b2b;
     white-space: nowrap;
 }
@@ -773,18 +779,23 @@ button.dy-cell:hover {
 
 .ln-cell.is-now {
     background: #fdf3d8;
-    box-shadow: inset 0 0 0 2px var(--secondary-color);
+    box-shadow: inset 0 -3px 0 var(--secondary-color);
     font-weight: 600;
+}
+
+.pan-yun .pan-empty {
+    grid-column: 1 / -1;
+    padding: 12px;
+    text-align: center;
 }
 
 /* 手机端：八字铺满，大运 8 个一行、流年 10 个一行，都压在屏宽内不出横滚 */
 @media (max-width: 768px) {
     .bazi-pan-card {
         max-width: 100%;
-        padding: 15px 10px;
     }
-    .pan-yun {
-        max-width: 100%;
+    .bazi-pan-card h4 {
+        padding: 14px 12px 10px;
     }
     .bazi-grid {
         grid-template-columns: 38px repeat(4, 1fr);

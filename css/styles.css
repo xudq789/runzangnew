@@ -1647,6 +1647,19 @@ button.dy-cell.is-active:hover {
     text-align: center;
 }
 
+/* 工具站带参跳转的预填提示 */
+.cta-note {
+    font-size: 14px;
+    color: #6b4f2a;
+    background: #fdf6e4;
+    border: 1px solid #eadfcb;
+    border-left: 4px solid var(--secondary-color);
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin: 0 0 14px;
+    line-height: 1.6;
+}
+
 /* 录入方式切换（出生时间 / 已有八字） */
 .mode-switch {
     display: flex;

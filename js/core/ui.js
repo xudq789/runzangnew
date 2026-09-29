@@ -786,7 +786,7 @@ function _vLabel(text) {
     return '<span class="yun-lb">' + text.split('').map(c => '<i>' + c + '</i>').join('') + '</span>';
 }
 
-// 行块紧跟在对应的八字卡之后；每次重建，监听器不会累积
+// 大运·流年行块并入八字卡（同一个框）；每次重建，监听器不会累积
 function _ensurePanCard(cfg) {
     let card = document.getElementById(cfg.cardId);
     if (card && card.parentNode) card.parentNode.removeChild(card);
@@ -799,8 +799,7 @@ function _ensurePanCard(cfg) {
         + '<div class="dy-strip" id="' + cfg.gridId + '"></div></div>'
         + '<div class="yun-row">' + _vLabel(cfg.lnLabel)
         + '<div class="ln-box" id="' + cfg.liunianGridId + '"></div></div>';
-    if (anchor.nextSibling) anchor.parentNode.insertBefore(card, anchor.nextSibling);
-    else anchor.parentNode.appendChild(card);
+    anchor.appendChild(card);
     return card;
 }
 

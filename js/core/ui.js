@@ -338,6 +338,89 @@ export function resetToDefaultModes() {
     }
 }
 
+/* ---- 工具站（bazi.runzang.top）排盘页带参跳转进来时预填表单 ---- */
+// 参数只消费一次：回填后立即从地址栏抹掉，避免刷新把用户后续改动覆盖回去。
+const CTA_KEYS = ['from', 'mode', 'by', 'bm', 'bd', 'bh', 'bn', 'city', 'gender',
+    'ly', 'lm', 'ld', 'lleap', 'lh', 'py', 'pm', 'pd', 'pt', 'qy'];
+
+function _useMode(scope, mode) {
+    const sw = scope === 'partner' ? UI.partnerModeSwitch() : UI.userModeSwitch();
+    if (sw) sw.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    applyFormMode(scope, mode);
+}
+
+// SELECT 只接受已存在的 option（年份 1900-2050、时辰地支等越界值一律丢弃），
+// 直接赋值会得到 el.value === ''，后续校验会提示用户重填。
+function _setField(id, val) {
+    const el = DOM.id(id);
+    if (!el || val === null || val === undefined || val === '') return false;
+    if (el.type === 'checkbox') {
+        el.checked = (String(val) === '1');
+        return true;
+    }
+    if (el.tagName === 'SELECT') {
+        const v = String(val);
+        if (!Array.from(el.options).some(o => o.value === v)) return false;
+        el.value = v;
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        return true;
+    }
+    el.value = String(val);
+    return true;
+}
+
+export function prefillFromToolSite() {
+    const q = new URLSearchParams(location.search);
+    if (q.get('from') !== 'bazi') return false;
+    const g = k => q.get(k);
+    const mode = g('mode') || 'solar';
+    let note = '';
+
+    if (mode === 'lunar' && g('ly')) {
+        _useMode('user', 'lunar');
+        _setField('lunar-year', g('ly'));
+        _setField('lunar-month', g('lm'));
+        _setField('lunar-day', g('ld'));
+        _setField('lunar-leap', g('lleap'));
+        _setField('lunar-hour', g('lh'));
+        note = '已带入你在排盘工具填写的农历生日与时辰，请核对后开始测算。';
+    } else if (mode === 'direct' && g('py')) {
+        _useMode('user', 'reverse');
+        // 工具站四柱键名：py/pm/pd/pt（时柱是 pt，不是 ph）
+        [['year', 'py'], ['month', 'pm'], ['day', 'pd'], ['hour', 'pt']].forEach(([pillar, key]) => {
+            const v = g(key);
+            if (v && v.length === 2) {
+                _setField('direct-' + pillar + '-gan', v.charAt(0));
+                _setField('direct-' + pillar + '-zhi', v.charAt(1));
+            }
+        });
+        note = '已带入你在排盘工具录入的四柱，请先点「反推公历出生时间」并在结果里选一项，再开始测算。';
+    } else if (g('by')) {
+        _useMode('user', 'solar');
+        _setField('birth-year', g('by'));
+        _setField('birth-month', g('bm'));
+        _setField('birth-day', g('bd'));
+        _setField('birth-hour', g('bh'));
+        _setField('birth-minute', g('bn'));
+        note = '已带入你在排盘工具填写的公历生日与时间，请核对后开始测算。';
+    }
+
+    if (g('city')) _setField('birth-city', g('city'));
+    const sex = g('gender');
+    if (sex === '男' || sex === '女') _setField('gender', sex === '男' ? 'male' : 'female');
+
+    const box = DOM.id('cta-note');
+    if (box && note) {
+        box.textContent = note;
+        box.style.display = 'block';
+    }
+
+    CTA_KEYS.forEach(k => q.delete(k));
+    const rest = q.toString();
+    history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
+    return true;
+}
+
 function _scopePrefix(scope) {
     return scope === 'partner' ? 'partner-' : '';
 }

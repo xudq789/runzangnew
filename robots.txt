@@ -2,4 +2,19 @@ User-agent: *
 Allow: /
 Disallow: /admin.html
 
+# AI 训练与摘要类爬虫不放行（搜索引擎蜘蛛不受影响）；Bytespider 保留，它是头条搜索的抓取源。
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: OAI-SearchBot
+User-agent: ClaudeBot
+User-agent: Claude-AI
+User-agent: anthropic-ai
+User-agent: Google-Extended
+User-agent: CCBot
+User-agent: Applebot-Extended
+User-agent: meta-externalagent
+User-agent: Amazonbot
+User-agent: PetalBot
+Disallow: /
+
 Sitemap: https://new.runzang.top/sitemap.xml

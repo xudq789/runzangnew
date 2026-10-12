@@ -1024,97 +1024,237 @@ export function updateProgress(currentStep, totalSteps, stepName, percent, messa
 }
 
 // ============ 支付相关函数 ============
+const METHOD_BRANDS = {
+    alipay: {
+        name: '支付宝',
+        color: '#1677FF',
+        gradient: 'linear-gradient(135deg, #1677FF, #4096ff)',
+        path: 'M19.695 15.07c3.426 1.158 4.203 1.22 4.203 1.22V3.846c0-2.124-1.705-3.845-3.81-3.845H3.914C1.808.001.102 1.722.102 3.846v16.31c0 2.123 1.706 3.845 3.813 3.845h16.173c2.105 0 3.81-1.722 3.81-3.845v-.157s-6.19-2.602-9.315-4.119c-2.096 2.602-4.8 4.181-7.607 4.181-4.75 0-6.361-4.19-4.112-6.949.49-.602 1.324-1.175 2.617-1.497 2.025-.502 5.247.313 8.266 1.317a16.796 16.796 0 0 0 1.341-3.302H5.781v-.952h4.799V6.975H4.77v-.953h5.81V3.591s0-.409.411-.409h2.347v2.84h5.744v.951h-5.744v1.704h4.69a19.453 19.453 0 0 1-1.986 5.06c1.424.52 2.702 1.011 3.654 1.333m-13.81-2.032c-.596.06-1.71.325-2.321.869-1.83 1.608-.735 4.55 2.968 4.55 2.151 0 4.301-1.388 5.99-3.61-2.403-1.182-4.438-2.028-6.637-1.809'
+    },
+    wechat: {
+        name: '微信支付',
+        color: '#07C160',
+        gradient: 'linear-gradient(135deg, #07C160, #2dd36f)',
+        path: 'M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 0 1 .598.082l1.584.926a.272.272 0 0 0 .14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 0 1-.023-.156.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-6.656-6.088V8.89c-.135-.01-.27-.027-.407-.03zm-2.53 3.274c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.969-.982z'
+    }
+};
+
+function isMobileBrowser() {
+    return /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+function methodIcon(methodId, size) {
+    const brand = METHOD_BRANDS[methodId];
+    if (!brand) return '';
+    return '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="' + brand.color +
+           '" aria-hidden="true" style="flex: 0 0 auto; display: block;"><path d="' + brand.path + '"/></svg>';
+}
+
+function setPaymentMethodLabel(methodId) {
+    const label = document.getElementById('payment-method-label');
+    if (!label) return;
+    const brand = METHOD_BRANDS[methodId];
+    if (!brand) {
+        label.style.color = '#7d6e63';
+        label.innerHTML = '请选择支付方式';
+        return;
+    }
+    label.style.color = brand.color;
+    label.innerHTML = methodIcon(methodId, 18) + brand.name + '安全支付';
+}
+
+async function fetchPaymentMethods() {
+    try {
+        const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/payment/methods`);
+        const result = await response.json();
+        const methods = ((result.data || {}).methods || [])
+            .filter(method => method.available && METHOD_BRANDS[method.id]);
+        if (methods.length) return methods;
+    } catch (error) {
+        console.warn('支付方式探测失败:', error);
+    }
+    // 探测不通时按线上现状用支付宝，不能让页面没有支付入口
+    return [{ id: 'alipay', name: '支付宝', modes: { pc: 'redirect', h5: 'redirect' } }];
+}
+
 export async function showPaymentModal() {
-    console.log('调用支付接口...');
     const serviceConfig = SERVICES[STATE.currentService];
     if (!serviceConfig) return;
-    
+
+    const paymentModal = UI.paymentModal();
+    if (paymentModal) {
+        showElement(paymentModal);
+        document.body.style.overflow = 'hidden';
+        UI.paymentServiceType().textContent = STATE.currentService;
+        UI.paymentAmount().textContent = '¥' + serviceConfig.price;
+        UI.paymentOrderId().textContent = '生成中...';
+    }
+
+    const methods = await fetchPaymentMethods();
+    // 只有一个通道时保持「打开即下单」，两个通道都开通才让用户先选
+    if (methods.length > 1) {
+        renderPaymentChooser(methods);
+        return;
+    }
+    await createPaymentOrder(methods[0]);
+}
+
+function payButtonStyle(isMobile, gradient) {
+    return `margin: 10px auto; display: block; max-width: ${isMobile ? '280px' : '250px'};
+        background: ${gradient}; color: white; border: none;
+        padding: ${isMobile ? '16px 35px' : '15px 30px'}; border-radius: 25px;
+        font-size: ${isMobile ? '18px' : '16px'}; font-weight: bold; cursor: pointer; transition: all 0.3s; width: 100%;`;
+}
+
+function payButtonInner(methodId, text) {
+    return `<span style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #fff; border-radius: 8px; flex: 0 0 auto;">${methodIcon(methodId, 20)}</span>
+            ${text}
+        </span>`;
+}
+
+function renderPaymentChooser(methods) {
+    const isMobile = isMobileBrowser();
+    setPaymentMethodLabel(null);
+    UI.paymentOrderId().textContent = '选择支付方式后生成';
+    updatePaymentStatusText('请选择支付方式');
+    const container = document.querySelector('.payment-methods');
+    if (!container) return;
+
+    container.innerHTML = `<div style="margin: 20px 0;">` + methods.map((method, index) => {
+        const brand = METHOD_BRANDS[method.id];
+        return `<button class="payment-choice-btn dynamic-pulse-btn" data-choice="${index}" style="${payButtonStyle(isMobile, brand.gradient)}">
+                    ${payButtonInner(method.id, brand.name + '支付')}
+                </button>`;
+    }).join('') + `</div>`;
+
+    container.querySelectorAll('.payment-choice-btn').forEach(button => {
+        button.onclick = () => createPaymentOrder(methods[Number(button.dataset.choice)]);
+    });
+}
+
+async function createPaymentOrder(method) {
+    const isMobile = isMobileBrowser();
+    const clientType = isMobile ? 'h5' : 'pc';
+    const mode = ((method.modes || {})[clientType]) || 'redirect';
+
     try {
-        const paymentModal = UI.paymentModal();
-        if (paymentModal) {
-            showElement(paymentModal);
-            document.body.style.overflow = 'hidden';
-            UI.paymentServiceType().textContent = STATE.currentService;
-            UI.paymentAmount().textContent = '¥' + serviceConfig.price;
-            UI.paymentOrderId().textContent = '生成中...';
-        }
-        
-        const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent);
-        
         const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/payment/create`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 service_type: STATE.currentService,
-                payment_method: 'alipay',
-                client_type: isMobile ? 'h5' : 'pc',
+                payment_method: method.id,
+                client_type: clientType,
                 task_id: localStorage.getItem('current_task_id') || ''
             })
         });
-        
+
         const result = await response.json();
         console.log('支付响应:', result);
-        
+
         if (!result.success) {
             alert('创建订单失败：' + (result.message || '请稍后重试'));
             closePaymentModal();
             return;
         }
-        
+
         const { orderId, outTradeNo, paymentUrl, paymentType, amount } = result.data;
-        
-        UI.paymentServiceType().textContent = STATE.currentService;
+
         UI.paymentAmount().textContent = '¥' + amount;
         UI.paymentOrderId().textContent = outTradeNo;
         STATE.currentOrderId = orderId;
         STATE.currentOutTradeNo = outTradeNo;
-        
-        const paymentMethods = document.querySelector('.payment-methods');
-        if (paymentMethods) {
-            const alipayIcon = `<svg viewBox="0 0 24 24" width="20" height="20" fill="#1677FF" aria-hidden="true" style="display: block;"><path d="M19.695 15.07c3.426 1.158 4.203 1.22 4.203 1.22V3.846c0-2.124-1.705-3.845-3.81-3.845H3.914C1.808.001.102 1.722.102 3.846v16.31c0 2.123 1.706 3.845 3.813 3.845h16.173c2.105 0 3.81-1.722 3.81-3.845v-.157s-6.19-2.602-9.315-4.119c-2.096 2.602-4.8 4.181-7.607 4.181-4.75 0-6.361-4.19-4.112-6.949.49-.602 1.324-1.175 2.617-1.497 2.025-.502 5.247.313 8.266 1.317a16.796 16.796 0 0 0 1.341-3.302H5.781v-.952h4.799V6.975H4.77v-.953h5.81V3.591s0-.409.411-.409h2.347v2.84h5.744v.951h-5.744v1.704h4.69a19.453 19.453 0 0 1-1.986 5.06c1.424.52 2.702 1.011 3.654 1.333m-13.81-2.032c-.596.06-1.71.325-2.321.869-1.83 1.608-.735 4.55 2.968 4.55 2.151 0 4.301-1.388 5.99-3.61-2.403-1.182-4.438-2.028-6.637-1.809"/></svg>`;
-            const buttonHtml = `
-                <div style="margin: 20px 0;">
-                    <button id="alipay-redirect-btn" class="dynamic-pulse-btn" style="
-                        margin: 10px auto; display: block; max-width: ${isMobile ? '280px' : '250px'};
-                        background: linear-gradient(135deg, #1677FF, #4096ff); color: white; border: none;
-                        padding: ${isMobile ? '16px 35px' : '15px 30px'}; border-radius: 25px;
-                        font-size: ${isMobile ? '18px' : '16px'}; font-weight: bold; cursor: pointer; transition: all 0.3s; width: 100%;
-                    ">
-                        <span style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #fff; border-radius: 8px; flex: 0 0 auto;">${alipayIcon}</span>
-                            ${isMobile ? '去支付宝支付' : '电脑支付'}
-                        </span>
-                    </button>
-                    <div style="text-align: center; margin-top: 10px; font-size: 12px; color: #999;">
-                        ${isMobile ? '将跳转到支付宝APP完成支付' : '使用支付宝扫码或登录完成支付'}
-                    </div>
-                </div>
-            `;
-            paymentMethods.innerHTML = buttonHtml;
-            
-            const payBtn = document.getElementById('alipay-redirect-btn');
-            if (payBtn) {
-                payBtn.onclick = () => {
-                    console.log('跳转到支付宝支付:', paymentUrl);
-                    // Save pending order before redirect (critical for mobile)
-                    const existingPaymentData = PaymentManager.getPaymentData() || {};
-                    existingPaymentData.orderId = orderId;
-                    existingPaymentData.waiting = true;
-                    existingPaymentData.pendingAt = new Date().toISOString();
-                    localStorage.setItem('alipay_payment_data', JSON.stringify(existingPaymentData));
-                    console.log('已保存待支付订单到 localStorage:', orderId);
-                    window.location.href = paymentUrl;
-                };
-            }
+        setPaymentMethodLabel(method.id);
+
+        if (paymentType === 'wechat_native' || mode === 'qrcode') {
+            renderQrPayment(result.data.codeUrl || paymentUrl);
+        } else {
+            renderRedirectPayment(method.id, orderId, paymentUrl, isMobile);
         }
-        
+
         startPollingPaymentStatus(orderId);
-        updatePaymentStatusText(isMobile ? '正在跳转支付宝...' : '等待支付...');
-        
     } catch (error) {
         console.error('支付请求失败:', error);
         alert('网络连接失败，请检查网络后重试');
         closePaymentModal();
+    }
+}
+
+function renderRedirectPayment(methodId, orderId, paymentUrl, isMobile) {
+    const brand = METHOD_BRANDS[methodId];
+    const isAlipay = methodId === 'alipay';
+    const buttonText = isAlipay ? (isMobile ? '去支付宝支付' : '电脑支付') : '去微信支付';
+    const hintText = isAlipay
+        ? (isMobile ? '将跳转到支付宝APP完成支付' : '使用支付宝扫码或登录完成支付')
+        : '将跳转到微信完成支付';
+
+    const container = document.querySelector('.payment-methods');
+    if (container) {
+        container.innerHTML = `
+            <div style="margin: 20px 0;">
+                <button id="payment-redirect-btn" class="dynamic-pulse-btn" style="${payButtonStyle(isMobile, brand.gradient)}">
+                    ${payButtonInner(methodId, buttonText)}
+                </button>
+                <div style="text-align: center; margin-top: 10px; font-size: 12px; color: #999;">
+                    ${hintText}
+                </div>
+            </div>
+        `;
+
+        const payBtn = document.getElementById('payment-redirect-btn');
+        if (payBtn) {
+            payBtn.onclick = () => {
+                console.log('跳转到支付页面:', paymentUrl);
+                // 跳走就没了内存状态，回跳/重开页面靠这个键找回订单（PaymentManager 用的就是它）
+                const existingPaymentData = PaymentManager.getPaymentData() || {};
+                existingPaymentData.orderId = orderId;
+                existingPaymentData.waiting = true;
+                existingPaymentData.pendingAt = new Date().toISOString();
+                localStorage.setItem('alipay_payment_data', JSON.stringify(existingPaymentData));
+                window.location.href = paymentUrl;
+            };
+        }
+    }
+
+    updatePaymentStatusText(isAlipay ? (isMobile ? '正在跳转支付宝...' : '等待支付...') : '等待支付...');
+}
+
+function renderQrPayment(codeUrl) {
+    const container = document.querySelector('.payment-methods');
+    if (container) {
+        container.innerHTML = `
+            <div style="margin: 16px 0;">
+                <div id="wechat-qr-box" style="display: inline-block; width: 200px; padding: 10px; background: #fff; border: 1px solid #eee; border-radius: 12px; line-height: 0;"></div>
+                <div style="text-align: center; margin-top: 10px; font-size: 12px; color: #999; line-height: 1.6;">
+                    打开微信「扫一扫」<br>支付完成后本页自动解锁
+                </div>
+            </div>
+        `;
+        drawQrCode('wechat-qr-box', codeUrl);
+    }
+
+    updatePaymentStatusText('请使用微信扫描二维码支付');
+}
+
+function drawQrCode(elementId, text) {
+    const box = document.getElementById(elementId);
+    if (!box) return;
+    if (typeof window.qrcode !== 'function') {
+        box.innerHTML = '<div style="padding: 20px; font-size: 13px; color: #c0392b; line-height: 1.6;">二维码组件加载失败，请刷新页面重试</div>';
+        return;
+    }
+    const qr = window.qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+    box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 4, scalable: true });
+    const svg = box.querySelector('svg');
+    if (svg) {
+        svg.removeAttribute('width');
+        svg.removeAttribute('height');
+        svg.style.display = 'block';
+        svg.style.width = '100%';
+        svg.style.height = 'auto';
     }
 }
 

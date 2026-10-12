@@ -469,7 +469,7 @@ import {
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData, prefillFromToolSite
-} from './ui.js?v=40';
+} from './ui.js?v=41';
 
 var _pollState = {
     active: false,
@@ -503,10 +503,10 @@ function handlePaymentSuccess() {
 // ============ 确认支付 ============
 function confirmPayment() {
     if (!STATE.currentOrderId) {
-        alert('请先点击"前往支付宝支付"按钮完成支付');
+        alert('请先选择支付方式并完成支付');
         return;
     }
-    var confirmed = confirm('如果您已完成支付宝支付，请点击"确定"解锁内容。\n如支付遇到问题，请联系客服微信：runzang888');
+    var confirmed = confirm('如果您已完成支付，请点击"确定"解锁内容。\n如支付遇到问题，请联系客服微信：runzang888');
     if (confirmed) {
         fetch(API_CONFIG.BACKEND_URL + '/api/payment/status/' + STATE.currentOrderId)
             .then(function(response) { return response.json(); })

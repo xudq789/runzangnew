@@ -221,11 +221,19 @@ const PaymentManager = {
         STATE.isDownloadLocked = false;
         STATE.currentOrderId = orderId;
         
-        console.log('状态已更新:', {
-            isPaymentUnlocked: STATE.isPaymentUnlocked,
-            isDownloadLocked: STATE.isDownloadLocked,
-            currentOrderId: STATE.currentOrderId
-        });
+        try {
+            const resp = await fetch(`${API_CONFIG.BACKEND_URL}/api/payment/unlock/${orderId}`);
+            const unlockResult = await resp.json();
+            if (unlockResult.success && unlockResult.data.verified) {
+                STATE.paidDetail = unlockResult.data.paidDetail || '';
+                localStorage.setItem('last_paid_detail', STATE.paidDetail);
+                console.log('🔓 付费内容已获取，长度:', STATE.paidDetail.length);
+            } else {
+                console.warn('⚠️ 解锁接口返回未验证:', unlockResult);
+            }
+        } catch (e) {
+            console.error('解锁接口调用失败:', e);
+        }
         
         try {
             console.log('🔓 调用 restoreAnalysis()...');
@@ -297,6 +305,11 @@ const PaymentManager = {
                 return false;
             }
             
+            if (!SERVICES[savedService]) {
+                console.warn('保存的服务已下架:', savedService, '回退到默认服务');
+                savedService = '人生详批';
+            }
+            
             console.log('📥 从存储恢复分析结果...');
             console.log('保存的服务:', savedService, '当前服务:', STATE.currentService);
             
@@ -345,12 +358,14 @@ const PaymentManager = {
             
             if (STATE.dayunData) {
                 try { displayDayunPan(STATE.dayunData); } catch(e) { console.warn('displayDayunPan失败:', e); }
+                try { displayLiunianPan(STATE.dayunData); } catch(e) { console.warn('displayLiunianPan失败:', e); }
             }
             
             if (savedService === '八字合婚' && STATE.partnerBaziData) {
                 try {
                     if (STATE.partnerDayunData) {
                         displayPartnerDayunPan(STATE.partnerDayunData);
+                        displayPartnerLiunianPan(STATE.partnerDayunData);
                     }
                 } catch(e) { console.warn('displayPartnerDayunPan失败:', e); }
             }
@@ -441,18 +456,20 @@ const PaymentManager = {
 };
 
 // ============ 【导入所有依赖】 ============
-import { SERVICES, STATE, API_CONFIG } from './config.js';
-import { checkAPIStatus, parseBaziData, analyzeBazi, startAnalysisTask, pollAnalysisResult } from './api.js?v=13';
+import { SERVICES, STATE, API_CONFIG } from './config.js?v=22';
+import { checkAPIStatus, parseBaziData, analyzeBazi, startAnalysisTask, pollAnalysisResult } from './api.js?v=21';
 import {
     UI, initFormOptions, updateServiceDisplay,
     updateUnlockInfo, displayPredictorInfo, displayBaziPan,
     displayDayunPan, displayPartnerDayunPan,
+    displayLiunianPan, displayPartnerLiunianPan,
+    bindServiceImage,
     updateProgress, showPaymentModal, closePaymentModal,
     updateUnlockInterface, showFullAnalysisContent, lockDownloadButton,
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
-    hideAnalysisResult, validateForm, collectUserData
-} from './ui.js';
+    hideAnalysisResult, validateForm, collectUserData, prefillFromToolSite
+} from './ui.js?v=42';
 
 var _pollState = {
     active: false,
@@ -486,10 +503,10 @@ function handlePaymentSuccess() {
 // ============ 确认支付 ============
 function confirmPayment() {
     if (!STATE.currentOrderId) {
-        alert('请先点击"前往支付宝支付"按钮完成支付');
+        alert('请先选择支付方式并完成支付');
         return;
     }
-    var confirmed = confirm('如果您已完成支付宝支付，请点击"确定"解锁内容。\n如支付遇到问题，请联系客服微信：runzang888');
+    var confirmed = confirm('如果您已完成支付，请点击"确定"解锁内容。\n如支付遇到问题，请联系客服微信：runzang888');
     if (confirmed) {
         fetch(API_CONFIG.BACKEND_URL + '/api/payment/status/' + STATE.currentOrderId)
             .then(function(response) { return response.json(); })
@@ -516,6 +533,7 @@ async function initApp() {
         await PaymentManager.initPaymentCheck();
         console.log('2. 常规初始化...');
         initFormOptions();
+        prefillFromToolSite();
         updateServiceDisplay(STATE.currentService);
         updateUnlockInfo();
         if (!STATE.isPaymentUnlocked) {
@@ -523,7 +541,6 @@ async function initApp() {
         }
         setupEventListeners();
         STATE.apiStatus = await checkAPIStatus();
-        preloadImages();
         console.log('✅ 应用初始化完成');
     } catch (error) {
         console.error('❌ 应用初始化失败:', error);
@@ -536,6 +553,10 @@ function setupEventListeners() {
     document.querySelectorAll('.service-nav a').forEach(function(link) {
         link.addEventListener('click', function(event) {
             event.preventDefault();
+            if (this.dataset.home) {
+                if (window.showHomePage) window.showHomePage();
+                return;
+            }
             var serviceName = this.dataset.service;
             switchService(serviceName);
         });
@@ -558,22 +579,8 @@ function setupEventListeners() {
         if (event.target === paymentModal) closePaymentModal();
     });
     
-    var heroImage = UI.heroImage();
-    var detailImage = UI.detailImage();
-    if (heroImage) {
-        heroImage.addEventListener('load', function() {
-            this.classList.add('loaded');
-            var placeholder = this.previousElementSibling;
-            if (placeholder) placeholder.style.display = 'none';
-        });
-    }
-    if (detailImage) {
-        detailImage.addEventListener('load', function() {
-            this.classList.add('loaded');
-            var placeholder = this.previousElementSibling;
-            if (placeholder) placeholder.style.display = 'none';
-        });
-    }
+    bindServiceImage(UI.heroImage());
+    bindServiceImage(UI.detailImage());
 }
 
 function switchService(serviceName) {
@@ -582,6 +589,11 @@ function switchService(serviceName) {
         console.error('服务不存在:', serviceName);
         return;
     }
+    // 切回服务时关闭首页视图
+    var homeSection = document.getElementById('home-section');
+    if (homeSection) homeSection.style.display = 'none';
+    var seamlessContainer = document.querySelector('.seamless-container');
+    if (seamlessContainer) seamlessContainer.style.display = '';
     var oldService = STATE.currentService;
     if (oldService !== serviceName) {
         console.log('切换到不同服务，彻底重置状态');
@@ -616,7 +628,7 @@ function switchService(serviceName) {
         var baziGrid = UI.baziGrid();
         if (baziGrid) baziGrid.innerHTML = '';
         
-        const dayunCards = document.querySelectorAll('.dayun-pan-card');
+        const dayunCards = document.querySelectorAll('.pan-yun');
         dayunCards.forEach(card => {
             if (card.parentNode) card.parentNode.removeChild(card);
         });
@@ -624,6 +636,10 @@ function switchService(serviceName) {
         if (dayunGrid) dayunGrid.innerHTML = '';
         const partnerDayunGrid = document.getElementById('partner-dayun-grid');
         if (partnerDayunGrid) partnerDayunGrid.innerHTML = '';
+        const liunianGrid = document.getElementById('liunian-grid');
+        if (liunianGrid) liunianGrid.innerHTML = '';
+        const partnerLiunianGrid = document.getElementById('partner-liunian-grid');
+        if (partnerLiunianGrid) partnerLiunianGrid.innerHTML = '';
 
         var lockedAnalysisText = document.getElementById('locked-analysis-text');
         if (lockedAnalysisText) lockedAnalysisText.innerHTML = '';
@@ -643,16 +659,6 @@ function switchService(serviceName) {
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     console.log('服务切换完成，解锁状态:', STATE.isPaymentUnlocked);
-}
-
-function preloadImages() {
-    console.log('预加载图片...');
-    Object.values(SERVICES).forEach(function(service) {
-        var heroImg = new Image();
-        heroImg.src = service.heroImage;
-        var detailImg = new Image();
-        detailImg.src = service.detailImage;
-    });
 }
 
 function sleep(ms) {
@@ -887,10 +893,7 @@ async function _handleAnalysisResult(result) {
     STATE.baziData = result.bazi_pan;
     
     if (result.dayun_pan && result.dayun_pan.length > 0) {
-        STATE.dayunData = {
-            ages: result.dayun_pan.map(d => d.age_start),
-            dayuns: result.dayun_pan.map(d => d.ganzhi)
-        };
+        STATE.dayunData = result.dayun_pan;
         console.log('✅ 大运数据已保存:', STATE.dayunData);
     }
     
@@ -898,18 +901,8 @@ async function _handleAnalysisResult(result) {
     displayBaziPan();
     
     if (result.dayun_pan && result.dayun_pan.length > 0) {
-        const dayunDisplayData = {
-            ages: result.dayun_pan.map(d => d.age_start),
-            dayuns: result.dayun_pan.map(d => d.ganzhi)
-        };
-        if (result.dayun_detail && result.dayun_detail.xi_ji) {
-            const xiJiMap = {};
-            result.dayun_detail.xi_ji.forEach(item => {
-                xiJiMap[item.age] = { xi: item.xi, ji: item.ji };
-            });
-            dayunDisplayData.xi_ji = xiJiMap;
-        }
-        displayDayunPan(dayunDisplayData);
+        displayDayunPan(result.dayun_pan);
+        displayLiunianPan(result.dayun_pan);
         console.log('✅ 大运排盘已显示');
     }
     
@@ -917,13 +910,15 @@ async function _handleAnalysisResult(result) {
         STATE.partnerBaziData = result.partner_bazi_pan;
         console.log('✅ 伴侣八字数据已保存:', STATE.partnerBaziData);
         
+        displayBaziPan();
+
         if (result.partner_dayun_pan && result.partner_dayun_pan.length > 0) {
             STATE.partnerDayunData = result.partner_dayun_pan;
             console.log('✅ 伴侣大运数据已保存:', STATE.partnerDayunData);
             displayPartnerDayunPan(result.partner_dayun_pan);
+            displayPartnerLiunianPan(result.partner_dayun_pan);
             console.log('✅ 伴侣大运排盘已显示');
         }
-        displayBaziPan();
     }
     
     STATE.freeSummary = result.free_summary || '';
@@ -1023,7 +1018,7 @@ function downloadReport() {
         return;
     }
     
-    var currentServiceName = STATE.currentService || '测算验证';
+    var currentServiceName = STATE.currentService || '人生详批';
     
     var predictorInfo = '命理分析报告 - ' + currentServiceName + '\n\n预测者信息：\n姓名：' + STATE.userData.name + '\n性别：' + STATE.userData.gender + '\n出生时间：' + STATE.userData.birthYear + '年' + STATE.userData.birthMonth + '月' + STATE.userData.birthDay + '日' + STATE.userData.birthHour + '时' + STATE.userData.birthMinute + '分\n出生城市：' + STATE.userData.birthCity + '\n测算服务：' + currentServiceName + '\n测算时间：' + new Date().toLocaleString('zh-CN');
     

@@ -469,7 +469,7 @@ import {
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData, prefillFromToolSite
-} from './ui.js?v=41';
+} from './ui.js?v=43';
 
 var _pollState = {
     active: false,

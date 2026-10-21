@@ -47,6 +47,7 @@
             saveToken(d.token);
             showPanel();
             loadList();
+            loadStats();
         } catch (e) {
             $('login-err').textContent = e.message;
         }
@@ -55,6 +56,84 @@
     function fmtTime(s) { return s || '—'; }
     function esc(s) {
         return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // ===== 站点统计 =====
+    function unpaid(b) { return Math.max(0, (b.order_new || 0) - (b.order_paid || 0)); }
+
+    function tile(k, v, sub) {
+        return `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="sub">${sub || ''}</div></div>`;
+    }
+
+    function renderTiles(d) {
+        const t = d.totals.today, s = d.totals.d30 || {};
+        $('stats-tiles').innerHTML = [
+            tile('今日访问量', t.pv, `近${d.days}天 ${s.pv || 0}`),
+            tile('今日访客数', t.uv, `近${d.days}天 ${s.uv || 0}`),
+            tile('今日测算量', t.analyse, `近${d.days}天 ${s.analyse || 0}`),
+            tile('今日已支付', t.order_paid, `近${d.days}天 ${s.order_paid || 0}`),
+            tile('今日待支付', unpaid(t), `近${d.days}天 ${unpaid(s)}`),
+            tile('今日收入', '¥' + (t.amount || 0).toFixed(2), `近${d.days}天 ¥${(s.amount || 0).toFixed(2)}`),
+        ].join('');
+    }
+
+    function renderSiteTable(d) {
+        const rows = d.by_site.map(b => {
+            const w = b.d30;
+            return `<tr>
+                <td>${esc(b.label)}</td>
+                <td>${w.pv}</td>
+                <td>${w.uv}</td>
+                <td>${w.analyse}</td>
+                <td>${w.order_new}</td>
+                <td>${w.order_paid}</td>
+                <td>${unpaid(w)}</td>
+                <td>¥${(w.amount || 0).toFixed(2)}</td>
+            </tr>`;
+        });
+        const sum = d.totals.d30 || {};
+        rows.push(`<tr><td><strong>合计</strong></td><td>${sum.pv || 0}</td><td>${sum.uv || 0}</td><td>${sum.analyse || 0}</td>
+            <td>${sum.order_new || 0}</td><td>${sum.order_paid || 0}</td><td>${unpaid(sum)}</td><td>¥${(sum.amount || 0).toFixed(2)}</td></tr>`);
+        if (!d.by_site.length) rows.push('<tr><td colspan="8" class="empty">区间内暂无数据</td></tr>');
+        $('stats-tbody').innerHTML = rows.join('');
+    }
+
+    function renderChart(d) {
+        const W = 720, H = 170, PAD = 8;
+        const series = d.series || [];
+        if (series.length < 2) { $('stats-chart').innerHTML = '<text x="360" y="90" fill="#999" font-size="13" text-anchor="middle">数据不足两天，暂不绘图</text>'; return; }
+        let max = 0;
+        series.forEach(p => { max = Math.max(max, p.total.pv, p.total.analyse, p.total.order_paid); });
+        max = Math.max(max, 1);
+        const dx = (W - PAD * 2) / (series.length - 1);
+        const y = v => H - PAD - (v / max) * (H - PAD * 2);
+        const line = (key, color) => {
+            const pts = series.map((p, i) => `${(PAD + i * dx).toFixed(1)},${y(p.total[key] || 0).toFixed(1)}`).join(' ');
+            return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6" />`;
+        };
+        const grid = [0.25, 0.5, 0.75].map(f =>
+            `<line x1="${PAD}" y1="${(H - PAD - f * (H - PAD * 2)).toFixed(1)}" x2="${W - PAD}" y2="${(H - PAD - f * (H - PAD * 2)).toFixed(1)}" stroke="#f0e9dc" stroke-width="1" />`).join('');
+        const labels = series.map((p, i) =>
+            (i % Math.ceil(series.length / 6) === 0)
+                ? `<text x="${(PAD + i * dx).toFixed(1)}" y="14" fill="#999" font-size="10">${p.date.slice(5)}</text>`
+                : '').join('');
+        $('stats-chart').innerHTML =
+            grid + labels + line('pv', '#8b4513') + line('analyse', '#d4af37') + line('order_paid', '#1e7a34') +
+            `<text x="${W - PAD}" y="${12}" fill="#666" font-size="10" text-anchor="end">峰值 ${max}</text>`;
+    }
+
+    async function loadStats() {
+        const days = $('stats-days').value;
+        $('stats-note').textContent = '加载中…';
+        try {
+            const d = (await api('/api/stats/overview?days=' + days)).data;
+            renderTiles(d);
+            renderSiteTable(d);
+            renderChart(d);
+            $('stats-note').textContent = `统计起点 ${d.start || '—'} ｜ 埋点上线后开始计数`;
+        } catch (e) {
+            $('stats-note').textContent = e.message;
+        }
     }
 
     async function loadList() {
@@ -111,7 +190,9 @@
     $('login-btn').onclick = doLogin;
     $('admin-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
     $('logout-btn').onclick = logout;
-    $('refresh-btn').onclick = () => { page = 1; loadList(); };
+    $('refresh-btn').onclick = () => { page = 1; loadList(); loadStats(); };
+    $('stats-refresh').onclick = loadStats;
+    $('stats-days').onchange = loadStats;
     $('filter-paid').onchange = () => { page = 1; loadList(); };
     $('filter-service').onchange = () => { page = 1; loadList(); };
     $('prev-btn').onclick = () => { if (page > 1) { page--; loadList(); } };
@@ -127,7 +208,7 @@
 
     if (token()) {
         // 先尝试列表，失败则回登录
-        api('/api/admin/reports?page=1&size=1').then(() => { showPanel(); loadList(); }).catch(() => showLogin());
+        api('/api/admin/reports?page=1&size=1').then(() => { showPanel(); loadList(); loadStats(); }).catch(() => showLogin());
     } else {
         showLogin();
     }

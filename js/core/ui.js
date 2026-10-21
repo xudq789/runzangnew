@@ -1077,6 +1077,9 @@ async function fetchPaymentMethods() {
     return [{ id: 'alipay', name: '支付宝', modes: { pc: 'redirect', h5: 'redirect' } }];
 }
 
+// 弹窗一打开就预下的单：订单号先给用户看，之后换通道也只是重绑这一张单
+let payOrder = null;
+
 export async function showPaymentModal() {
     const serviceConfig = SERVICES[STATE.currentService];
     if (!serviceConfig) return;
@@ -1087,16 +1090,42 @@ export async function showPaymentModal() {
         document.body.style.overflow = 'hidden';
         UI.paymentServiceType().textContent = STATE.currentService;
         UI.paymentAmount().textContent = '¥' + serviceConfig.price;
-        UI.paymentOrderId().textContent = '生成中...';
+        UI.paymentOrderId().textContent = (payOrder && payOrder.service === STATE.currentService)
+            ? payOrder.outTradeNo : '生成中...';
     }
 
     const methods = await fetchPaymentMethods();
-    // 只有一个通道时保持「打开即下单」，两个通道都开通才让用户先选
-    if (methods.length > 1) {
-        renderPaymentChooser(methods);
-        return;
+    // 「只有一个通道就打开即下单」的捷径已取消：现在一律先落单出订单号，
+    // 再由用户在弹窗里点通道，点通道只是给这张单绑支付方式。
+    renderPaymentChooser(methods);
+    if (!(payOrder && payOrder.service === STATE.currentService)) await precreateOrder();
+}
+
+async function precreateOrder() {
+    try {
+        const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/order/precreate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                service_type: STATE.currentService,
+                task_id: localStorage.getItem('current_task_id') || ''
+            })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || '订单号生成失败');
+        payOrder = {
+            service: STATE.currentService,
+            orderId: result.data.orderId,
+            outTradeNo: result.data.outTradeNo,
+            amount: result.data.amount
+        };
+        UI.paymentOrderId().textContent = payOrder.outTradeNo;
+        if (payOrder.amount !== undefined) UI.paymentAmount().textContent = '¥' + payOrder.amount;
+    } catch (error) {
+        console.warn('预下单失败:', error);
+        payOrder = null;
+        UI.paymentOrderId().textContent = '订单号暂时取不到，选通道时会现场建单';
     }
-    await createPaymentOrder(methods[0]);
 }
 
 function payButtonStyle(isMobile, gradient) {
@@ -1116,8 +1145,7 @@ function payButtonInner(methodId, text) {
 function renderPaymentChooser(methods) {
     const isMobile = isMobileBrowser();
     setPaymentMethodLabel(null);
-    UI.paymentOrderId().textContent = '选择支付方式后生成';
-    updatePaymentStatusText('请选择支付方式');
+    updatePaymentStatusText('请选择支付方式，订单号已生成');
     const container = document.querySelector('.payment-methods');
     if (!container) return;
 
@@ -1146,7 +1174,8 @@ async function createPaymentOrder(method) {
                 service_type: STATE.currentService,
                 payment_method: method.id,
                 client_type: clientType,
-                task_id: localStorage.getItem('current_task_id') || ''
+                task_id: localStorage.getItem('current_task_id') || '',
+                out_trade_no: payOrder ? payOrder.outTradeNo : ''
             })
         });
 
@@ -1154,12 +1183,19 @@ async function createPaymentOrder(method) {
         console.log('支付响应:', result);
 
         if (!result.success) {
+            // 通道被平台限制时不能关掉弹窗：订单号还在，用户换支付宝就能付完
+            if (payOrder) {
+                renderPaymentChooser(await fetchPaymentMethods());
+                updatePaymentStatusText(result.message || '该通道暂时不可用，请换一种支付方式');
+                return;
+            }
             alert('创建订单失败：' + (result.message || '请稍后重试'));
             closePaymentModal();
             return;
         }
 
         const { orderId, outTradeNo, paymentUrl, paymentType, amount } = result.data;
+        payOrder = { service: STATE.currentService, orderId, outTradeNo, amount };
 
         UI.paymentAmount().textContent = '¥' + amount;
         UI.paymentOrderId().textContent = outTradeNo;
@@ -1170,7 +1206,14 @@ async function createPaymentOrder(method) {
         if (paymentType === 'wechat_native' || mode === 'qrcode') {
             renderQrPayment(result.data.codeUrl || paymentUrl);
         } else {
-            renderRedirectPayment(method.id, orderId, paymentUrl, isMobile);
+            // 直接跳转支付，不再显示二次确认按钮
+            const existingPaymentData = PaymentManager.getPaymentData() || {};
+            existingPaymentData.orderId = orderId;
+            existingPaymentData.waiting = true;
+            existingPaymentData.pendingAt = new Date().toISOString();
+            localStorage.setItem('alipay_payment_data', JSON.stringify(existingPaymentData));
+            window.location.href = paymentUrl;
+            return;
         }
 
         startPollingPaymentStatus(orderId);

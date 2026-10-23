@@ -1135,6 +1135,12 @@ function payButtonStyle(isMobile, gradient) {
         font-size: ${isMobile ? '18px' : '16px'}; font-weight: bold; cursor: pointer; transition: all 0.3s; width: 100%;`;
 }
 
+// 品牌名自带「支付」的（微信支付）不再补后缀，否则按钮成「微信支付支付」
+function payButtonLabel(methodId) {
+    const name = METHOD_BRANDS[methodId].name;
+    return name.endsWith('支付') ? name : name + '支付';
+}
+
 function payButtonInner(methodId, text) {
     return `<span style="display: flex; align-items: center; justify-content: center; gap: 10px;">
             <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #fff; border-radius: 8px; flex: 0 0 auto;">${methodIcon(methodId, 20)}</span>
@@ -1152,7 +1158,7 @@ function renderPaymentChooser(methods) {
     container.innerHTML = `<div style="margin: 20px 0;">` + methods.map((method, index) => {
         const brand = METHOD_BRANDS[method.id];
         return `<button class="payment-choice-btn dynamic-pulse-btn" data-choice="${index}" style="${payButtonStyle(isMobile, brand.gradient)}">
-                    ${payButtonInner(method.id, brand.name + '支付')}
+                    ${payButtonInner(method.id, payButtonLabel(method.id))}
                 </button>`;
     }).join('') + `</div>`;
 

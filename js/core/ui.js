@@ -1,6 +1,6 @@
 // UI控制模块
 import { DOM, formatDate, hideElement, showElement } from './utils.js?v=20';
-import { SERVICES, STATE, API_CONFIG } from './config.js?v=22';
+import { SERVICES, STATE, API_CONFIG } from './config.js?v=23';
 import { reverseBaziFromPillars } from './api.js?v=22';
 
 // UI元素集合
@@ -1101,6 +1101,12 @@ export async function showPaymentModal() {
     if (!(payOrder && payOrder.service === STATE.currentService)) await precreateOrder();
 }
 
+// 下单必须带上本次报告的 task_id，否则订单绑不到报告：支付回来的解锁接口取不到付费正文。
+// localStorage 在刷新后仍在，STATE 兜住同一页内轮询中断/清过的情况。
+function currentTaskId() {
+    return localStorage.getItem('current_task_id') || STATE.currentTaskId || '';
+}
+
 async function precreateOrder() {
     try {
         const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/order/precreate`, {
@@ -1108,7 +1114,7 @@ async function precreateOrder() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 service_type: STATE.currentService,
-                task_id: localStorage.getItem('current_task_id') || ''
+                task_id: currentTaskId()
             })
         });
         const result = await response.json();
@@ -1180,7 +1186,7 @@ async function createPaymentOrder(method) {
                 service_type: STATE.currentService,
                 payment_method: method.id,
                 client_type: clientType,
-                task_id: localStorage.getItem('current_task_id') || '',
+                task_id: currentTaskId(),
                 out_trade_no: payOrder ? payOrder.outTradeNo : ''
             })
         });
@@ -1370,16 +1376,27 @@ function updatePaymentStatusText(text) {
     if (statusElement) statusElement.textContent = text;
 }
 
-function handlePaymentSuccessDirect(orderId) {
+async function handlePaymentSuccessDirect(orderId) {
+    // 弹窗内轮询到已支付：付费正文只能由解锁接口给出（/api/analyze/status 出于防泄漏已剥掉
+    // paid_detail），不请求就渲染的话，用户付完钱看到的仍是空章节。
+    if (window.PaymentManager && typeof window.PaymentManager.unlockContent === 'function') {
+        await window.PaymentManager.unlockContent(orderId);
+        return;
+    }
+
     STATE.isPaymentUnlocked = true;
     STATE.isDownloadLocked = false;
+    STATE.currentOrderId = orderId;
 
-    localStorage.setItem('alipay_payment_data', JSON.stringify({
-        orderId: orderId,
-        verified: true,
-        verifiedAt: new Date().toISOString(),
-        waiting: false
-    }));
+    try {
+        const resp = await fetch(`${API_CONFIG.BACKEND_URL}/api/payment/unlock/${orderId}`);
+        const result = await resp.json();
+        if (result.success && result.data && result.data.verified) {
+            STATE.paidDetail = result.data.paidDetail || '';
+        }
+    } catch (e) {
+        console.error('解锁接口调用失败:', e);
+    }
 
     unlockDownloadButton();
     updateUnlockInterface();
@@ -1391,8 +1408,6 @@ function handlePaymentSuccessDirect(orderId) {
     if (window.PaymentManager && typeof PaymentManager.showSuccessMessage === 'function') {
         PaymentManager.showSuccessMessage();
     }
-
-    try { localStorage.removeItem('alipay_payment_data'); } catch(e) {}
 }
 
 export function closePaymentModal() {

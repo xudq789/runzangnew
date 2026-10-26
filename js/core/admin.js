@@ -67,13 +67,14 @@
 
     function renderTiles(d) {
         const t = d.totals.today, s = d.totals.d30 || {};
+        const win = d.days === 1 ? '今天' : `近${d.days}天`;
         $('stats-tiles').innerHTML = [
-            tile('今日访问量', t.pv, `近${d.days}天 ${s.pv || 0}`),
-            tile('今日访客数', t.uv, `近${d.days}天 ${s.uv || 0}`),
-            tile('今日测算量', t.analyse, `近${d.days}天 ${s.analyse || 0}`),
-            tile('今日已支付', t.order_paid, `近${d.days}天 ${s.order_paid || 0}`),
-            tile('今日待支付', unpaid(t), `近${d.days}天 ${unpaid(s)}`),
-            tile('今日收入', '¥' + (t.amount || 0).toFixed(2), `近${d.days}天 ¥${(s.amount || 0).toFixed(2)}`),
+            tile('今日访问量', t.pv, `${win} ${s.pv || 0}`),
+            tile('今日访客数', t.uv, `${win} ${s.uv || 0}`),
+            tile('今日测算量', t.analyse, `${win} ${s.analyse || 0}`),
+            tile('今日已支付', t.order_paid, `${win} ${s.order_paid || 0}`),
+            tile('今日待支付', unpaid(t), `${win} ${unpaid(s)}`),
+            tile('今日收入', '¥' + (t.amount || 0).toFixed(2), `${win} ¥${(s.amount || 0).toFixed(2)}`),
         ].join('');
     }
 
@@ -101,7 +102,7 @@
     function renderChart(d) {
         const W = 720, H = 170, PAD = 8;
         const series = d.series || [];
-        if (series.length < 2) { $('stats-chart').innerHTML = '<text x="360" y="90" fill="#999" font-size="13" text-anchor="middle">数据不足两天，暂不绘图</text>'; return; }
+        if (series.length < 2) { $('stats-chart').innerHTML = '<text x="360" y="90" fill="#999" font-size="13" text-anchor="middle">趋势图需两天以上，「今天」请看上方数字</text>'; return; }
         let max = 0;
         series.forEach(p => { max = Math.max(max, p.total.pv, p.total.analyse, p.total.order_paid); });
         max = Math.max(max, 1);
@@ -140,7 +141,7 @@
         const tbody = $('report-tbody');
         const paid = $('filter-paid').value;
         const service = $('filter-service').value;
-        tbody.innerHTML = '<tr><td colspan="9" class="empty">加载中…</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="empty">加载中…</td></tr>';
         try {
             const q = new URLSearchParams({ page, size: SIZE });
             if (paid !== '') q.set('paid', paid);
@@ -149,24 +150,26 @@
             const items = d.data.items;
             $('page-info').textContent = `第 ${d.data.page} 页 / 共 ${d.data.total} 条`;
             if (!items.length) {
-                tbody.innerHTML = '<tr><td colspan="9" class="empty">暂无报告</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" class="empty">暂无报告</td></tr>';
                 return;
             }
             tbody.innerHTML = items.map(r => `
                 <tr>
                     <td>${r.id}</td>
                     <td>${fmtTime(r.created_at)}</td>
+                    <td>${r.site_label ? '<span class="site-tag">' + esc(r.site_label) + '</span>' : '—'}</td>
                     <td>${esc(r.service_type)}</td>
                     <td>${esc(r.user_name) || '—'}</td>
                     <td>${esc(r.gender)}</td>
                     <td>${esc(r.bazi_text)}</td>
                     <td>${r.amount != null ? '¥' + r.amount : '—'}</td>
+                    <td class="order-no" title="${esc(r.out_trade_no || '')}">${esc(r.out_trade_no) || '—'}</td>
                     <td><span class="paid-tag ${r.paid ? 'yes' : 'no'}">${r.paid ? '已支付' : '未支付'}</span></td>
                     <td><button class="btn btn-outline" data-id="${r.id}" style="padding:4px 10px;">查看</button></td>
                 </tr>`).join('');
             tbody.querySelectorAll('button[data-id]').forEach(b => b.onclick = () => openDetail(+b.dataset.id));
         } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="9" class="empty">${esc(e.message)}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="11" class="empty">${esc(e.message)}</td></tr>`;
         }
     }
 

@@ -226,8 +226,10 @@ const PaymentManager = {
             const unlockResult = await resp.json();
             if (unlockResult.success && unlockResult.data.verified) {
                 STATE.paidDetail = unlockResult.data.paidDetail || '';
+                this._unlockBundle = unlockResult.data.bundle || null;
                 localStorage.setItem('last_paid_detail', STATE.paidDetail);
-                console.log('🔓 付费内容已获取，长度:', STATE.paidDetail.length);
+                console.log('🔓 付费内容已获取，长度:', STATE.paidDetail.length,
+                    '报告包:', this._unlockBundle ? '有' : '无');
             } else {
                 console.warn('⚠️ 解锁接口返回未验证:', unlockResult);
             }
@@ -259,20 +261,21 @@ const PaymentManager = {
                         resultSection.scrollIntoView({ behavior: 'smooth' });
                     }
                 }, 500);
+            } else if (STATE.fullAnalysisResult) {
+                console.log('但有当前分析结果，直接解锁');
+                this.updateUIAfterPayment();
+                this.showSuccessMessage();
             } else {
-                if (STATE.fullAnalysisResult) {
-                    console.log('但有当前分析结果，直接解锁');
-                    this.updateUIAfterPayment();
-                    this.showSuccessMessage();
-                } else {
-                    console.warn('⚠️ 无法恢复分析结果，保存订单信息后重载');
-                    localStorage.setItem('pending_unlock_order', JSON.stringify({
-                        orderId,
-                        timestamp: new Date().toISOString()
-                    }));
-                    setTimeout(() => window.location.reload(), 1000);
-                    return;
+                // 重载解决不了缺数据：之前这里是 setTimeout(reload)，页面每次重载都重新走一遍
+                // status+unlock 又仍然恢复不出报告，形成每 2 秒一次的死循环，客户付完款永远看不到内容。
+                console.warn('⚠️ 报告数据既没有本地缓存也没有从解锁接口取回');
+                try { localStorage.removeItem('alipay_payment_data'); } catch(e) {}
+                const freeText = document.getElementById('free-analysis-text');
+                if (freeText) {
+                    freeText.innerHTML = '<div class="analysis-content" style="color:#b3362d;text-align:center;padding:24px;">支付已确认，但这份报告的数据没能取回。<br>请在下单时的同一浏览器刷新重试；仍未出现请联系客服微信：runzang888（订单号 ' + orderId + '）</div>';
                 }
+                showAnalysisResult();
+                return;
             }
 
             const lockedOverlay = document.getElementById('locked-overlay');
@@ -291,11 +294,12 @@ const PaymentManager = {
     async restoreAnalysis() {
         console.log('📥 开始恢复分析结果...');
         try {
-            const savedResult = localStorage.getItem('last_analysis_result');
-            const savedService = localStorage.getItem('last_analysis_service');
-            const savedUserData = localStorage.getItem('last_user_data');
-            const savedFreeSummary = localStorage.getItem('last_free_summary');
-            const savedPaidDetail = localStorage.getItem('last_paid_detail');
+            let savedResult = localStorage.getItem('last_analysis_result');
+            let savedService = localStorage.getItem('last_analysis_service');
+            let savedUserData = localStorage.getItem('last_user_data');
+            let savedFreeSummary = localStorage.getItem('last_free_summary');
+            let savedPaidDetail = localStorage.getItem('last_paid_detail');
+            let fromBundle = false;
             
             console.log('📥 localStorage数据检查:', {
                 hasResult: !!savedResult,
@@ -309,8 +313,39 @@ const PaymentManager = {
             });
             
             if (!savedResult || !savedService) {
+                // 支付宝内置浏览器、换设备、清缓存这几类回跳环境本地什么都没有，
+                // 只能用解锁接口带回的报告包把整页重建出来，否则客户付完款看不到报告。
+                const b = this._unlockBundle;
+                if (b && (b.paidDetail || b.polishedReport || b.freeSummary)) {
+                    console.log('📦 本地无缓存，改用解锁报告包重建页面');
+                    savedResult = b.polishedReport || b.paidDetail;
+                    savedService = b.serviceType || '人生详批';
+                    savedFreeSummary = b.freeSummary || '';
+                    savedPaidDetail = b.paidDetail || '';
+                    if (b.userData && Object.keys(b.userData).length) {
+                        savedUserData = JSON.stringify(b.userData);
+                    } else if (b.userName) {
+                        savedUserData = JSON.stringify({ name: b.userName, gender: b.gender, birthText: b.birthText });
+                    }
+                    if (b.baziPan && Object.keys(b.baziPan).length) localStorage.setItem('last_bazi_data', JSON.stringify(b.baziPan));
+                    if (Array.isArray(b.dayunPan) && b.dayunPan.length) localStorage.setItem('last_dayun_data', JSON.stringify(b.dayunPan));
+                    fromBundle = true;
+                }
+            }
+
+            if (!savedResult || !savedService) {
                 console.log('❌ 没有保存的分析结果');
                 return false;
+            }
+
+            if (fromBundle) {
+                try {
+                    localStorage.setItem('last_analysis_result', savedResult);
+                    localStorage.setItem('last_analysis_service', savedService);
+                    localStorage.setItem('last_free_summary', savedFreeSummary);
+                    localStorage.setItem('last_paid_detail', savedPaidDetail);
+                    if (savedUserData) localStorage.setItem('last_user_data', savedUserData);
+                } catch (e) { console.warn('报告包落盘失败:', e); }
             }
             
             if (!SERVICES[savedService]) {
@@ -477,7 +512,7 @@ import {
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData, prefillFromToolSite
-} from './ui.js?v=45';
+} from './ui.js?v=46';
 
 var _pollState = {
     active: false,
@@ -1030,7 +1065,7 @@ function downloadReport() {
     
     var currentServiceName = STATE.currentService || '人生详批';
     
-    var predictorInfo = '命理分析报告 - ' + currentServiceName + '\n\n预测者信息：\n姓名：' + STATE.userData.name + '\n性别：' + STATE.userData.gender + '\n出生时间：' + STATE.userData.birthYear + '年' + STATE.userData.birthMonth + '月' + STATE.userData.birthDay + '日' + STATE.userData.birthHour + '时' + STATE.userData.birthMinute + '分\n出生城市：' + STATE.userData.birthCity + '\n测算服务：' + currentServiceName + '\n测算时间：' + new Date().toLocaleString('zh-CN');
+    var predictorInfo = '命理分析报告 - ' + currentServiceName + '\n\n预测者信息：\n姓名：' + STATE.userData.name + '\n性别：' + STATE.userData.gender + '\n出生时间：' + (STATE.userData.birthText || (STATE.userData.birthYear + '年' + STATE.userData.birthMonth + '月' + STATE.userData.birthDay + '日' + STATE.userData.birthHour + '时' + STATE.userData.birthMinute + '分')) + '\n出生城市：' + STATE.userData.birthCity + '\n测算服务：' + currentServiceName + '\n测算时间：' + new Date().toLocaleString('zh-CN');
     
     if (currentServiceName === '八字合婚' && STATE.partnerData) {
         predictorInfo += '\n\n伴侣信息：\n姓名：' + STATE.partnerData.partnerName + '\n性别：' + STATE.partnerData.partnerGender + '\n出生时间：' + STATE.partnerData.partnerBirthYear + '年' + STATE.partnerData.partnerBirthMonth + '月' + STATE.partnerData.partnerBirthDay + '日' + STATE.partnerData.partnerBirthHour + '时' + STATE.partnerData.partnerBirthMinute + '分\n出生城市：' + STATE.partnerData.partnerBirthCity;

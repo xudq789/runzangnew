@@ -632,7 +632,7 @@ export function displayPredictorInfo() {
     const infoItems = [
         { label: '姓名', value: ud.name },
         { label: '性别', value: ud.gender },
-        { label: '出生时间', value: isLunar ? lunarText(ud) : solarText(ud) },
+        { label: '出生时间', value: (isLunar ? lunarText(ud) : solarText(ud)) || ud.birthText || '' },
         { label: '出生城市', value: ud.birthCity }
     ];
     infoItems.push(

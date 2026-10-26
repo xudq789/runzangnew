@@ -97,6 +97,7 @@ export const STATE = {
     partnerDayunData: null,
     currentOrderId: null,
     currentOutTradeNo: null,
+    currentTaskId: null,
     userData: null,
     partnerData: null,
     apiStatus: null,

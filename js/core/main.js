@@ -231,6 +231,14 @@ const PaymentManager = {
             } else {
                 console.warn('⚠️ 解锁接口返回未验证:', unlockResult);
             }
+            if (!STATE.paidDetail) {
+                // 取不到正文时不能只留空章节让用户对着锁定框猜：明说并给处置入口
+                const lockedText = document.getElementById('locked-analysis-text');
+                if (lockedText) {
+                    lockedText.innerHTML = '<div class="analysis-content" style="color:#b3362d;text-align:center;padding:20px;">支付已确认，但这份报告的正文暂时没取到。请刷新页面重试；仍未出现请联系客服微信：runzang888</div>';
+                    lockedText.style.display = 'block';
+                }
+            }
         } catch (e) {
             console.error('解锁接口调用失败:', e);
         }
@@ -456,7 +464,7 @@ const PaymentManager = {
 };
 
 // ============ 【导入所有依赖】 ============
-import { SERVICES, STATE, API_CONFIG } from './config.js?v=22';
+import { SERVICES, STATE, API_CONFIG } from './config.js?v=23';
 import { checkAPIStatus, parseBaziData, analyzeBazi, startAnalysisTask, pollAnalysisResult } from './api.js?v=21';
 import {
     UI, initFormOptions, updateServiceDisplay,
@@ -469,7 +477,7 @@ import {
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData, prefillFromToolSite
-} from './ui.js?v=44';
+} from './ui.js?v=45';
 
 var _pollState = {
     active: false,
@@ -785,6 +793,7 @@ async function startAnalysis() {
         _pollState.progressPercent = 10;
         _pollState.totalSteps = totalSteps;
         localStorage.setItem('current_task_id', taskId);
+        STATE.currentTaskId = taskId;
         
         _pollState.progressTimer = setInterval(function() {
             if (_pollState.progressPercent < 75) {
@@ -848,7 +857,8 @@ function _startPolling() {
             
             if (result.status === 'completed') {
                 _stopPolling();
-                localStorage.removeItem('current_task_id');
+                // 这里绝不能清 current_task_id：下单在分析完成之后，清掉就等于订单绑不上报告，
+                // 支付回来时解锁接口取不到正文，用户付了钱看不到报告。新一轮分析会自然覆盖它。
                 console.log('✅ 分析任务完成');
                 _handleAnalysisResult(result.data);
             } else if (result.status === 'failed') {

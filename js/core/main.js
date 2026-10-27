@@ -893,6 +893,11 @@ async function startAnalysis() {
         _stopPolling();
         
         var errMsg = String(error && error.message || error || '');
+        // 后端限流文案本身就是给用户看的结论，不能再套一层「请稍后再试」并重复贴详情
+        if (errMsg.indexOf('今日测算次数已用完') !== -1) {
+            alert(errMsg + '\n\n如已付费仍需加急，请联系客服。');
+            return;
+        }
         var errorMessage = '命理分析失败，请稍后再试。';
         if (errMsg.indexOf('401') !== -1 || errMsg.indexOf('Unauthorized') !== -1) {
             errorMessage = 'API密钥错误，请联系管理员。';

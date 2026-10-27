@@ -1107,6 +1107,27 @@ function currentTaskId() {
     return localStorage.getItem('current_task_id') || STATE.currentTaskId || '';
 }
 
+// 解锁凭证：新单建单时后端下发随机 token，之后 status/unlock 都要带上它才拿得到报告正文。
+// 跳出去付款就没了内存状态，回跳后全靠这份 localStorage 把凭证接上。
+function savePaymentData(payOrder) {
+    try {
+        if (!payOrder || !payOrder.orderId) return;
+        const saved = PaymentManager.getPaymentData() || {};
+        saved.orderId = payOrder.orderId;
+        if (payOrder.outTradeNo) saved.outTradeNo = payOrder.outTradeNo;
+        if (payOrder.token) saved.token = payOrder.token;
+        localStorage.setItem('alipay_payment_data', JSON.stringify(saved));
+    } catch (e) { console.warn('解锁凭证落盘失败:', e); }
+}
+
+function unlockTokenFor(orderId) {
+    // 历史单（鉴权改动上线前建的）没有 token，后端拿商户订单号当凭证，这里一并回退
+    if (payOrder && String(payOrder.orderId) === String(orderId)) return payOrder.token || payOrder.outTradeNo || '';
+    const saved = PaymentManager.getPaymentData() || {};
+    if (String(saved.orderId) === String(orderId)) return saved.token || saved.outTradeNo || '';
+    return '';
+}
+
 async function precreateOrder() {
     try {
         const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/order/precreate`, {
@@ -1123,8 +1144,10 @@ async function precreateOrder() {
             service: STATE.currentService,
             orderId: result.data.orderId,
             outTradeNo: result.data.outTradeNo,
-            amount: result.data.amount
+            amount: result.data.amount,
+            token: result.data.unlockToken || ''
         };
+        savePaymentData(payOrder);
         UI.paymentOrderId().textContent = payOrder.outTradeNo;
         if (payOrder.amount !== undefined) UI.paymentAmount().textContent = '¥' + payOrder.amount;
     } catch (error) {
@@ -1207,7 +1230,8 @@ async function createPaymentOrder(method) {
         }
 
         const { orderId, outTradeNo, paymentUrl, paymentType, amount } = result.data;
-        payOrder = { service: STATE.currentService, orderId, outTradeNo, amount };
+        payOrder = { service: STATE.currentService, orderId, outTradeNo, amount,
+                     token: result.data.unlockToken || '' };
 
         UI.paymentAmount().textContent = '¥' + amount;
         UI.paymentOrderId().textContent = outTradeNo;
@@ -1216,6 +1240,7 @@ async function createPaymentOrder(method) {
         setPaymentMethodLabel(method.id);
 
         if (paymentType === 'wechat_native' || mode === 'qrcode') {
+            savePaymentData(payOrder);
             renderQrPayment(result.data.codeUrl || paymentUrl);
         } else {
             // 直接跳转支付，不再显示二次确认按钮
@@ -1223,6 +1248,7 @@ async function createPaymentOrder(method) {
             existingPaymentData.orderId = orderId;
             existingPaymentData.waiting = true;
             existingPaymentData.pendingAt = new Date().toISOString();
+            if (payOrder.token) existingPaymentData.token = payOrder.token;
             localStorage.setItem('alipay_payment_data', JSON.stringify(existingPaymentData));
             window.location.href = paymentUrl;
             return;
@@ -1325,7 +1351,7 @@ function startPollingPaymentStatus(orderId) {
     window._paymentPolling = setInterval(async () => {
         pollCount++;
         try {
-            const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/payment/status/${orderId}`);
+            const response = await fetch(`${API_CONFIG.BACKEND_URL}/api/payment/status/${orderId}?token=${encodeURIComponent(unlockTokenFor(orderId))}`);
             const result = await response.json();
             console.log(`📊 轮询支付状态 (${pollCount}/${maxPolls}):`, result);
             
@@ -1389,7 +1415,9 @@ async function handlePaymentSuccessDirect(orderId) {
     STATE.currentOrderId = orderId;
 
     try {
-        const resp = await fetch(`${API_CONFIG.BACKEND_URL}/api/payment/unlock/${orderId}`);
+        const resp = await fetch(`${API_CONFIG.BACKEND_URL}/api/payment/unlock/${orderId}`, {
+            headers: { 'X-Unlock-Token': unlockTokenFor(orderId) }
+        });
         const result = await resp.json();
         if (result.success && result.data && result.data.verified) {
             STATE.paidDetail = result.data.paidDetail || '';

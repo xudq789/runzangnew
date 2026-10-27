@@ -666,8 +666,8 @@ function switchService(serviceName) {
         console.error('服务不存在:', serviceName);
         return;
     }
-    // 切回服务时关闭首页视图
-    var homeSection = document.getElementById('home-section');
+    // 切回服务时关闭首页视图（整块内容区：今日命例 + 每日命理科普）
+    var homeSection = document.getElementById('home-duo') || document.getElementById('home-section');
     if (homeSection) homeSection.style.display = 'none';
     var seamlessContainer = document.querySelector('.seamless-container');
     if (seamlessContainer) seamlessContainer.style.display = '';

@@ -1847,3 +1847,149 @@ ul.cases li .cs {
 a.dynamic-pulse-btn {
     text-decoration: none;
 }
+
+/* ===== 每日命理科普板块（首页） ===== */
+.kepu-section {
+    padding: 6px 16px 40px;
+    background: #f5f1ea;
+}
+.kepu-card {
+    background: #fff;
+    border: 1px solid #e9e1d4;
+    border-radius: 12px;
+    padding: 18px 18px 20px;
+    box-shadow: 0 2px 10px rgba(92, 61, 46, 0.06);
+    margin-top: 14px;
+}
+.kepu-tag {
+    display: inline-block;
+    background: #f7f2e8;
+    color: #8a6a3a;
+    font-size: 12.5px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+}
+.kepu-card h3 {
+    font-size: 18px;
+    color: #5c3d2e;
+    margin: 0 0 6px;
+}
+.kepu-card h3 a {
+    color: inherit;
+    text-decoration: none;
+}
+.kepu-card h3 a:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+.kepu-card p {
+    font-size: 14.5px;
+    line-height: 1.9;
+    color: #4b4438;
+    text-align: justify;
+    margin: 6px 0;
+}
+.kepu-more {
+    display: inline-block;
+    color: var(--primary-color);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+.kepu-more:hover {
+    text-decoration: underline;
+}
+.kepu-sub {
+    font-size: 16px;
+    color: #5c3d2e;
+    border-left: 4px solid #c9a227;
+    padding-left: 8px;
+    margin: 22px 0 4px;
+}
+ul.kepu-list {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 18px;
+}
+ul.kepu-list li {
+    border-bottom: 1px dashed #e9e1d4;
+    padding: 9px 0;
+    font-size: 14px;
+}
+ul.kepu-list li a {
+    color: #5c3d2e;
+    text-decoration: none;
+    display: block;
+}
+ul.kepu-list li a:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+.kepu-foot {
+    text-align: center;
+    margin: 18px 0 4px;
+}
+@media (max-width: 640px) {
+    ul.kepu-list {
+        grid-template-columns: 1fr;
+    }
+    .kepu-card p {
+        font-size: 15px;
+    }
+}
+
+/* ===== 首页内容区：今日命例 + 每日命理科普 双栏 ===== */
+.home-duo {
+    background: #f7f3ec;
+}
+.home-duo > .home-section,
+.home-duo > .kepu-section {
+    background: transparent;
+}
+.home-duo > .home-section {
+    padding-bottom: 8px;
+}
+.home-duo > .kepu-section {
+    padding-top: 8px;
+}
+@media (min-width: 980px) {
+    .home-duo {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 0 34px;
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 6px 24px 0;
+    }
+    .home-duo > .home-section,
+    .home-duo > .kepu-section {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    .home-duo .home-container {
+        max-width: none;
+    }
+    .home-duo > .kepu-section {
+        border-left: 1px dashed #ddd2bf;
+        padding-left: 34px;
+    }
+    .home-duo ul.kepu-list {
+        grid-template-columns: 1fr;
+    }
+    .home-duo ul.cases li,
+    .home-duo ul.kepu-list li {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .home-duo .kepu-card p {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+}

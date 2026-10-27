@@ -12,7 +12,7 @@ function showHomePage() {
     const result = document.getElementById('analysis-result-section');
     if (result) result.style.display = 'none';
 
-    const home = document.getElementById('home-section');
+    const home = document.getElementById('home-duo') || document.getElementById('home-section');
     if (home) home.style.display = 'block';
 
     window.scrollTo({ top: 0, behavior: 'smooth' });

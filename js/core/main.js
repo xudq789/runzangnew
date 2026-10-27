@@ -9,8 +9,10 @@ const AlipayCallbackHandler = {
         const orderId = urlParams.get('order_id');
         const verified = urlParams.get('verified');
         const amount = urlParams.get('amount');
-        
-        console.log('🔍 解析参数:', { paymentSuccess, orderId, verified, amount });
+        // 回跳地址自带解锁凭证：换了浏览器上下文（支付宝内置浏览器、换设备）也得带回去
+        const unlockToken = urlParams.get('unlock_token') || urlParams.get('token');
+
+        console.log('🔍 解析参数:', { paymentSuccess, orderId, verified, amount, hasToken: !!unlockToken });
         
         // Handle payment failure
         const paymentStatus = urlParams.get('payment_status');
@@ -30,6 +32,7 @@ const AlipayCallbackHandler = {
                 amount,
                 verified: verified === 'true',
                 backendVerified: verified === 'true',
+                token: this._keptToken(orderId, unlockToken),
                 timestamp: new Date().toISOString()
             };
             localStorage.setItem('alipay_payment_data', JSON.stringify(paymentData));
@@ -46,6 +49,7 @@ const AlipayCallbackHandler = {
                 verified: false,
                 backendVerified: false,
                 waiting: true,
+                token: this._keptToken(orderId, unlockToken),
                 timestamp: new Date().toISOString()
             };
             localStorage.setItem('alipay_payment_data', JSON.stringify(paymentData));
@@ -53,6 +57,16 @@ const AlipayCallbackHandler = {
             return orderId;
         }
         return null;
+    },
+
+    // URL 没带凭证时（旧链接、半路改道）退回本单在下单页存下的那份，别的订单的不认
+    _keptToken(orderId, fromUrl) {
+        if (fromUrl) return fromUrl;
+        try {
+            const saved = JSON.parse(localStorage.getItem('alipay_payment_data') || 'null');
+            if (saved && String(saved.orderId) === String(orderId)) return saved.token || '';
+        } catch (e) {}
+        return '';
     },
     
     cleanUrlParams() {
@@ -119,11 +133,21 @@ const PaymentManager = {
             return null;
         }
     },
+
+    // 解锁凭证只认本单的：status 接口凭它才下发报告地址，unlock 接口凭它才回付费正文
+    tokenFor(orderId) {
+        const d = this.getPaymentData();
+        if (!d) return '';
+        if (orderId !== undefined && orderId !== null && String(d.orderId) !== String(orderId)) return '';
+        // 改动上线前建的历史单没有 token，后端把那批单的商户订单号当凭证，回退一份照旧能解锁
+        return d.token || d.outTradeNo || '';
+    },
     
     async verifyPaymentStatus(orderId) {
         try {
             console.log('🔐 验证支付状态，订单号:', orderId);
-            const response = await fetch(API_CONFIG.BACKEND_URL + '/api/payment/status/' + orderId);
+            const response = await fetch(API_CONFIG.BACKEND_URL + '/api/payment/status/' + orderId +
+                '?token=' + encodeURIComponent(this.tokenFor(orderId)));
             const result = await response.json();
             console.log('支付状态响应:', result);
             if (result.success && result.data.status === 'paid') {
@@ -222,7 +246,9 @@ const PaymentManager = {
         STATE.currentOrderId = orderId;
         
         try {
-            const resp = await fetch(`${API_CONFIG.BACKEND_URL}/api/payment/unlock/${orderId}`);
+            const resp = await fetch(`${API_CONFIG.BACKEND_URL}/api/payment/unlock/${orderId}`, {
+                headers: { 'X-Unlock-Token': this.tokenFor(orderId) }
+            });
             const unlockResult = await resp.json();
             if (unlockResult.success && unlockResult.data.verified) {
                 STATE.paidDetail = unlockResult.data.paidDetail || '';
@@ -231,6 +257,7 @@ const PaymentManager = {
                 console.log('🔓 付费内容已获取，长度:', STATE.paidDetail.length,
                     '报告包:', this._unlockBundle ? '有' : '无');
             } else {
+                this._unlockMessage = unlockResult.message || '';
                 console.warn('⚠️ 解锁接口返回未验证:', unlockResult);
             }
             if (!STATE.paidDetail) {
@@ -272,7 +299,13 @@ const PaymentManager = {
                 try { localStorage.removeItem('alipay_payment_data'); } catch(e) {}
                 const freeText = document.getElementById('free-analysis-text');
                 if (freeText) {
-                    freeText.innerHTML = '<div class="analysis-content" style="color:#b3362d;text-align:center;padding:24px;">支付已确认，但这份报告的数据没能取回。<br>请在下单时的同一浏览器刷新重试；仍未出现请联系客服微信：runzang888（订单号 ' + orderId + '）</div>';
+                    // 凭证不在本机（换设备、清缓存、用别的浏览器打开过）时服务端只会回"凭证无效"，
+                    // 这种情况刷新多少次都没用，话术要直接指路客服而不是让人重试。
+                    const why = /凭证/.test(this._unlockMessage || '')
+                        ? '这台设备上没有这笔订单的解锁凭证。'
+                        : '';
+                    freeText.innerHTML = '<div class="analysis-content" style="color:#b3362d;text-align:center;padding:24px;">' +
+                        why + '支付已确认，但这份报告的数据没能取回。<br>请在下单时的同一浏览器刷新重试；仍未出现请联系客服微信：runzang888（订单号 ' + String(orderId).replace(/[&<>"']/g, '') + '）</div>';
                 }
                 showAnalysisResult();
                 return;
@@ -512,7 +545,7 @@ import {
     unlockDownloadButton, resetUnlockInterface, animateButtonStretch,
     showLoadingModal, hideLoadingModal, showAnalysisResult,
     hideAnalysisResult, validateForm, collectUserData, prefillFromToolSite
-} from './ui.js?v=46';
+} from './ui.js?v=47';
 
 var _pollState = {
     active: false,
@@ -551,7 +584,8 @@ function confirmPayment() {
     }
     var confirmed = confirm('如果您已完成支付，请点击"确定"解锁内容。\n如支付遇到问题，请联系客服微信：runzang888');
     if (confirmed) {
-        fetch(API_CONFIG.BACKEND_URL + '/api/payment/status/' + STATE.currentOrderId)
+        fetch(API_CONFIG.BACKEND_URL + '/api/payment/status/' + STATE.currentOrderId +
+              '?token=' + encodeURIComponent(PaymentManager.tokenFor(STATE.currentOrderId)))
             .then(function(response) { return response.json(); })
             .then(function(result) {
                 if (result.success && result.data.status === 'paid') {

@@ -430,16 +430,19 @@ input:focus, select:focus {
     margin: 0 auto;
 }
 
-/* 网页端（桌面）：整个布局压到屏幕一半宽，手机端不受影响。
-   首页 .home-duo 见下方同名规则：原先固定 1160px，比服务页宽出一截，并排看像两个站。 */
+/* 网页端（桌面）：所有栏目统一压到屏幕三分之一宽，400px 兜底防止正文过窄，手机端不受影响。
+   首页 .home-duo 见下方同名规则：原先固定 1160px，比服务页宽出一截，并排看像两个站。
+   两条 max-width 是故意的：不认识 max() 的老内核退回上一条 33vw。 */
 @media (min-width: 769px) {
     .seamless-container,
-    .result-container {
-        max-width: 50vw;
+    .result-container,
+    .home-duo,
+    .seo-content {
+        max-width: 33vw;
+        max-width: max(400px, 33vw);
     }
 
     .home-duo {
-        max-width: 50vw;
         margin: 0 auto;
         padding: 0 24px;
     }
@@ -1968,9 +1971,10 @@ ul.kepu-list li a:hover {
 .home-duo > .kepu-section {
     padding-top: 8px;
 }
-/* 双栏要等收窄后的容器还放得下两列时才开：50vw 得视口 1280px 才有 640px 可用宽。
-   宽度本身已由上方 min-width:769px 的 .home-duo 规则统一交给服务页那套 50vw。 */
-@media (min-width: 1280px) {
+/* 双栏要等收窄后的容器还放得下两列时才开：带宽 33vw，视口 2200px 才有 726px，
+   扣掉内边距与中缝两列各约 310px，再窄标题就被挤没了——所以一般桌面是上下堆叠。
+   宽度本身已由上方 min-width:769px 的规则统一，这里只管排布。 */
+@media (min-width: 2200px) {
     .home-duo {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

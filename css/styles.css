@@ -432,12 +432,13 @@ input:focus, select:focus {
 
 /* 网页端（桌面）：所有栏目统一压到屏幕三分之一宽，400px 兜底防止正文过窄，手机端不受影响。
    首页 .home-duo 见下方同名规则：原先固定 1160px，比服务页宽出一截，并排看像两个站。
-   两条 max-width 是故意的：不认识 max() 的老内核退回上一条 33vw。 */
+   两条 max-width 是故意的：不认识 max() 的老内核退回上一条 33vw。
+   选择器带 body 是为了压过后面 .seo-content{max-width:980px} 这类同特异度的基础规则。 */
 @media (min-width: 769px) {
-    .seamless-container,
-    .result-container,
-    .home-duo,
-    .seo-content {
+    body .seamless-container,
+    body .result-container,
+    body .home-duo,
+    body .seo-content {
         max-width: 33vw;
         max-width: max(400px, 33vw);
     }
@@ -1975,6 +1976,9 @@ ul.kepu-list li a:hover {
    扣掉内边距与中缝两列各约 310px，再窄标题就被挤没了——所以一般桌面是上下堆叠。
    宽度本身已由上方 min-width:769px 的规则统一，这里只管排布。 */
 @media (min-width: 2200px) {
+    body .home-duo .home-container {
+        max-width: none;
+    }
     .home-duo {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

@@ -2013,3 +2013,23 @@ ul.kepu-list li a:hover {
         overflow: hidden;
     }
 }
+
+/* 品牌位：官方印章 + 文字（header 内、药丸导航上方） */
+.brand-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--light-color);
+}
+.brand-mark {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--accent-color);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+.brand-mark span { color: var(--primary-color); font-weight: 400; }

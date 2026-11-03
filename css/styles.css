@@ -2036,21 +2036,38 @@ ul.kepu-list li a:hover {
 }
 .brand-mark span { color: var(--primary-color); font-weight: 400; }
 
-/* 顶栏品牌位内移：印章不贴左缘（窄屏仍留 15px，避免挤掉导航） */
+/* 顶栏品牌位：桌面与 33vw 版面左缘对齐（不是整页最左侧）。
+   padding 的百分比按 body 宽度算，容器也用同一表达式居中，所以两处左缘精确重合；窄屏仍 15px。 */
 @media (min-width: 769px) {
-    header { padding-left: 32px; }
+    header { padding-left: calc((100% - max(400px, 33vw)) / 2); }
 }
 
-/* 人生详批页主图/副图：图片原始 1200x675，显示高恒等于 0.5625×宽。
-   正文列仍是 33vw（#444 口径不动），只把这两张图破出到 711~1000px 一档：
-   低于 711 会被 min-height:400 顶出图下方的米色空白，高于 1067 会被 max-height 裁掉，
-   711~1000 之内区块高度正好等于图片高度，所以高度规则一条都不动。
-   规则放在文件末尾，靠源码顺序压过上面 769/1200 两档的 .seamless-container 约束。 */
+/* 人生详批页主图/副图（#455 订正版）：版面宽度保持屏幕三分之一不动，
+   把图片行拉满这一档宽度，框架高度改成跟着 16:9 的图走 —— 上下都不留白、也不裁切。
+   图片原始 1200x675，显示高恒 = 0.5625×列宽；原先的 min-height:300/400 地板正是留白的来源。
+   aspect-ratio 负责未加载时就把框架撑好（占位符仍铺满、不跳版）；不认识它的老内核
+   靠 img{height:auto} 同样能按图片比例定高。规则排在文件末尾，压过前面 769/1200 两档。 */
 @media (min-width: 769px) {
     body .seamless-container > .hero-section,
     body .seamless-container > .detail-section {
-        left: 50%;
-        transform: translateX(-50%);
-        width: min(94vw, clamp(711px, 60vw, 1000px));
+        aspect-ratio: 1200 / 675;
+        height: auto;
+        min-height: 0;
+        max-height: none;
+    }
+
+    body .seamless-container > .hero-section .hero-image,
+    body .seamless-container > .detail-section .detail-image {
+        height: auto;
+        max-height: none;
+    }
+
+    /* 区块高度改由 aspect-ratio 供给后，绝对定位子元素的 height:100% 会算成 0，
+       占位符（正在加载…）会消失；改用四边拉伸，加载前仍能铺满框架。 */
+    body .seamless-container > .hero-section .image-placeholder,
+    body .seamless-container > .detail-section .image-placeholder {
+        right: 0;
+        bottom: 0;
+        height: auto;
     }
 }

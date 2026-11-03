@@ -2035,3 +2035,22 @@ ul.kepu-list li a:hover {
     letter-spacing: 2px;
 }
 .brand-mark span { color: var(--primary-color); font-weight: 400; }
+
+/* 顶栏品牌位内移：印章不贴左缘（窄屏仍留 15px，避免挤掉导航） */
+@media (min-width: 769px) {
+    header { padding-left: 32px; }
+}
+
+/* 人生详批页主图/副图：图片原始 1200x675，显示高恒等于 0.5625×宽。
+   正文列仍是 33vw（#444 口径不动），只把这两张图破出到 711~1000px 一档：
+   低于 711 会被 min-height:400 顶出图下方的米色空白，高于 1067 会被 max-height 裁掉，
+   711~1000 之内区块高度正好等于图片高度，所以高度规则一条都不动。
+   规则放在文件末尾，靠源码顺序压过上面 769/1200 两档的 .seamless-container 约束。 */
+@media (min-width: 769px) {
+    body .seamless-container > .hero-section,
+    body .seamless-container > .detail-section {
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(94vw, clamp(711px, 60vw, 1000px));
+    }
+}

@@ -59,6 +59,10 @@ header {
     position: sticky;
     top: 0;
     z-index: 1000;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 16px;
 }
 
 .service-nav {
@@ -67,6 +71,7 @@ header {
     justify-content: center;
     gap: 10px;
     flex-wrap: wrap;
+    flex: 1 1 auto;
 }
 
 .service-nav a {
@@ -2017,11 +2022,8 @@ ul.kepu-list li a:hover {
 /* 品牌位：官方印章 + 文字（header 内、药丸导航上方） */
 .brand-row {
     display: flex;
-    justify-content: center;
     align-items: center;
-    padding-bottom: 8px;
-    margin-bottom: 8px;
-    border-bottom: 1px solid var(--light-color);
+    flex: 0 0 auto;
 }
 .brand-mark {
     display: inline-flex;

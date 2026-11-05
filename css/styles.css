@@ -2083,3 +2083,45 @@ ul.kepu-list li a:hover {
         height: auto;
     }
 }
+/* ===== 录入栏紧凑化（2026-11-05 方案 A：纯 CSS，HTML 结构与 JS 收集逻辑不动） =====
+   手机端窄控件不再各占一整行，桌面 33vw 版面内一行排满；行距一律由 gap 供给，
+   取消 .form-grid/.form-row 与 .form-group 各带 margin-bottom 的双重叠加。
+   注：出生时间等块由 JS 就地写 inline display，不可用 !important 改其 display，
+   否则切到农历/四柱反推页签时公历时间块会被强制显示。 */
+.form-container .form-grid { gap: 10px; margin-bottom: 10px; }
+.form-container .form-grid .form-group { margin-bottom: 0; }
+.form-container .form-row { gap: 8px; margin-bottom: 8px; }
+.form-container .form-row .form-group { margin-bottom: 0; min-width: 0; }
+.form-container .form-group > label { margin-bottom: 4px; }
+.form-container .form-group input,
+.form-container .form-group select { padding: 6px 8px; }
+.form-container .birth-time-group { padding: 10px 12px; margin-bottom: 10px; border-radius: 8px; }
+.form-container .birth-time-group > label { margin-bottom: 8px; }
+.form-container .mode-switch { margin: 0 0 10px; padding: 7px 12px; border-radius: 9px; }
+.form-container .direct-hint { margin: 0 0 10px; padding: 6px 10px; line-height: 1.55; }
+.form-container .partner-info-section { padding: 12px; margin: 10px 0; }
+.form-container .partner-info-section h3 { margin-bottom: 8px; font-size: 16px; }
+.info-section { padding: 16px 22px; }
+.info-section .section-title { margin-bottom: 10px; }
+.info-section .section-title p { margin-top: 6px; font-size: 12.5px; }
+
+/* 桌面：姓名/性别/城市 一行排满；三格不等分（城市最宽），33vw 版面内占位文字不截断 */
+@media (min-width: 769px) {
+    .form-container > .form-grid,
+    .form-container .partner-info-section > .form-grid { grid-template-columns: 1.1fr 1fr 1.4fr; }
+    .form-container #user-lunar-fields .form-grid,
+    .form-container #partner-lunar-fields .form-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* 手机：姓名+性别 一行、城市整行；时间按 3+2 并排；内边距收到 14/12 */
+@media (max-width: 768px) {
+    .info-section { padding: 14px 12px; }
+    .form-container > .form-grid,
+    .form-container .partner-info-section > .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .form-container > .form-grid > .form-group:nth-child(3),
+    .form-container .partner-info-section > .form-grid > .form-group:nth-child(3) { grid-column: 1 / -1; }
+    .form-container .form-row { flex-direction: row; flex-wrap: wrap; }
+    .form-container .form-row .form-group { flex: 1 1 30%; }
+    .form-container #user-lunar-fields .form-grid,
+    .form-container #partner-lunar-fields .form-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

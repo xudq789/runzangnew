@@ -778,8 +778,17 @@ function renderDeepSeekSection(text, part) {
         return `<div class="ds-content ds-analysis">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`;
     }
 
+    // 历史报告兜底：2026-09-24~11 的续写逻辑把整篇付费章节写了两遍，同章名只渲染第一份
+    const seenHeaders = new Set();
+    const uniqueSegments = segments.filter(function (seg) {
+        if (!seg.header) return true;
+        if (seenHeaders.has(seg.header)) return false;
+        seenHeaders.add(seg.header);
+        return true;
+    });
+
     let html = '';
-    for (const seg of segments) {
+    for (const seg of uniqueSegments) {
         const isConclusion = CONCLUSION_HEADERS.includes(seg.header);
         const contentHtml = escapeHtml(seg.content).replace(/\n/g, '<br>');
         const headerHtml = escapeHtml('【' + seg.header + '】');
